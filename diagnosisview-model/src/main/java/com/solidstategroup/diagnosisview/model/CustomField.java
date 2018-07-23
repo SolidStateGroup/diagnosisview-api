@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Sample custom field, gives an example of how to retrieve from postgres
+ * Sample custom field, gives an example of how to retrieve from postgres.
  */
 @Data
 @AllArgsConstructor

@@ -41,9 +41,16 @@ public class ApiController {
     }
 
 
+    /**
+     * Get the media content for a profile.
+     *
+     * @param username - the username
+     * @param response - the response to stream to
+     * @throws Exception
+     */
     @RequestMapping(value = "/profile/image/{username}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void getMyMediaContent(@PathVariable("username") final String username, HttpServletResponse response)
+    public void getMyMediaContent(@PathVariable("username") final String username, final HttpServletResponse response)
             throws Exception {
 
         User user = userService.getUser(username);

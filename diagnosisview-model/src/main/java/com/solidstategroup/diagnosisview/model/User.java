@@ -86,6 +86,11 @@ public class User {
     }
 
 
+    /**
+     * Get the profile path.
+     *
+     * @return the profile iamge path
+     */
     public String getProfileImagePath() {
         return String.format("/api/profile/image/%s", getUsername());
     }

@@ -9,6 +9,25 @@
     <name>DiagnosisView API</name>
     <packaging>pom</packaging>
 
+    <profiles>
+        <profile>
+            <id>production</id>
+
+            <properties>
+                <env>production</env>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>staging</id>
+
+            <properties>
+                <env>staging</env>
+            </properties>
+        </profile>
+    </profiles>
+
+
     <properties>
         <feign.version>9.5.1</feign.version>
         <java.version>1.8</java.version>

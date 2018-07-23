@@ -60,7 +60,6 @@ public class AdminApiController {
     /**
      * Update a user.
      * @param user User user to update
-     * @return User the updated user
      * @throws Exception thrown adding projects config
      */
     @RequestMapping(value = "/users", method = RequestMethod.DELETE)
