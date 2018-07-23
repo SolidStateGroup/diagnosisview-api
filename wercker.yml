@@ -5,6 +5,15 @@ build:
       key: $AWS_ACCESS_KEY_ID
       secret: $AWS_SECRET_ACCESS_KEY
       region: $AWS_DEFAULT_REGION
+    - script:
+        name: Deploy Dev
+        code: |
+          echo Build started on `date`
+          adduser postgres
+          cd ../
+          cp -a src/ /home/postgres/
+          chown -R postgres:postgres /home/postgres/
+          sudo -H -u postgres bash -c 'cd ~/src && mvn clean install'
     - wercker/maven:
       goals: clean install validate
       profiles: staging
