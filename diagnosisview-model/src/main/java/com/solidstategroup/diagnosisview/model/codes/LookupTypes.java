@@ -1,0 +1,27 @@
+package com.solidstategroup.diagnosisview.model.codes;
+
+/**
+ * Created by james@solidstategroup.com
+ * Created on 05/06/2014
+ */
+public enum LookupTypes {
+    GROUP, MENU, ROLE,
+    CODE_STANDARD, CODE_TYPE,
+    FEATURE_TYPE, RELATIONSHIP_TYPE,
+    IDENTIFIER, CONTACT_POINT_TYPE, STATISTIC_TYPE,
+    NEWS_TYPE,
+
+    // IBD patient management
+    GENDER,
+    IBD_CROHNSLOCATION,
+    IBD_CROHNSPROXIMALTERMINALILEUM,
+    IBD_CROHNSPERIANAL,
+    IBD_CROHNSBEHAVIOUR,
+    IBD_UCEXTENT,
+    IBD_EGIMCOMPLICATION,
+    IBD_SURGERYMAINPROCEDURE,
+    IBD_SMOKINGSTATUS,
+    IBD_FAMILYHISTORY,
+
+    LINK_TYPE
+}
