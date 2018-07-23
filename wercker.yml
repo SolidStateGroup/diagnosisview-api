@@ -1,0 +1,10 @@
+build:
+  box: maven:3.5.2-jdk-8
+  steps:
+    - edgecaseadmin/install-aws-cli:
+      key: $AWS_ACCESS_KEY_ID
+      secret: $AWS_SECRET_ACCESS_KEY
+      region: $AWS_DEFAULT_REGION
+    - wercker/maven:
+      goals: clean install validate
+      profiles: staging
