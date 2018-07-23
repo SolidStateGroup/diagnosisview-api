@@ -1,0 +1,27 @@
+version: '3'
+
+networks:
+  prodnetwork:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: diagnosisview
+      POSTGRES_PASSWORD: diagnosisview
+      POSTGRES_DB: diagnosisview
+    networks:
+      - prodnetwork
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - prodnetwork
+    depends_on:
+      - postgres
+    environment:
+      "spring.datasource.url": "jdbc:postgresql://postgres:5432/postgres"
