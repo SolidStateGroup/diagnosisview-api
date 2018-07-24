@@ -8,7 +8,7 @@ build:
     - script:
         name: Run Maven upload
         code: |
-          mvn clean install -P staging
+          mvn clean install -DskipTests=true -P staging
           cd diagnosisview-api
           mvn -Dfile.encoding=UTF-8 -DskipTests=true beanstalk:clean-previous-versions  beanstalk:upload-source-bundle beanstalk:create-application-version beanstalk:update-environment -f pom.xml -P staging
 
