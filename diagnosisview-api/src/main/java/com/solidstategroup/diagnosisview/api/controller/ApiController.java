@@ -88,4 +88,16 @@ public class ApiController {
     public User login(@RequestBody final User user) throws Exception {
         return userService.login(user.getUsername(), user.getStoredPassword());
     }
+
+    /**
+     * User wants to register
+     *
+     * @param user user to login
+     * @return User user to reset
+     * @throws Exception thrown when user cannot be logged in
+     */
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    public User register(@RequestBody final User user) throws Exception {
+        return null;
+    }
 }

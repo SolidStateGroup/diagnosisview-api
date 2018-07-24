@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -89,6 +90,35 @@ public class UserApiController {
             response = User.class)
     public List<User> getAllUsers() throws Exception {
         return userService.getAllUsers();
+    }
+
+
+    /**
+     * Save a favourite for the user.
+     *
+     * @return User the updated users
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/user/favourites", method = RequestMethod.PUT)
+    @ApiOperation(value = "Add a code to favourites",
+            notes = "Adds a code to user favourites",
+            response = User.class)
+    public User saveFavourite(@RequestBody final Code favourite) throws Exception {
+        return null;
+    }
+
+    /**
+     * Save a favourite for the user.
+     *
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/user/history", method = RequestMethod.PUT)
+    @ApiOperation(value = "Save user history",
+            notes = "Add a history item to users history",
+            response = User.class)
+    public User saveHistory(@RequestBody final String history) throws Exception {
+        return null;
     }
 
 }

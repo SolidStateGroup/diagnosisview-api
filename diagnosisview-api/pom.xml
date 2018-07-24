@@ -20,8 +20,11 @@
         <beanstalker.region>eu-west-1</beanstalker.region>
         <beanstalk.useStagingDirectory>true</beanstalk.useStagingDirectory>
         <beanstalk.versionLabel>${project.artifactId}:${maven.build.timestamp}</beanstalk.versionLabel>
+        <!--<beanstalk.versionLabel>1</beanstalk.versionLabel>-->
         <beanstalk.versionsToKeep>5</beanstalk.versionsToKeep>
         <beanstalk.dryRun>false</beanstalk.dryRun>
+        <beanstalk.environmentAwsSecretKey></beanstalk.environmentAwsSecretKey>
+        <beanstalk.environmentAwsAccessKeyId></beanstalk.environmentAwsAccessKeyId>
     </properties>
 
     <dependencies>
@@ -61,7 +64,7 @@
 
                 <executions>
                     <execution>
-                        <phase>verify</phase>
+                        <phase/>
                         <goals>
                             <goal>clean-previous-versions</goal>
                             <goal>upload-source-bundle</goal>

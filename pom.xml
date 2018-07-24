@@ -11,6 +11,14 @@
 
     <profiles>
         <profile>
+            <id>local</id>
+
+            <properties>
+                <env>local</env>
+            </properties>
+        </profile>
+
+        <profile>
             <id>production</id>
 
             <properties>

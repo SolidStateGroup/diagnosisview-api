@@ -2,6 +2,8 @@ package com.solidstategroup.diagnosisview.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.type.CustomFieldArrayType;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -10,13 +12,18 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.TypeDefs;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Authenticated user object extracted from JWT and used as method argument in controllers.
@@ -64,6 +71,15 @@ public class User {
 
     @Column(name = "profile_image_type")
     private String profileImageFileType;
+
+//s    @OneToMany(mappedBy = "favourites", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Transient
+    private Set<Code> favourites = new HashSet<>();
+
+    @Transient
+    private Set<String> searches = new HashSet<>();
+
+
 
     /**
      * Gets the stored password.

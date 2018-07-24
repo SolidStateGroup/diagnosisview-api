@@ -1,0 +1,13 @@
+deploy:
+  box: 8.11.3-jessie
+  steps:
+    - script:
+          name: Remove existing dist
+          code: |
+            rm -rf dist/
+        - npm-install
+    - s3sync:
+        key-id: $AWS_ACCESS_KEY_ID
+        key-secret: $AWS_SECRET_ACCESS_KEY
+        bucket-url: $BUCKET
+        source-dir: $SOURCE
