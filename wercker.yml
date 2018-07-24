@@ -5,13 +5,10 @@ build:
       key: $AWS_ACCESS_KEY_ID
       secret: $AWS_SECRET_ACCESS_KEY
       region: $AWS_DEFAULT_REGION
-    - wercker/maven:
-      goals: clean install site-deploy -DskipTests=true validate
-      profiles: staging
     - script:
         name: Run Maven upload
         code: |
-          mvn clean install
+          mvn clean install -P staging
           cd diagnosisview-api
           mvn -Dfile.encoding=UTF-8 -DskipTests=true beanstalk:clean-previous-versions  beanstalk:upload-source-bundle beanstalk:create-application-version beanstalk:update-environment -f pom.xml -P staging
 
