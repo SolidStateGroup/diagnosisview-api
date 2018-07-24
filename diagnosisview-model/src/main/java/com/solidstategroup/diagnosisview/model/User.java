@@ -3,8 +3,7 @@ package com.solidstategroup.diagnosisview.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.type.CustomFieldArrayType;
+import com.solidstategroup.diagnosisview.type.PaymentFieldArrayType;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -12,13 +11,10 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.TypeDefs;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Date;
@@ -31,7 +27,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "dashboard_user")
-@TypeDefs({@TypeDef(name = "CustomFieldArrayTypeObject", typeClass = CustomFieldArrayType.class)})
+@TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class)})
 public class User {
     @Id
     @GeneratedValue
@@ -57,9 +53,6 @@ public class User {
     @Column
     private Date dateCreated;
 
-    @Type(type = "CustomFieldArrayTypeObject")
-    private CustomField[] customField;
-
     @Column(name = "profile_image")
     @JsonIgnore
     private byte[] profileImage;
@@ -79,6 +72,8 @@ public class User {
     @Transient
     private Set<String> searches = new HashSet<>();
 
+    @Type(type = "PaymentFieldArrayType")
+    private PaymentDetails[] paymentData;
 
 
     /**
