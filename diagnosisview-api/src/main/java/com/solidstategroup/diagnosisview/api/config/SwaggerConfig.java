@@ -13,18 +13,16 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  */
 @Configuration
 @EnableSwagger2
-public class SwaggerConfig {
+public class SwaggerConfig extends BaseSwaggerConfig {
 
-    /**
-     * Swagger config.
-     * @return the Swagger Docker
-     */
-    @Bean
-    public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
-                .build();
+    @Override
+    public String description() {
+        return "Provides a set of endpoints for DiagnosisView";
     }
+
+    @Override
+    public String title() {
+        return "DiagnosisView";
+    }
+
 }
