@@ -43,7 +43,7 @@ public class UserApiController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/users", method = RequestMethod.POST)
+    @RequestMapping(value = "/", method = RequestMethod.POST)
     @ApiOperation(value = "Create User",
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
@@ -57,7 +57,7 @@ public class UserApiController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/users", method = RequestMethod.PUT)
+    @RequestMapping(value = "/", method = RequestMethod.PUT)
     @ApiOperation(value = "Update User",
             notes = "Update a user, pass the password in which will then be encrypted",
             response = User.class)
@@ -71,7 +71,7 @@ public class UserApiController {
      * @param user User user to update
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/users", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete User - TEST PURPOSES ONLY",
             notes = "Pass the user in with an ID to be deleted")
     public void deleteUser(@RequestBody final User user) throws Exception {
@@ -84,7 +84,7 @@ public class UserApiController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/users", method = RequestMethod.GET)
+    @RequestMapping(value = "/", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Users",
             notes = "Admin User endpoint to get all users within the DiagnosisView",
             response = User.class)
@@ -99,7 +99,7 @@ public class UserApiController {
      * @return User the updated users
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/user/favourites", method = RequestMethod.PUT)
+    @RequestMapping(value = "/favourites", method = RequestMethod.PUT)
     @ApiOperation(value = "Add a code to favourites",
             notes = "Adds a code to user favourites",
             response = User.class)
@@ -113,7 +113,7 @@ public class UserApiController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/user/history", method = RequestMethod.PUT)
+    @RequestMapping(value = "/history", method = RequestMethod.PUT)
     @ApiOperation(value = "Save user history",
             notes = "Add a history item to users history",
             response = User.class)
