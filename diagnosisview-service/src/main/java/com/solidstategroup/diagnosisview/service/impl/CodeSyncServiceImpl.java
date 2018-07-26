@@ -154,6 +154,12 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                 externalStandardRepository.save(externalStandard.getExternalStandard());
             }
 
+            //Check if code category exists
+            for (Link link : code.getLinks()) {
+                lookupTypeRepository.save(link.getLinkType().getLookupType());
+                lookupRepository.save(link.getLinkType());
+            }
+
             Set<Link> links = code.getLinks();
             Set<CodeCategory> codeCategories = code.getCodeCategories();
             Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
