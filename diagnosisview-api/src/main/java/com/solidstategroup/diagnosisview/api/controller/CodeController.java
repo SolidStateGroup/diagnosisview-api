@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -91,9 +93,19 @@ public class CodeController {
     @RequestMapping(value = "/code", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Codes",
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
-            response = Code[].class)
-    public List<Code> getAllUsers() throws Exception {
-        return codeRepository.findAll();
+            response = CodeDto[].class)
+    public List<CodeDto> getAllUsers() throws Exception {
+
+        List<CodeDto> codeDtoList = new ArrayList<>();
+        List<Code> codeList = codeRepository.findAll();
+        codeList.parallelStream().forEach(code -> {
+            CodeDto codeDto = new CodeDto();
+            codeDto.setCode(code.getCode());
+            codeDto.setFriendlyName(code.getPatientFriendlyName());
+            codeDto.setDescription(code.getDescription());
+        });
+
+        return codeDtoList;
     }
 
 
