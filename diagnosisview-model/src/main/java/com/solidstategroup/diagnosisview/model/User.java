@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.type.PaymentFieldArrayType;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -34,6 +35,7 @@ public class User {
     private Long id;
 
     @Column
+    @ApiModelProperty(required = true)
     private String username;
 
     @Getter(AccessLevel.PRIVATE)
