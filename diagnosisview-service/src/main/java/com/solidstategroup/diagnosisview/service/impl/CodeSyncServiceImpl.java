@@ -1,16 +1,16 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
-import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
@@ -22,6 +22,9 @@ import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
+import com.tyler.gson.immutable.ImmutableListDeserializer;
+import com.tyler.gson.immutable.ImmutableMapDeserializer;
+import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
 import lombok.extern.java.Log;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -34,12 +37,6 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
-import com.tyler.gson.immutable.ImmutableListDeserializer;
-import com.tyler.gson.immutable.ImmutableMapDeserializer;
-import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -145,6 +142,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             lookupTypeRepository.save(code.getStandardType().getLookupType());
             lookupRepository.save(code.getStandardType());
 
+            lookupTypeRepository.save(code.getCodeType().getLookupType());
+            lookupRepository.save(code.getCodeType());
+
             for (CodeCategory codeCategory : code.getCodeCategories()) {
                 categoryRepository.save(codeCategory.getCategory());
             }
@@ -163,6 +163,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             Set<Link> links = code.getLinks();
             Set<CodeCategory> codeCategories = code.getCodeCategories();
             Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+
 
             //Remove code related fields, this stops exceptions being thrown
             code.setLinks(null);
@@ -197,7 +198,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         }
     }
-
 
     /**
      * Get the token returned by the api
