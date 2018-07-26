@@ -103,6 +103,7 @@ public class CodeController {
             codeDto.setCode(code.getCode());
             codeDto.setFriendlyName(code.getPatientFriendlyName());
             codeDto.setDescription(code.getDescription());
+            codeDtoList.add(codeDto);
         });
 
         return codeDtoList;
