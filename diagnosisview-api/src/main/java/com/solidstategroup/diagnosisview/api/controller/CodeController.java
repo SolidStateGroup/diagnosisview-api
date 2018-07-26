@@ -8,6 +8,7 @@ import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -90,9 +91,24 @@ public class CodeController {
     @RequestMapping(value = "/code", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Codes",
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
-            response = User.class)
+            response = Code[].class)
     public List<Code> getAllUsers() throws Exception {
         return codeRepository.findAll();
+    }
+
+
+    /**
+     * Get a single code by querying using the id.
+     *
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
+    @ApiOperation(value = "Get A single Codes",
+            notes = "Admin User endpoint to get all codes within the DiagnosisView",
+            response = Code.class)
+    public Code getAllUsers(@PathVariable("code") final String code) throws Exception {
+        return codeRepository.findOneByCode(code);
     }
 
 }

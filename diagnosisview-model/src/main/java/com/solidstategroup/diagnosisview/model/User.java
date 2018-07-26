@@ -26,7 +26,7 @@ import java.util.Set;
  */
 @Data
 @Entity
-@Table(name = "dashboard_user")
+@Table(name = "dv_user")
 @TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class)})
 public class User {
     @Id
