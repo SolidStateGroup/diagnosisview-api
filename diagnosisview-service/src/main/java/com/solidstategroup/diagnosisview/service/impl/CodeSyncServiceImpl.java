@@ -8,7 +8,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
+import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
+import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
+import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.repository.CategoryRepository;
+import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
+import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
+import com.solidstategroup.diagnosisview.repository.CodeRepository;
+import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
+import com.solidstategroup.diagnosisview.repository.LinkRepository;
+import com.solidstategroup.diagnosisview.repository.LookupRepository;
+import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
+import com.solidstategroup.diagnosisview.service.DatetimeParser;
 import lombok.extern.java.Log;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -18,6 +31,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.google.common.collect.ImmutableList;
@@ -33,6 +47,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -54,31 +69,122 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}")
     private String patientviewUrl;
 
+    private static Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+            .registerTypeAdapter(Date.class, new DatetimeParser())
+            .registerTypeAdapter(ImmutableSortedMap.class, new ImmutableSortedMapDeserializer())
+            .registerTypeAdapter(ImmutableList.class, new ImmutableListDeserializer())
+            .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
+            .create();
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private CodeExternalStandardRepository codeExternalStandardRepository;
+
+    @Autowired
+    private CodeRepository codeRepository;
+
+    @Autowired
+    private CodeCategoryRepository codeCategoryRepository;
+
+    @Autowired
+    private ExternalStandardRepository externalStandardRepository;
+
+    @Autowired
+    private LinkRepository linkRepository;
+
+    @Autowired
+    private LookupRepository lookupRepository;
+
+    @Autowired
+    private LookupTypeRepository lookupTypeRepository;
 
     @Override
     public void syncCodes() {
-        //Make request to auth/login
-        HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
-
         try {
+
+            //Make request to auth/login
+            HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
+
             //Make the request
             HttpGet request = new HttpGet(patientviewUrl +
-                    "code?filterText=&page=0&size=20000&sortDirection=ASC&sortField=code&standardTypes=134");
+                    "code?filterText=&page=0&size=200000&sortDirection=ASC&sortField=code&standardTypes=134");
             request.addHeader("content-type", "application/json");
             request.addHeader("X-Auth-Token", getLoginToken());
+
             HttpResponse response = httpClient.execute(request);
 
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity, "UTF-8");
 
-            Type fooType = new TypeToken<List<Code>>() {}.getType();
-            String contentString = new Gson().toJson(new Gson().fromJson(responseString, Map.class).get("content"),
-                                            fooType);
-            List<Code> codes = new Gson().fromJson(contentString, fooType);
+            Type fooType = new TypeToken<List<Code>>() {
+            }.getType();
+            String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
+                    fooType);
+            log.info(responseString);
+
+            List<Code> codes = gson.fromJson(contentString, fooType);
             System.out.println(responseString);
-        } catch (Exception ex) {
-            log.severe(ex.getMessage());
-            //handle exception here
+
+            codes.stream().forEach(code -> updateCode(code));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void updateCode(Code code) {
+        Code existingCode = codeRepository.findOne(code.getId());
+
+        //If there is a code, or it has been updated, update
+        if (existingCode == null || existingCode.getLastUpdate().before(code.getLastUpdate())) {
+
+            lookupTypeRepository.save(code.getStandardType().getLookupType());
+            lookupRepository.save(code.getStandardType());
+
+            for (CodeCategory codeCategory : code.getCodeCategories()) {
+                categoryRepository.save(codeCategory.getCategory());
+            }
+
+            //Check if code category exists
+            for (CodeExternalStandard externalStandard : code.getExternalStandards()) {
+                externalStandardRepository.save(externalStandard.getExternalStandard());
+            }
+
+            //Check if code category exists
+            for (Link link : code.getLinks()) {
+                lookupTypeRepository.save(link.getLinkType().getLookupType());
+                lookupRepository.save(link.getLinkType());
+                linkRepository.save(link);
+            }
+
+            Set<CodeCategory> codeCategories = code.getCodeCategories();
+            Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+
+            code.setCodeCategories(null);
+            code.setExternalStandards(null);
+
+            codeRepository.save(code);
+
+            for (CodeCategory codeCategory : codeCategories) {
+                codeCategory.setCode(code);
+                codeCategoryRepository.save(codeCategory);
+            }
+
+            //Check if code category exists
+            for (CodeExternalStandard externalStandard : externalStandards) {
+                externalStandard.setCode(code);
+                codeExternalStandardRepository.save(externalStandard);
+            }
+
+            code.setCodeCategories(codeCategories);
+            code.setExternalStandards(externalStandards);
+
+            codeRepository.save(code);
+
 
         }
     }
@@ -101,7 +207,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
 
         HttpPost request = new HttpPost(patientviewUrl + "auth/login");
-        StringEntity params = new StringEntity(new Gson().toJson(postbody));
+        StringEntity params = new StringEntity(gson.toJson(postbody));
         request.addHeader("content-type", "application/json");
         request.setEntity(params);
         HttpResponse response = httpClient.execute(request);
@@ -110,6 +216,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         String responseString = EntityUtils.toString(entity, "UTF-8");
         System.out.println(responseString);
 
-        return new Gson().fromJson(responseString, Map.class).get("token").toString();
+        return gson.fromJson(responseString, Map.class).get("token").toString();
     }
 }

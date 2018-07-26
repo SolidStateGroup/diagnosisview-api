@@ -98,6 +98,6 @@ public class ApiController {
      */
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public User register(@RequestBody final User user) throws Exception {
-        return null;
+        return userService.createOrUpdateUser(user);
     }
 }

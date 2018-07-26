@@ -3,6 +3,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
@@ -24,20 +25,23 @@ public class CodeController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
+    private CodeRepository codeRepository;
 
     /**
      * Instantiate API controller, includes required services.
      *
-     * @param userService     UserService manages the dashboard users
+     * @param userService UserService manages the dashboard users
      */
     @Autowired
-    public CodeController(final UserService userService) {
+    public CodeController(final UserService userService, final CodeRepository codeRepository) {
         this.userService = userService;
+        this.codeRepository = codeRepository;
     }
 
 
     /**
      * Create a code within DV.
+     *
      * @param code - code to create
      * @return the created code with ID
      * @throws Exception
@@ -52,7 +56,6 @@ public class CodeController {
 
 
     /**
-     *
      * @param code
      * @return
      * @throws Exception
@@ -68,6 +71,7 @@ public class CodeController {
 
     /**
      * Update a code.
+     *
      * @param code Code code to delete
      * @throws Exception thrown adding projects config
      */
@@ -88,7 +92,7 @@ public class CodeController {
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = User.class)
     public List<Code> getAllUsers() throws Exception {
-        return null;
+        return codeRepository.findAll();
     }
 
 }

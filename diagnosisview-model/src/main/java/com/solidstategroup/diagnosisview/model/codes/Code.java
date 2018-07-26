@@ -24,7 +24,7 @@ public class Code extends AuditModel {
     @Column(name = "code")
     private String code;
 
-    @OneToMany(mappedBy = "code", cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CodeCategory> codeCategories = new HashSet<>();
 
     @OneToOne
@@ -38,7 +38,7 @@ public class Code extends AuditModel {
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "code", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CodeExternalStandard> externalStandards = new HashSet<>();
 
     // from NHS choices initially
@@ -48,7 +48,7 @@ public class Code extends AuditModel {
     @Column(name = "hide_from_patients")
     private boolean hideFromPatients = false;
 
-    @OneToMany(mappedBy = "code", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Link> links = new HashSet<>();
 
     // used for PATIENTVIEW code standard Codes, from NHS choices initially
