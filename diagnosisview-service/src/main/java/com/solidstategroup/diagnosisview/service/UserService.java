@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 
 import java.util.List;
@@ -10,10 +11,30 @@ import java.util.List;
 public interface UserService {
 
     /**
+     * Add a new favourite to a user.
+     *
+     * @param user the user to update
+     * @param savedUserCode the code to add
+     * @return User the updated user
+     * @throws Exception
+     */
+    User addFavouriteToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
+
+    /**
+     * Add a history item to a user.
+     *
+     * @param user the user to update
+     * @param savedUserCode the code to add
+     * @return User the updated user
+     * @throws Exception
+     */
+    User addHistoryToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
+
+    /**
      * Create or update a dashboard user.
      *
      * @param user the user to create or update
-     * @return the created or updated user
+     * @return User the created or updated user
      * @throws Exception thrown when cannot update user
      */
     User createOrUpdateUser(final User user) throws Exception;
@@ -26,6 +47,26 @@ public interface UserService {
      * @throws Exception thrown when cannot update user
      */
     void deleteUser(final User user) throws Exception;
+
+    /**
+     * Remove a favourite from a user.
+     *
+     * @param user the user to remove
+     * @param savedUserCode the code to remove
+     * @return User the updated user
+     * @throws Exception
+     */
+    User deleteFavouriteToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
+
+    /**
+     * Remove a history item from a user.
+     *
+     * @param user the user to update
+     * @param savedUserCode the code to remove
+     * @return User the updated user
+     * @throws Exception
+     */
+    User deleteHistoryToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
 
     /**
      * Dashboard user login.

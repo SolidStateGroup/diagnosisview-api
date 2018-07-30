@@ -2,8 +2,8 @@ package com.solidstategroup.diagnosisview.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.type.PaymentFieldArrayType;
+import com.solidstategroup.diagnosisview.type.SavedUserCodeArrayType;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -19,8 +19,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Authenticated user object extracted from JWT and used as method argument in controllers.
@@ -28,7 +26,8 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "dv_user")
-@TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class)})
+@TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class),
+        @TypeDef(name = "SavedUserCodeFieldArrayType", typeClass = SavedUserCodeArrayType.class)})
 public class User {
     @Id
     @GeneratedValue
@@ -68,11 +67,11 @@ public class User {
     private String profileImageFileType;
 
 //s    @OneToMany(mappedBy = "favourites", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @Transient
-    private Set<Code> favourites = new HashSet<>();
+    @Type(type = "SavedUserCodeFieldArrayType")
+    private SavedUserCode[] favourites;
 
-    @Transient
-    private Set<String> searches = new HashSet<>();
+    @Type(type = "SavedUserCodeFieldArrayType")
+    private SavedUserCode[] history;
 
     @Type(type = "PaymentFieldArrayType")
     private PaymentDetails[] paymentData;

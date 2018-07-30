@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
+import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
@@ -12,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +38,50 @@ public class UserServiceImpl implements UserService {
     @Autowired
     public UserServiceImpl(final UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User addFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
+        Arrays.stream(savedUser.getFavourites()).forEach(savedCode -> {
+            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+        });
+
+
+        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
+            savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+        }
+
+
+        savedUser.setFavourites(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        userRepository.save(savedUser);
+        return savedUser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User addHistoryToUser(User user, SavedUserCode savedUserCode) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
+        Arrays.stream(savedUser.getHistory()).forEach(savedCode -> {
+            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+        });
+
+
+        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
+            savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+        }
+
+
+        savedUser.setHistory(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        userRepository.save(savedUser);
+        return savedUser;
     }
 
     /**
@@ -72,6 +119,50 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(User user) throws Exception {
         User user1 = userRepository.findOneByUsername(user.getUsername());
         userRepository.delete(user1);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User deleteFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
+        Arrays.stream(savedUser.getFavourites()).forEach(savedCode -> {
+            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+        });
+
+
+        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
+            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+        }
+
+
+        savedUser.setFavourites(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        userRepository.save(savedUser);
+        return savedUser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User deleteHistoryToUser(User user, SavedUserCode savedUserCode) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
+        Arrays.stream(savedUser.getHistory()).forEach(savedCode -> {
+            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+        });
+
+
+        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
+            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+        }
+
+
+        savedUser.setHistory(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        userRepository.save(savedUser);
+        return savedUser;
     }
 
     /**
