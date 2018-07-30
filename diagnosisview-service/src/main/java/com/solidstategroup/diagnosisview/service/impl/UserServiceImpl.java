@@ -171,10 +171,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public User login(final String username, final String password) throws Exception {
         User user = userRepository.findOneByUsername(username);
+
         if (user == null) {
             throw new IllegalStateException("Please check your username and password.");
         }
         if (Utils.checkPassword(password, user.getStoredSalt(), user.getStoredPassword())) {
+            //Update the user token on a sucessful login
+            user.setToken(UUID.randomUUID().toString());
+            userRepository.save(user);
+
             return user;
         } else {
             throw new IllegalStateException("Please check your username and password");

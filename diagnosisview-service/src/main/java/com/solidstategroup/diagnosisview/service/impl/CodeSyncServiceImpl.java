@@ -200,7 +200,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     }
 
     /**
-     * Get the token returned by the api
+     * Get the token returned by the api.
      *
      * @return login token
      */
