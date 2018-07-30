@@ -102,7 +102,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     @Override
     public void syncCodes() {
         try {
-
+            log.info("Starting Code Sync from PatientView");
             //Make request to auth/login
             HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
@@ -127,6 +127,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             System.out.println(responseString);
 
             codes.stream().forEach(code -> updateCode(code));
+            log.info("Finished Code Sync from PatientView");
         } catch (IOException e) {
             e.printStackTrace();
         }
