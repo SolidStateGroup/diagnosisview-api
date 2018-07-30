@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class CodeDto {
     private String friendlyName;
-    private String description;
+    private Boolean deleted;
     private String code;
 }

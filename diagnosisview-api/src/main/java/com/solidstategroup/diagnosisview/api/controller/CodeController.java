@@ -101,8 +101,16 @@ public class CodeController {
         codeList.parallelStream().forEach(code -> {
             CodeDto codeDto = new CodeDto();
             codeDto.setCode(code.getCode());
+
+            if (code.isRemovedExternally() || code.isHideFromPatients()) {
+                codeDto.setDeleted(true);
+            } else {
+                codeDto.setDeleted(false);
+            }
+
+
             codeDto.setFriendlyName(code.getPatientFriendlyName());
-            codeDto.setDescription(code.getDescription());
+
             codeDtoList.add(codeDto);
         });
 
