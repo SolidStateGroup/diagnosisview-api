@@ -40,20 +40,6 @@ public class UserApiController extends BaseController {
         this.userService = userService;
     }
 
-    /**
-     * Create a user.
-     *
-     * @param user User user to create
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/", method = RequestMethod.POST)
-    @ApiOperation(value = "Create User",
-            notes = "Create a user, pass the password in which will then be encrypted",
-            response = User.class)
-    public User createUser(@RequestBody final User user) throws Exception {
-        return userService.createOrUpdateUser(user);
-    }
 
     /**
      * Update a user.
@@ -68,34 +54,6 @@ public class UserApiController extends BaseController {
             response = User.class)
     public User updateUser(@RequestBody final User user) throws Exception {
         return userService.createOrUpdateUser(user);
-    }
-
-
-    /**
-     * Update a user.
-     *
-     * @param user User user to update
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/", method = RequestMethod.DELETE)
-    @ApiOperation(value = "Delete User - TEST PURPOSES ONLY",
-            notes = "Pass the user in with an ID to be deleted")
-    public void deleteUser(@RequestBody final User user) throws Exception {
-        userService.deleteUser(user);
-    }
-
-    /**
-     * Get all users.
-     *
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/", method = RequestMethod.GET)
-    @ApiOperation(value = "Get All Users",
-            notes = "Admin User endpoint to get all users within the DiagnosisView",
-            response = User.class)
-    public List<User> getAllUsers() throws Exception {
-        return userService.getAllUsers();
     }
 
 
@@ -179,49 +137,4 @@ public class UserApiController extends BaseController {
         }
         return userService.deleteHistoryToUser(user, history);
     }
-
-
-
-    /**
-     * Validates and android receipt against the play store API
-     *
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/validate/android", method = RequestMethod.POST)
-    @ApiOperation(value = "Validate an Android receipt",
-            notes = "Validate an Android receipt",
-            response = SavedUserCode.class)
-    public User validateAndroidReceipt(@RequestBody final String purchase,
-                                     final HttpServletRequest request) throws Exception {
-        //Get the user from the request
-        User user = this.getUserFromRequest(request);
-        if (user == null) {
-            throw new Exception("You are not authenticated, please login to save favourites");
-        }
-
-        return userService.verifyAndroidToken(user, purchase);
-    }
-
-    /**
-     * Delete a history item for the user.
-     *
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/validate/ios", method = RequestMethod.POST)
-    @ApiOperation(value = "Validate and iOS receipt",
-            notes = "Validates and iOS receipt against",
-            response = SavedUserCode.class)
-    public User validateIosReceipt(@RequestBody final Map<String, String> purchase,
-                               final HttpServletRequest request) throws Exception {
-        //Get the user from the request
-        User user = this.getUserFromRequest(request);
-        if (user == null) {
-            throw new Exception("You are not authenticated, please login to save favourites");
-        }
-
-        return userService.verifyAppleReceiptData(user, purchase.get("transactionReceipt"));
-    }
-
 }

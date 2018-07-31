@@ -53,8 +53,8 @@ public class CodeController {
     @ApiOperation(value = "Create Code",
             notes = "Creates code within DV (unsure if required)",
             response = User.class)
-    public Code createUser(@RequestBody final Code code) throws Exception {
-        return null;
+    public Code createCode(@RequestBody final Code code) throws Exception {
+        return codeRepository.save(code);
     }
 
 
@@ -67,8 +67,8 @@ public class CodeController {
     @ApiOperation(value = "Update Code",
             notes = "Update a user, pass the password in which will then be encrypted",
             response = User.class)
-    public Code updateUser(@RequestBody final Code code) throws Exception {
-        return null;
+    public Code updateCode(@RequestBody final Code code) throws Exception {
+        return codeRepository.save(code);
     }
 
 
@@ -81,7 +81,8 @@ public class CodeController {
     @RequestMapping(value = "/code", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete code - TEST PURPOSES ONLY",
             notes = "Pass the code in with an ID to be deleted")
-    public void deleteUser(@RequestBody final Code code) throws Exception {
+    public void deleteCode(@RequestBody final Code code) throws Exception {
+        codeRepository.delete(code);
     }
 
     /**
@@ -94,7 +95,7 @@ public class CodeController {
     @ApiOperation(value = "Get All Codes",
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = CodeDto[].class)
-    public List<CodeDto> getAllUsers() throws Exception {
+    public List<CodeDto> getAllCodes() throws Exception {
 
         List<CodeDto> codeDtoList = new ArrayList<>();
         List<Code> codeList = codeRepository.findAll();
