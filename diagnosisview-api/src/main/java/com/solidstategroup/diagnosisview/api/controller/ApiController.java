@@ -98,8 +98,8 @@ public class ApiController extends BaseController {
      * @throws Exception thrown when user cannot be logged in
      */
     @RequestMapping(value = "/account", method = RequestMethod.GET)
-    public User getCurrentUser(final HttpServletRequest request) throws Exception {
-        return this.getCurrentUser(request);
+    public User getAccount(final HttpServletRequest request) throws Exception {
+        return this.getUserFromRequest(request);
     }
 
 
