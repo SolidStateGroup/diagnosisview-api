@@ -1,22 +1,40 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
+import com.google.gson.Gson;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import lombok.extern.java.Log;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -28,6 +46,12 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
+
+    @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
+    private String appleUrlString;
+
+    @Value("${ANDROID_PUBLIC_KEY:NONE}")
+    private String androidPublicKey;
 
 
     /**
@@ -68,18 +92,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public User addHistoryToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
-        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
-        Arrays.stream(savedUser.getHistory()).forEach(savedCode -> {
-            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
-        });
-
-
-        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
-            savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+        if (savedUserCode.getDateAdded() == null) {
+            savedUserCode.setDateAdded(new Date());
         }
 
+        List<SavedUserCode> userCodes = Arrays.asList(savedUser.getHistory());
+        userCodes.add(savedUserCode);
 
-        savedUser.setHistory(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        savedUser.setHistory(userCodes.toArray(new SavedUserCode[userCodes.size()]));
         userRepository.save(savedUser);
         return savedUser;
     }
@@ -106,7 +126,7 @@ public class UserServiceImpl implements UserService {
                     String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
         }
         if (user.getLogoData() != null) {
-            user.setProfileImage(Base64.decodeBase64(new String(user.getLogoData()).getBytes("UTF-8")));
+            user.setProfileImage(Base64.decode(new String(user.getLogoData()).getBytes("UTF-8")));
         }
 
         return userRepository.save(user);

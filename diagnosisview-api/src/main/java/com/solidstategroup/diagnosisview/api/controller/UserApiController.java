@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Secured API controller, handles main methods.
@@ -23,7 +24,7 @@ import java.util.List;
 @Api(value = "/api/user", description = "Manage Users")
 @RequestMapping("/api/user")
 @Log
-public class UserApiController extends BaseRepository {
+public class UserApiController extends BaseController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
@@ -35,6 +36,7 @@ public class UserApiController extends BaseRepository {
      */
     @Autowired
     public UserApiController(final UserService userService) {
+        super();
         this.userService = userService;
     }
 

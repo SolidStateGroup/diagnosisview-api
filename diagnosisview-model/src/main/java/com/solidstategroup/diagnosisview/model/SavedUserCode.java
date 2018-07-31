@@ -19,4 +19,5 @@ public class SavedUserCode {
     private String code;
     @ApiModelProperty(example = "MEDLINE_PLUS")
     private String type;
+    private Date dateAdded;
 }

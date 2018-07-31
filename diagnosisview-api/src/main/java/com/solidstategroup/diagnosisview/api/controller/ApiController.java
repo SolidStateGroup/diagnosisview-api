@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.io.InputStream;
 @RestController
 @RequestMapping("/api")
 @Log
-public class ApiController {
+public class ApiController extends BaseController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
@@ -33,10 +34,11 @@ public class ApiController {
     /**
      * Instantiate API controller, includes required services.
      *
-     * @param userService     UserService manages the dashboard users
+     * @param userService UserService manages the dashboard users
      */
     @Autowired
     public ApiController(final UserService userService) {
+        super();
         this.userService = userService;
     }
 
@@ -88,6 +90,18 @@ public class ApiController {
     public User login(@RequestBody final User user) throws Exception {
         return userService.login(user.getUsername(), user.getStoredPassword());
     }
+
+    /**
+     * Get the current user that is logged into the api.
+     *
+     * @return User the logged in user
+     * @throws Exception thrown when user cannot be logged in
+     */
+    @RequestMapping(value = "/account", method = RequestMethod.POST)
+    public User getCurrentUser(HttpServletRequest request) throws Exception {
+        return this.getCurrentUser(request);
+    }
+
 
     /**
      * User wants to register

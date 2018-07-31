@@ -15,4 +15,6 @@ import java.util.Date;
 public class PaymentDetails {
     private String name;
     private Date paymentDate;
+    private Date expiryDate;
+
 }
