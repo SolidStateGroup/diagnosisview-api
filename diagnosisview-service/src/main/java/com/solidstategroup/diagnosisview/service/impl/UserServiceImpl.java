@@ -25,6 +25,7 @@ import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -73,10 +74,11 @@ public class UserServiceImpl implements UserService {
     public User addFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
-        Arrays.stream(savedUser.getFavourites()).forEach(savedCode -> {
-            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
-        });
-
+        if (savedUser.getFavourites() != null) {
+            Arrays.stream(savedUser.getFavourites()).forEach(savedCode -> {
+                savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+            });
+        }
 
         if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
             savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
@@ -97,8 +99,12 @@ public class UserServiceImpl implements UserService {
         if (savedUserCode.getDateAdded() == null) {
             savedUserCode.setDateAdded(new Date());
         }
+        List<SavedUserCode> userCodes = new ArrayList<>();
 
-        List<SavedUserCode> userCodes = Arrays.asList(savedUser.getHistory());
+        if (savedUser.getHistory() != null) {
+            userCodes = Arrays.asList(savedUser.getHistory());
+        }
+
         userCodes.add(savedUserCode);
 
         savedUser.setHistory(userCodes.toArray(new SavedUserCode[userCodes.size()]));
@@ -239,15 +245,14 @@ public class UserServiceImpl implements UserService {
      * @return the map with the data
      */
     public String getAppleReceiptData(String receipt) {
-        try{
+        try {
             //validate the receipt using the sandbox (or use false for production)
             JsonObject responseJson = AppleReceiptValidation.validateReciept(receipt, true);
             //prints response
             log.info(responseJson.getAsString());
 
             return responseJson.getAsString();
-        }
-        catch(AppleReceiptValidation.AppleReceiptValidationFailedException arvfEx){
+        } catch (AppleReceiptValidation.AppleReceiptValidationFailedException arvfEx) {
             arvfEx.printStackTrace();
             //do something to handle API error or invalid receipt...
         }

@@ -37,6 +37,21 @@ public class User {
     @ApiModelProperty(required = true)
     private String username;
 
+    @Column
+    private String profession;
+
+    @Column
+    private String institution;
+
+    @Column
+    private String firstName;
+
+    @Column
+    private String lastName;
+
+    @Column
+    private String token;
+
     @Getter(AccessLevel.PRIVATE)
     @Column
     private String password;
@@ -44,9 +59,6 @@ public class User {
     @Getter(AccessLevel.PRIVATE)
     @Column
     private String salt;
-
-    @Column
-    private String token;
 
     @Column
     private Date expiryDate;
