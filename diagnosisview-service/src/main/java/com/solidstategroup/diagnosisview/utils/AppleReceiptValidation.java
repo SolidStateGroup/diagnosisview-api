@@ -32,12 +32,8 @@ public class AppleReceiptValidation {
 	 * @throws AppleReceiptValidationFailedException gets thrown when the response from the Apple API server responded in an unexpected way or the receipt is invalid
 	 */
 	public static JsonObject validateReciept(String receipt, boolean test) throws AppleReceiptValidationFailedException{
-		
-		//encode receipt data using base64
-		receipt = new String(Base64.getEncoder().encode(receipt.getBytes()));
-		
 		//prepare a JSON with the receipt data for a request to Apple
-		Map<String,String> receiptData = new HashMap<String,String>();
+		Map<String,String> receiptData = new HashMap<>();
 		receiptData.put("receipt-data", receipt);
 		Gson requestJson = new GsonBuilder().create();
 		String json = requestJson.toJson(receiptData);

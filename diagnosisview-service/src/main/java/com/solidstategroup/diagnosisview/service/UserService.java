@@ -104,8 +104,22 @@ public interface UserService {
      */
     List<User> getAllUsers() throws Exception;
 
-    String getAppleReceiptData(String receipt);
+    /**
+     * Validates the Apple receipt against the api
+     *
+     * @param user - the user to update
+     * @param receipt - the base64 encoded string
+     * @return User the updated user
+     */
+    User verifyAppleReceiptData(User user, String receipt) throws Exception;
 
-    String verifyAndroidToken(String receipt) throws Exception;
+    /**
+     * Validates the Android receipt against the api
+     *
+     * @param user - the user to update
+     * @param receipt - the base64 encoded string
+     * @return User the updated user
+     */
+    User verifyAndroidToken(User user, String receipt) throws Exception;
 
 }

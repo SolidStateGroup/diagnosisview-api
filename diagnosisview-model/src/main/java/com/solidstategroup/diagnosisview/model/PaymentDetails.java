@@ -13,8 +13,6 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentDetails {
-    private String name;
-    private Date paymentDate;
-    private Date expiryDate;
+    private String response;
 
 }

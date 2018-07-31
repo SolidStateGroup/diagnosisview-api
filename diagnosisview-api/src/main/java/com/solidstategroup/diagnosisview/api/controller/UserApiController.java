@@ -183,18 +183,24 @@ public class UserApiController extends BaseController {
 
 
     /**
-     * Delete a history item for the user.
+     * Validates and android receipt against the play store API
      *
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/android", method = RequestMethod.POST)
-    @ApiOperation(value = "Delete user history item",
-            notes = "Remove a history item to users history",
+    @RequestMapping(value = "/validate/android", method = RequestMethod.POST)
+    @ApiOperation(value = "Validate an Android receipt",
+            notes = "Validate an Android receipt",
             response = SavedUserCode.class)
-    public String checkAndroid(@RequestBody final String purchase,
+    public User validateAndroidReceipt(@RequestBody final String purchase,
                                      final HttpServletRequest request) throws Exception {
-        return userService.verifyAndroidToken(purchase);
+        //Get the user from the request
+        User user = this.getUserFromRequest(request);
+        if (user == null) {
+            throw new Exception("You are not authenticated, please login to save favourites");
+        }
+
+        return userService.verifyAndroidToken(user, purchase);
     }
 
     /**
@@ -203,13 +209,19 @@ public class UserApiController extends BaseController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/ios", method = RequestMethod.POST)
-    @ApiOperation(value = "Delete user history item",
-            notes = "Remove a history item to users history",
+    @RequestMapping(value = "/validate/ios", method = RequestMethod.POST)
+    @ApiOperation(value = "Validate and iOS receipt",
+            notes = "Validates and iOS receipt against",
             response = SavedUserCode.class)
-    public String checkIos(@RequestBody final String purchase,
+    public User validateIosReceipt(@RequestBody final Map<String, String> purchase,
                                final HttpServletRequest request) throws Exception {
-        return userService.getAppleReceiptData(purchase);
+        //Get the user from the request
+        User user = this.getUserFromRequest(request);
+        if (user == null) {
+            throw new Exception("You are not authenticated, please login to save favourites");
+        }
+
+        return userService.verifyAppleReceiptData(user, purchase.get("transactionReceipt"));
     }
 
 }

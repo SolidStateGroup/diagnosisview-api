@@ -87,7 +87,7 @@ public class User {
     private List<SavedUserCode> history;
 
     @Type(type = "PaymentFieldArrayType")
-    private PaymentDetails[] paymentData;
+    private List<PaymentDetails> paymentData;
 
 
     /**
