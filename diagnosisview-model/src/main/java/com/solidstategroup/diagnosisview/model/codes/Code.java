@@ -1,5 +1,8 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
+import lombok.Data;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -19,6 +22,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "pv_code")
+@Data
 public class Code extends AuditModel {
 
     @Column(name = "code")
@@ -67,107 +71,4 @@ public class Code extends AuditModel {
     @JoinColumn(name = "standard_type_id")
     private Lookup standardType;
 
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public Set<CodeCategory> getCodeCategories() {
-        return codeCategories;
-    }
-
-    public void setCodeCategories(Set<CodeCategory> codeCategories) {
-        this.codeCategories = codeCategories;
-    }
-
-    public Lookup getCodeType() {
-        return codeType;
-    }
-
-    public void setCodeType(Lookup codeType) {
-        this.codeType = codeType;
-    }
-
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Set<CodeExternalStandard> getExternalStandards() {
-        return externalStandards;
-    }
-
-    public void setExternalStandards(Set<CodeExternalStandard> externalStandards) {
-        this.externalStandards = externalStandards;
-    }
-
-    public String getFullDescription() {
-        return fullDescription;
-    }
-
-    public void setFullDescription(String fullDescription) {
-        this.fullDescription = fullDescription;
-    }
-
-    public boolean isHideFromPatients() {
-        return hideFromPatients;
-    }
-
-    public void setHideFromPatients(boolean hideFromPatients) {
-        this.hideFromPatients = hideFromPatients;
-    }
-
-    public Set<Link> getLinks() {
-        return links;
-    }
-
-    public void setLinks(Set<Link> links) {
-        this.links = links;
-    }
-
-    public String getPatientFriendlyName() {
-        return patientFriendlyName;
-    }
-
-    public void setPatientFriendlyName(String patientFriendlyName) {
-        this.patientFriendlyName = patientFriendlyName;
-    }
-
-    public boolean isRemovedExternally() {
-        return removedExternally;
-    }
-
-    public void setRemovedExternally(boolean removedExternally) {
-        this.removedExternally = removedExternally;
-    }
-
-    public CodeSourceTypes getSourceType() {
-        return sourceType;
-    }
-
-    public void setSourceType(CodeSourceTypes sourceType) {
-        this.sourceType = sourceType;
-    }
-
-    public Lookup getStandardType() {
-        return standardType;
-    }
-
-    public void setStandardType(Lookup standardType) {
-        this.standardType = standardType;
-    }
 }

@@ -2,9 +2,13 @@ package com.solidstategroup.diagnosisview.model.codes;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
+import lombok.Data;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
@@ -25,10 +29,10 @@ public class Link extends AuditModel {
     @ManyToOne
     @JoinColumn(name = "code_id")
     private Code code;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "group_id")
-//    private Group group;
+
+    @Column(name = "difficulty_level")
+    @Enumerated(EnumType.STRING)
+    private DifficultyLevel difficultyLevel;
 
     @Column(name = "link")
     private String link;
@@ -87,5 +91,13 @@ public class Link extends AuditModel {
 
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public DifficultyLevel getDifficultyLevel() {
+        return DifficultyLevel.GREEN;
+    }
+
+    public void setDifficultyLevel(DifficultyLevel difficultyLevel) {
+        this.difficultyLevel = difficultyLevel;
     }
 }

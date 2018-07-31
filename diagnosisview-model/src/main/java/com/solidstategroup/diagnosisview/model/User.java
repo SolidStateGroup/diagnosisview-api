@@ -19,6 +19,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Authenticated user object extracted from JWT and used as method argument in controllers.
@@ -80,10 +81,10 @@ public class User {
 
 //s    @OneToMany(mappedBy = "favourites", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Type(type = "SavedUserCodeFieldArrayType")
-    private SavedUserCode[] favourites;
+    private List<SavedUserCode> favourites;
 
     @Type(type = "SavedUserCodeFieldArrayType")
-    private SavedUserCode[] history;
+    private List<SavedUserCode> history;
 
     @Type(type = "PaymentFieldArrayType")
     private PaymentDetails[] paymentData;

@@ -1,4 +1,4 @@
-package com.solidstategroup.diagnosisview.model.codes;
+package com.solidstategroup.diagnosisview.model.codes.enums;
 
 
 /**

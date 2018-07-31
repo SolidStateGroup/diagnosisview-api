@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
         User savedUser = this.getUser(user.getUsername());
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
         if (savedUser.getFavourites() != null) {
-            Arrays.stream(savedUser.getFavourites()).forEach(savedCode -> {
+            savedUser.getFavourites().stream().forEach(savedCode -> {
                 savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
             });
         }
@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserService {
         }
 
 
-        savedUser.setFavourites(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
         userRepository.save(savedUser);
         return savedUser;
     }
@@ -102,12 +102,12 @@ public class UserServiceImpl implements UserService {
         List<SavedUserCode> userCodes = new ArrayList<>();
 
         if (savedUser.getHistory() != null) {
-            userCodes = Arrays.asList(savedUser.getHistory());
+            userCodes = savedUser.getHistory();
         }
 
         userCodes.add(savedUserCode);
 
-        savedUser.setHistory(userCodes.toArray(new SavedUserCode[userCodes.size()]));
+        savedUser.setHistory(userCodes);
         userRepository.save(savedUser);
         return savedUser;
     }
@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
     public User deleteFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
-        Arrays.stream(savedUser.getFavourites()).forEach(savedCode -> {
+        savedUser.getFavourites().stream().forEach(savedCode -> {
             savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
         });
 
@@ -166,7 +166,7 @@ public class UserServiceImpl implements UserService {
         }
 
 
-        savedUser.setFavourites(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
         userRepository.save(savedUser);
         return savedUser;
     }
@@ -178,7 +178,7 @@ public class UserServiceImpl implements UserService {
     public User deleteHistoryToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
-        Arrays.stream(savedUser.getHistory()).forEach(savedCode -> {
+        savedUser.getHistory().stream().forEach(savedCode -> {
             savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
         });
 
@@ -188,7 +188,7 @@ public class UserServiceImpl implements UserService {
         }
 
 
-        savedUser.setHistory(savedCodesMap.values().toArray(new SavedUserCode[savedCodesMap.size()]));
+        savedUser.setHistory(new ArrayList<>(savedCodesMap.values()));
         userRepository.save(savedUser);
         return savedUser;
     }

@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.solidstategroup.diagnosisview.model.BaseModel;
+import lombok.Data;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -17,6 +18,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "pv_category")
+@Data
 public class Category extends BaseModel {
 
     @Column(name = "number", nullable = false)
@@ -47,46 +49,6 @@ public class Category extends BaseModel {
         this.number = number;
         this.icd10Description = icd10Description;
         this.friendlyDescription = friendlyDescription;
-        this.hidden = hidden;
-    }
-
-    public Integer getNumber() {
-        return number;
-    }
-
-    public void setNumber(Integer number) {
-        this.number = number;
-    }
-
-    public String getIcd10Description() {
-        return icd10Description;
-    }
-
-    public void setIcd10Description(String icd10Description) {
-        this.icd10Description = icd10Description;
-    }
-
-    public String getFriendlyDescription() {
-        return friendlyDescription;
-    }
-
-    public void setFriendlyDescription(String friendlyDescription) {
-        this.friendlyDescription = friendlyDescription;
-    }
-
-    public Set<CodeCategory> getCodeCategories() {
-        return codeCategories;
-    }
-
-    public void setCodeCategories(Set<CodeCategory> codeCategories) {
-        this.codeCategories = codeCategories;
-    }
-
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }
 }
