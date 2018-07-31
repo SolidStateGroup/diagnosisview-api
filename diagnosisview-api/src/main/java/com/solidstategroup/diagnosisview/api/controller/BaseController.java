@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class BaseRepository {
+public class BaseController {
     @Autowired
     private UserService userService;
 

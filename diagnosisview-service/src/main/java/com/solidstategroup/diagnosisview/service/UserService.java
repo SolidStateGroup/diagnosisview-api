@@ -104,4 +104,8 @@ public interface UserService {
      */
     List<User> getAllUsers() throws Exception;
 
+    String getAppleReceiptData(String receipt);
+
+    String verifyAndroidToken(String receipt) throws Exception;
+
 }

@@ -1,40 +1,37 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.androidpublisher.AndroidPublisher;
+import com.google.api.services.androidpublisher.AndroidPublisherScopes;
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
+import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
 import lombok.extern.java.Log;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
+import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -50,9 +47,14 @@ public class UserServiceImpl implements UserService {
     @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
     private String appleUrlString;
 
-    @Value("${ANDROID_PUBLIC_KEY:NONE}")
-    private String androidPublicKey;
+    @Value("${ANDROID_SERVICE_ACCOUNT:NONE}")
+    private String androidServiceAccount;
 
+    @Value("${ANDROID_APPLICATION_NAME:NONE}")
+    private String androidApplicationName;
+
+    @Value("${ANDROID_PACKAGE_NAME:NONE}")
+    private String androidPackageName;
 
     /**
      * Constructor for the dashboard user service.
@@ -229,4 +231,60 @@ public class UserServiceImpl implements UserService {
     public List<User> getAllUsers() throws Exception {
         return userRepository.findAll(new Sort(Sort.Direction.ASC, "dateCreated"));
     }
+
+
+    /**
+     * Get the receipt data for an apple receipt
+     *
+     * @return the map with the data
+     */
+    public String getAppleReceiptData(String receipt) {
+        try{
+            //validate the receipt using the sandbox (or use false for production)
+            JsonObject responseJson = AppleReceiptValidation.validateReciept(receipt, true);
+            //prints response
+            log.info(responseJson.getAsString());
+
+            return responseJson.getAsString();
+        }
+        catch(AppleReceiptValidation.AppleReceiptValidationFailedException arvfEx){
+            arvfEx.printStackTrace();
+            //do something to handle API error or invalid receipt...
+        }
+
+        return null;
+    }
+
+
+    public String verifyAndroidToken(String receipt) throws Exception {
+
+        Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
+        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+        JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+        Set<String> scopes = Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER);
+        GoogleCredential credential = new GoogleCredential.Builder()
+                .setTransport(httpTransport)
+                .setJsonFactory(jsonFactory)
+                .setServiceAccountId("")
+                .setServiceAccountScopes(scopes)
+                .setServiceAccountPrivateKeyFromP12File(
+                        new File("")).build();
+
+
+        AndroidPublisher pub = new AndroidPublisher.Builder
+                (httpTransport, jsonFactory, credential)
+                .setApplicationName(androidApplicationName)
+                .build();
+        final AndroidPublisher.Purchases.Products.Get get =
+                pub.purchases()
+                        .products()
+                        .get(androidPackageName, receiptMap.get("productId"), receiptMap.get("userPurchaseToken"));
+        final ProductPurchase purchase = get.execute();
+        log.info("Found google purchase item " + purchase.toPrettyString());
+
+        return purchase.toPrettyString();
+    }
+
 }

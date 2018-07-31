@@ -175,9 +175,41 @@ public class UserApiController extends BaseController {
         //Get the user from the request
         User user = this.getUserFromRequest(request);
         if (user == null) {
-            throw new Exception("You are not authenticated, plese login to save favourites");
+            throw new Exception("You are not authenticated, please login to save favourites");
         }
         return userService.deleteHistoryToUser(user, history);
+    }
+
+
+
+    /**
+     * Delete a history item for the user.
+     *
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/android", method = RequestMethod.POST)
+    @ApiOperation(value = "Delete user history item",
+            notes = "Remove a history item to users history",
+            response = SavedUserCode.class)
+    public String checkAndroid(@RequestBody final String purchase,
+                                     final HttpServletRequest request) throws Exception {
+        return userService.verifyAndroidToken(purchase);
+    }
+
+    /**
+     * Delete a history item for the user.
+     *
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/ios", method = RequestMethod.POST)
+    @ApiOperation(value = "Delete user history item",
+            notes = "Remove a history item to users history",
+            response = SavedUserCode.class)
+    public String checkIos(@RequestBody final String purchase,
+                               final HttpServletRequest request) throws Exception {
+        return userService.getAppleReceiptData(purchase);
     }
 
 }
