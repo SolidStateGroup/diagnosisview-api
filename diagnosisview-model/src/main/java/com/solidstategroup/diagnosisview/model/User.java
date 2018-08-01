@@ -109,17 +109,6 @@ public class User {
         return this.salt;
     }
 
-
-    /**
-     * Get the profile path.
-     *
-     * @return the profile iamge path
-     */
-    public String getProfileImagePath() {
-        return String.format("/api/profile/image/%s", getUsername());
-    }
-
-
     /**
      * Get the type of user that is logging in.
      *
