@@ -52,7 +52,14 @@ public class UserApiController extends BaseController {
     @ApiOperation(value = "Update User",
             notes = "Update a user, pass the password in which will then be encrypted",
             response = User.class)
-    public User updateUser(@RequestBody final User user) throws Exception {
+    public User updateUser(@RequestBody final User user,
+                           final HttpServletRequest request) throws Exception {
+
+        User requestUser = checkIsAuthenticated(request);
+
+        user.setId(requestUser.getId());
+        user.setUsername(requestUser.getUsername());
+
         return userService.createOrUpdateUser(user);
     }
 
@@ -70,10 +77,8 @@ public class UserApiController extends BaseController {
     public User saveFavourite(@RequestBody final SavedUserCode favourite,
                               final HttpServletRequest request) throws Exception {
         //Get the user from the request
-        User user = this.getUserFromRequest(request);
-        if (user == null) {
-            throw new Exception("You are not authenticated, plese login to save favourites");
-        }
+        User user = checkIsAuthenticated(request);
+
         return userService.addFavouriteToUser(user, favourite);
     }
 
@@ -90,10 +95,8 @@ public class UserApiController extends BaseController {
     public User saveHistory(@RequestBody final SavedUserCode history,
                             final HttpServletRequest request) throws Exception {
         //Get the user from the request
-        User user = this.getUserFromRequest(request);
-        if (user == null) {
-            throw new Exception("You are not authenticated, plese login to save favourites");
-        }
+        User user = checkIsAuthenticated(request);
+
         return userService.addHistoryToUser(user, history);
     }
 
@@ -111,10 +114,8 @@ public class UserApiController extends BaseController {
     public User deleteFavourite(@RequestBody final SavedUserCode favourite,
                                final HttpServletRequest request) throws Exception {
         //Get the user from the request
-        User user = this.getUserFromRequest(request);
-        if (user == null) {
-            throw new Exception("You are not authenticated, plese login to save favourites");
-        }
+        User user = checkIsAuthenticated(request);
+
         return userService.deleteFavouriteToUser(user, favourite);
     }
 

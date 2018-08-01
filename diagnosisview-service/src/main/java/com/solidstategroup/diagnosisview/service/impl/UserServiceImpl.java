@@ -141,14 +141,31 @@ public class UserServiceImpl implements UserService {
         } else {
             //Only certain fields can be updated, these are in this section.
             User savedUser = userRepository.findOneByUsername(user.getUsername());
-            savedUser.setFirstName(user.getFirstName());
-            savedUser.setLastName(user.getLastName());
-            savedUser.setOccupation(user.getOccupation());
-            savedUser.setInstitution(user.getInstitution());
-            savedUser.setEmailAddress(user.getEmailAddress());
-            savedUser.setSalt(Utils.generateSalt());
-            savedUser.setPassword(DigestUtils.sha256Hex(
-                    String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
+
+            if (user.getFirstName() != null) {
+                savedUser.setFirstName(user.getFirstName());
+            }
+
+            if (user.getLastName() != null) {
+                savedUser.setLastName(user.getLastName());
+            }
+
+            if (user.getOccupation() != null) {
+                savedUser.setOccupation(user.getOccupation());
+            }
+            if (user.getInstitution() != null) {
+                savedUser.setInstitution(user.getInstitution());
+            }
+
+            if (user.getEmailAddress() != null) {
+                savedUser.setEmailAddress(user.getEmailAddress());
+            }
+
+            if (user.getStoredPassword() != null) {
+                savedUser.setSalt(Utils.generateSalt());
+                savedUser.setPassword(DigestUtils.sha256Hex(
+                        String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
+            }
         }
         if (user.getLogoData() != null) {
             user.setProfileImage(Base64.decode(new String(user.getLogoData()).getBytes("UTF-8")));
@@ -292,8 +309,8 @@ public class UserServiceImpl implements UserService {
 
         GoogleCredential credential =
                 GoogleCredential.fromStream(
-                new FileInputStream(file))
-                .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
+                        new FileInputStream(file))
+                        .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
         HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();

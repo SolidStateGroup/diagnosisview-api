@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.repository.CodeRepository;
+import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,7 +27,7 @@ public class CodeController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
-    private CodeRepository codeRepository;
+    private CodeService codeService;
 
     /**
      * Instantiate API controller, includes required services.
@@ -36,9 +35,9 @@ public class CodeController {
      * @param userService UserService manages the dashboard users
      */
     @Autowired
-    public CodeController(final UserService userService, final CodeRepository codeRepository) {
+    public CodeController(final UserService userService, final CodeService codeService) {
         this.userService = userService;
-        this.codeRepository = codeRepository;
+        this.codeService = codeService;
     }
 
 
@@ -54,7 +53,7 @@ public class CodeController {
             notes = "Creates code within DV (unsure if required)",
             response = User.class)
     public Code createCode(@RequestBody final Code code) throws Exception {
-        return codeRepository.save(code);
+        return codeService.save(code);
     }
 
 
@@ -68,7 +67,7 @@ public class CodeController {
             notes = "Update a user, pass the password in which will then be encrypted",
             response = User.class)
     public Code updateCode(@RequestBody final Code code) throws Exception {
-        return codeRepository.save(code);
+        return codeService.save(code);
     }
 
 
@@ -82,7 +81,7 @@ public class CodeController {
     @ApiOperation(value = "Delete code - TEST PURPOSES ONLY",
             notes = "Pass the code in with an ID to be deleted")
     public void deleteCode(@RequestBody final Code code) throws Exception {
-        codeRepository.delete(code);
+        codeService.delete(code);
     }
 
     /**
@@ -96,26 +95,7 @@ public class CodeController {
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = CodeDto[].class)
     public List<CodeDto> getAllCodes() throws Exception {
-
-        List<CodeDto> codeDtoList = new ArrayList<>();
-        List<Code> codeList = codeRepository.findAll();
-        codeList.parallelStream().forEach(code -> {
-            CodeDto codeDto = new CodeDto();
-            codeDto.setCode(code.getCode());
-
-            if (code.isRemovedExternally() || code.isHideFromPatients()) {
-                codeDto.setDeleted(true);
-            } else {
-                codeDto.setDeleted(false);
-            }
-
-
-            codeDto.setFriendlyName(code.getPatientFriendlyName());
-
-            codeDtoList.add(codeDto);
-        });
-
-        return codeDtoList;
+        return codeService.getAllCodes();
     }
 
 
@@ -130,7 +110,7 @@ public class CodeController {
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = Code.class)
     public Code getAllUsers(@PathVariable("code") final String code) throws Exception {
-        return codeRepository.findOneByCode(code);
+        return codeService.getCode(code);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +23,33 @@ public class BaseController {
         return userService.getUserByToken(getToken(request));
     }
 
+    /**
+     * Check whether the user for the request is authenticated
 
+     * @param request the request to check
+     * @return User the user is the request is authenticated
+     * @throws Exception - when the user is not logged in
+     */
+    public User checkIsAuthenticated(final HttpServletRequest request) throws Exception {
+        User requestUser = userService.getUserByToken(getToken(request));
+        if (requestUser == null) {
+            throw new NotAuthorisedException("You are not authenticated, please login to save favourites");
+        }
+        return requestUser;
+    }
 
+    /**
+     * Check whether the user for the request is an admin.
+     *
+     * @param request the request to check
+     * @return Boolean if the user is an admin
+     * @throws Exception
+     */
+    public Boolean isAdminUser(final HttpServletRequest request) throws Exception {
+        User user = userService.getUserByToken(getToken(request));
+
+        return user.getRoleType().equals(RoleType.ADMIN);
+    }
 
     /**
      * Get token from X-Auth-Token or fallback to ?token=XXX query parameter.
