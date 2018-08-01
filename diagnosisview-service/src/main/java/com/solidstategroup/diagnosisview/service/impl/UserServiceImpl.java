@@ -121,9 +121,11 @@ public class UserServiceImpl implements UserService {
         User savedUser = this.getUser(user.getUsername());
         List<SavedUserCode> userCodes = new ArrayList<>();
 
-        savedUser.getHistory().stream().forEach(history -> {
-            userCodes.add(history);
-        });
+        if (savedUser.getHistory() != null) {
+            savedUser.getHistory().stream().forEach(history -> {
+                userCodes.add(history);
+            });
+        }
 
         for (SavedUserCode savedUserCode : savedUserCodes) {
             if (savedUserCode.getDateAdded() == null) {
@@ -148,7 +150,9 @@ public class UserServiceImpl implements UserService {
         List<SavedUserCode> userCodes = new ArrayList<>();
 
         if (savedUser.getHistory() != null) {
-            userCodes = savedUser.getHistory();
+            savedUser.getHistory().stream().forEach(history -> {
+                userCodes.add(history);
+            });
         }
 
         userCodes.add(savedUserCode);
