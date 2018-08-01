@@ -110,8 +110,7 @@ public class UserServiceImpl implements UserService {
 
 
         savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
-        userRepository.save(savedUser);
-        return savedUser;
+        return userRepository.save(savedUser);
     }
 
     /**
@@ -122,20 +121,19 @@ public class UserServiceImpl implements UserService {
         User savedUser = this.getUser(user.getUsername());
         List<SavedUserCode> userCodes = new ArrayList<>();
 
-        if (savedUser.getHistory() != null) {
-            userCodes = savedUser.getHistory();
-        }
+        savedUser.getHistory().stream().forEach(history -> {
+            userCodes.add(history);
+        });
 
-        List<SavedUserCode> finalUserCodes = userCodes;
-        savedUserCodes.stream().forEach(savedUserCode -> {
+        for (SavedUserCode savedUserCode : savedUserCodes) {
             if (savedUserCode.getDateAdded() == null) {
                 savedUserCode.setDateAdded(new Date());
             }
-            finalUserCodes.add(savedUserCode);
-        });
-        savedUser.setHistory(finalUserCodes);
-        userRepository.save(savedUser);
-        return savedUser;
+            userCodes.add(savedUserCode);
+        }
+
+        savedUser.setHistory(new ArrayList(userCodes));
+        return userRepository.save(savedUser);
     }
 
     /**
@@ -155,9 +153,8 @@ public class UserServiceImpl implements UserService {
 
         userCodes.add(savedUserCode);
 
-        savedUser.setHistory(userCodes);
-        userRepository.save(savedUser);
-        return savedUser;
+        savedUser.setHistory(new ArrayList(userCodes));
+        return userRepository.save(savedUser);
     }
 
     /**
