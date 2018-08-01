@@ -2,9 +2,7 @@ package com.solidstategroup.diagnosisview.model.codes.enums;
 
 
 /**
- * Source of Code, PATIENTVIEW by default, NHS_CHOICES if from NHS Choices API.
- * Created by jamesr@solidstategroup.com
- * Created on 08/06/2016
+ * Difficulty level of a link.
  */
 public enum DifficultyLevel {
     GREEN("Green"),

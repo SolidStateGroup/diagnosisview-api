@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
@@ -44,7 +45,12 @@ public class AdminApiController extends BaseController {
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public User login(@RequestBody final User user) throws Exception {
-        return userService.login(user.getUsername(), user.getStoredPassword());
+        User loggedInUser = userService.login(user.getUsername(), user.getStoredPassword());
+        if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
+            throw new IllegalStateException("Please check your username and password.");
+        }
+        log.info("Logging in Admin - " + loggedInUser.getUsername());
+        return loggedInUser;
     }
 
 
@@ -61,7 +67,6 @@ public class AdminApiController extends BaseController {
     public List<User> getAllUsers() throws Exception {
         return userService.getAllUsers();
     }
-
 
 
     /**
@@ -93,7 +98,6 @@ public class AdminApiController extends BaseController {
     public User createUser(@RequestBody final User user) throws Exception {
         return userService.createOrUpdateUser(user);
     }
-
 
 
 }

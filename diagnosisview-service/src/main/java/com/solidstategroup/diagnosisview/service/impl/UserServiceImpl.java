@@ -139,8 +139,15 @@ public class UserServiceImpl implements UserService {
                     user.getStoredSalt()));
             user.setToken(UUID.randomUUID().toString());
         } else {
-            user.setSalt(Utils.generateSalt());
-            user.setPassword(DigestUtils.sha256Hex(
+            //Only certain fields can be updated, these are in this section.
+            User savedUser = userRepository.findOneByUsername(user.getUsername());
+            savedUser.setFirstName(user.getFirstName());
+            savedUser.setLastName(user.getLastName());
+            savedUser.setOccupation(user.getOccupation());
+            savedUser.setInstitution(user.getInstitution());
+            savedUser.setEmailAddress(user.getEmailAddress());
+            savedUser.setSalt(Utils.generateSalt());
+            savedUser.setPassword(DigestUtils.sha256Hex(
                     String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
         }
         if (user.getLogoData() != null) {
@@ -217,7 +224,6 @@ public class UserServiceImpl implements UserService {
             //Update the user token on a sucessful login
             user.setToken(UUID.randomUUID().toString());
             userRepository.save(user);
-
             return user;
         } else {
             throw new IllegalStateException("Please check your username and password");

@@ -1,7 +1,9 @@
 package com.solidstategroup.diagnosisview.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.type.PaymentFieldArrayType;
 import com.solidstategroup.diagnosisview.type.SavedUserCodeArrayType;
 import io.swagger.annotations.ApiModelProperty;
@@ -14,6 +16,8 @@ import org.hibernate.annotations.TypeDefs;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -26,6 +30,7 @@ import java.util.List;
  */
 @Data
 @Entity
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Table(name = "dv_user")
 @TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class),
         @TypeDef(name = "SavedUserCodeFieldArrayType", typeClass = SavedUserCodeArrayType.class)})
@@ -38,8 +43,12 @@ public class User {
     @ApiModelProperty(required = true)
     private String username;
 
+    @Column(name = "role_type")
+    @Enumerated(EnumType.STRING)
+    private RoleType roleType;
+
     @Column
-    private String profession;
+    private String occupation;
 
     @Column
     private String institution;
@@ -49,6 +58,9 @@ public class User {
 
     @Column
     private String lastName;
+
+    @Column
+    private String emailAddress;
 
     @Column
     private String token;
@@ -79,7 +91,7 @@ public class User {
     @Column(name = "profile_image_type")
     private String profileImageFileType;
 
-//s    @OneToMany(mappedBy = "favourites", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    //s    @OneToMany(mappedBy = "favourites", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Type(type = "SavedUserCodeFieldArrayType")
     private List<SavedUserCode> favourites;
 
@@ -118,5 +130,18 @@ public class User {
      */
     public String getProfileImagePath() {
         return String.format("/api/profile/image/%s", getUsername());
+    }
+
+
+    /**
+     * Get the type of user that is logging in.
+     *
+     * @return RoleType the role type
+     */
+    public RoleType getRoleType() {
+        if (roleType == null) {
+            return RoleType.USER;
+        }
+        return roleType;
     }
 }

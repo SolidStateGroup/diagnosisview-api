@@ -59,15 +59,6 @@ public class Link extends AuditModel {
     public void setCode(Code code) {
         this.code = code;
     }
-//
-//    @JsonIgnore
-//    public Group getGroup() {
-//        return group;
-//    }
-//
-//    public void setGroup(Group group) {
-//        this.group = group;
-//    }
 
     public String getLink() {
         return link;
