@@ -132,12 +132,14 @@ public class UserServiceImpl implements UserService {
             if (userRepository.findOneByUsername(user.getUsername()) != null) {
                 throw new IllegalStateException("This username already exists. Please try another one");
             }
-
             user.setDateCreated(new Date());
             user.setSalt(Utils.generateSalt());
             user.setPassword(DigestUtils.sha256Hex(user.getStoredPassword() +
                     user.getStoredSalt()));
             user.setToken(UUID.randomUUID().toString());
+
+            return userRepository.save(user);
+
         } else {
             //Only certain fields can be updated, these are in this section.
             User savedUser = userRepository.findOneByUsername(user.getUsername());
@@ -166,12 +168,9 @@ public class UserServiceImpl implements UserService {
                 savedUser.setPassword(DigestUtils.sha256Hex(
                         String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
             }
-        }
-        if (user.getLogoData() != null) {
-            user.setProfileImage(Base64.decode(new String(user.getLogoData()).getBytes("UTF-8")));
-        }
 
-        return userRepository.save(user);
+            return userRepository.save(savedUser);
+        }
     }
 
     /**

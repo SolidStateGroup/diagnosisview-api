@@ -79,19 +79,6 @@ public class User {
     @Column
     private Date dateCreated;
 
-    @Column(name = "profile_image")
-    @JsonIgnore
-    private byte[] profileImage;
-
-    //Used when Frontend sends content up
-    @Transient
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String logoData;
-
-    @Column(name = "profile_image_type")
-    private String profileImageFileType;
-
-    //s    @OneToMany(mappedBy = "favourites", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Type(type = "SavedUserCodeFieldArrayType")
     private List<SavedUserCode> favourites;
 
