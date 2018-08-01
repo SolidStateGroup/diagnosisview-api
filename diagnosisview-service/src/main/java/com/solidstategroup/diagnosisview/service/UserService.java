@@ -46,7 +46,7 @@ public interface UserService {
      * @return the created or updated user
      * @throws Exception thrown when cannot update user
      */
-    void deleteUser(final User user) throws Exception;
+    User deleteUser(final User user) throws Exception;
 
     /**
      * Remove a favourite from a user.

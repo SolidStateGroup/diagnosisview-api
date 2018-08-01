@@ -10,6 +10,7 @@ import com.google.api.services.androidpublisher.AndroidPublisherScopes;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
 import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
@@ -63,13 +64,6 @@ public class UserServiceImpl implements UserService {
      */
     @Autowired
     public UserServiceImpl(final UserRepository userRepository) {
-        try {
-            FileUtils.writeStringToFile(new File("google-play-key.json"), androidServiceAccountJSON);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
         this.userRepository = userRepository;
     }
 
@@ -160,6 +154,14 @@ public class UserServiceImpl implements UserService {
             }
 
             if (user.getStoredPassword() != null) {
+                //Check the old password
+                User userLogin = this.login(savedUser.getUsername(), savedUser.getOldPassword());
+
+                if (userLogin == null) {
+                    throw new NotAuthorisedException("Your password does not appear to be correct. " +
+                            "Please check and try again.");
+                }
+
                 savedUser.setSalt(Utils.generateSalt());
                 savedUser.setPassword(DigestUtils.sha256Hex(
                         String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
@@ -173,9 +175,12 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
-    public void deleteUser(User user) throws Exception {
+    public User deleteUser(User user) throws Exception {
         User user1 = userRepository.findOneByUsername(user.getUsername());
-        userRepository.delete(user1);
+        user1.setDeleted(true);
+        userRepository.save(user1);
+
+        return user1;
     }
 
     /**
@@ -233,6 +238,10 @@ public class UserServiceImpl implements UserService {
             throw new IllegalStateException("Please check your username and password.");
         }
         if (Utils.checkPassword(password, user.getStoredSalt(), user.getStoredPassword())) {
+            if (user.getDeleted()) {
+                throw new IllegalStateException("This account has been deleted. " +
+                        "Please contact support@diagnosisview.org.");
+            }
             //Update the user token on a sucessful login
             user.setToken(UUID.randomUUID().toString());
             userRepository.save(user);
@@ -270,37 +279,32 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAppleReceiptData(User user, String receipt) throws Exception {
-        try {
-            User savedUser = this.getUser(user.getUsername());
-            //validate the receipt using the sandbox (or use false for production)
-            JsonObject responseJson = AppleReceiptValidation.validateReciept(receipt, true);
-            //prints response
-            log.info(responseJson.toString());
+        User savedUser = this.getUser(user.getUsername());
+        //validate the receipt using the sandbox (or use false for production)
+        JsonObject responseJson = AppleReceiptValidation.validateReciept(receipt, true);
+        //prints response
+        log.info(responseJson.toString());
 
-            PaymentDetails details = new PaymentDetails(responseJson.toString());
-            List<PaymentDetails> payments = savedUser.getPaymentData();
-            payments.add(details);
-            savedUser.setPaymentData(payments);
-            this.createOrUpdateUser(savedUser);
+        PaymentDetails details = new PaymentDetails(responseJson.toString());
+        List<PaymentDetails> payments = savedUser.getPaymentData();
+        payments.add(details);
+        savedUser.setPaymentData(payments);
+        savedUser.setActiveSubscription(true);
+        this.createOrUpdateUser(savedUser);
 
-            return savedUser;
-        } catch (AppleReceiptValidation.AppleReceiptValidationFailedException arvfEx) {
-            arvfEx.printStackTrace();
-            //do something to handle API error or invalid receipt...
-        }
-
-        return null;
+        return savedUser;
     }
 
     /**
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
-        //Write the file to local storage
-        URL filePath = Thread.currentThread().getContextClassLoader().getResource(
-                "google-play-key.json");
-
-        File file = new File(filePath.toURI());
+        try {
+            FileUtils.writeStringToFile(new File("google-play-key.json"), androidServiceAccountJSON);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        File file = new File("google-play-key.json");
 
         GoogleCredential credential =
                 GoogleCredential.fromStream(
@@ -308,6 +312,7 @@ public class UserServiceImpl implements UserService {
                         .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
+        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
         HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -319,9 +324,9 @@ public class UserServiceImpl implements UserService {
         final AndroidPublisher.Purchases.Products.Get get =
                 pub.purchases()
                         .products()
-                        .get(receiptMap.get("packageName"),
-                                receiptMap.get("productId"),
-                                receiptMap.get("purchaseToken"));
+                        .get(data.get("packageName"),
+                                data.get("productId"),
+                                data.get("purchaseToken"));
         final ProductPurchase purchase = get.execute();
         log.info("Found google purchase item " + purchase.toPrettyString());
 

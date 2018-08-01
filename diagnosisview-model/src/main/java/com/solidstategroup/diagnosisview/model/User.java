@@ -65,6 +65,12 @@ public class User {
     @Column
     private String token;
 
+    @Column
+    private Boolean activeSubscription;
+
+    @Column
+    private Boolean deleted;
+
     @Getter(AccessLevel.PRIVATE)
     @Column
     private String password;
@@ -88,6 +94,8 @@ public class User {
     @Type(type = "PaymentFieldArrayType")
     private List<PaymentDetails> paymentData;
 
+    @Transient
+    private String oldPassword;
 
     /**
      * Gets the stored password.

@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.service.UserService;
@@ -33,7 +34,7 @@ public class BaseController {
     public User checkIsAuthenticated(final HttpServletRequest request) throws Exception {
         User requestUser = userService.getUserByToken(getToken(request));
         if (requestUser == null) {
-            throw new NotAuthorisedException("You are not authenticated, please login to save favourites");
+            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
         }
         return requestUser;
     }
@@ -63,6 +64,10 @@ public class BaseController {
         if (StringUtils.isEmpty(token) || "undefined".equals(token)) {
             // not in header
             token = request.getParameter("token");
+        }
+
+        if (token == null) {
+            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
         }
 
         return token;

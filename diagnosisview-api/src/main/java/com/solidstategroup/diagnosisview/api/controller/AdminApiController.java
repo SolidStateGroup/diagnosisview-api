@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -46,9 +47,10 @@ public class AdminApiController extends BaseController {
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public User login(@RequestBody final User user) throws Exception {
         User loggedInUser = userService.login(user.getUsername(), user.getStoredPassword());
-        if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
-            throw new IllegalStateException("Please check your username and password.");
-        }
+        //Temp disabled whilst TS is on holiday
+//        if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
+//            throw new IllegalStateException("Please check your username and password.");
+//        }
         log.info("Logging in Admin - " + loggedInUser.getUsername());
         return loggedInUser;
     }
@@ -64,7 +66,10 @@ public class AdminApiController extends BaseController {
     @ApiOperation(value = "Get All Users",
             notes = "Admin User endpoint to get all users within the DiagnosisView",
             response = User.class)
-    public List<User> getAllUsers() throws Exception {
+    public List<User> getAllUsers(HttpServletRequest request) throws Exception {
+        //TODO Add this back in
+        //isAdminUser(request);
+
         return userService.getAllUsers();
     }
 
@@ -78,9 +83,13 @@ public class AdminApiController extends BaseController {
     @RequestMapping(value = "/", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete User - TEST PURPOSES ONLY",
             notes = "Pass the user in with an ID to be deleted")
-    public void deleteUser(@RequestBody final User user) throws Exception {
+    public User deleteUser(@RequestBody final User user,
+                           HttpServletRequest request) throws Exception {
+        //TODO Add this back in
+        //isAdminUser(request);
+
         //Soft delete, making user as deleted
-        userService.deleteUser(user);
+        return userService.deleteUser(user);
     }
 
 
