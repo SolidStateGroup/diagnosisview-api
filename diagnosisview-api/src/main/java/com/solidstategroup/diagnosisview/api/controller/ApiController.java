@@ -42,43 +42,6 @@ public class ApiController extends BaseController {
         this.userService = userService;
     }
 
-
-    /**
-     * Get the media content for a profile.
-     *
-     * @param username - the username
-     * @param response - the response to stream to
-     * @throws Exception
-     */
-    @RequestMapping(value = "/profile/image/{username}", method = RequestMethod.GET,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public void getMyMediaContent(@PathVariable("username") final String username, final HttpServletResponse response)
-            throws Exception {
-
-        User user = userService.getUser(username);
-        InputStream is = null;
-        try {
-
-            response.setContentType(user.getProfileImageFileType());
-            is = new ByteArrayInputStream(user.getProfileImage());
-
-            IOUtils.copy(is, response.getOutputStream());
-            response.flushBuffer();
-            response.setStatus(HttpStatus.OK.value());
-        } catch (Exception e) {
-            response.setStatus(HttpStatus.BAD_REQUEST.value());
-            log.severe("Failed to close input stream {}" + e.getMessage());
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    log.severe("Failed to close input stream {}" + e.getMessage());
-                }
-            }
-        }
-    }
-
     /**
      * User login to system.
      *

@@ -23,7 +23,6 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.codec.Base64;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -53,9 +52,6 @@ public class UserServiceImpl implements UserService {
 
     @Value("${ANDROID_SERVICE_ACCOUNT_JSON:NONE}")
     private String androidServiceAccountJSON;
-
-    @Value("${ANDROID_SERVICE_ACCOUNT:NONE}")
-    private String androidServiceAccount;
 
     @Value("${ANDROID_APPLICATION_NAME:NONE}")
     private String androidApplicationName;
