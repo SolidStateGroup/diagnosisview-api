@@ -286,7 +286,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalStateException("Please check your username and password.");
         }
         if (Utils.checkPassword(password, user.getStoredSalt(), user.getStoredPassword())) {
-            if (user.getDeleted()) {
+            if (user.isDeleted()) {
                 throw new IllegalStateException("This account has been deleted. " +
                         "Please contact support@diagnosisview.org.");
             }

@@ -66,10 +66,10 @@ public class User {
     private String token;
 
     @Column
-    private Boolean activeSubscription;
+    private boolean activeSubscription;
 
     @Column
-    private Boolean deleted;
+    private boolean deleted;
 
     @Getter(AccessLevel.PRIVATE)
     @Column
