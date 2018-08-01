@@ -71,6 +71,30 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
+    public User addMultipleFavouritesToUser(User user, List<SavedUserCode> savedUserCodes) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
+        if (savedUser.getFavourites() != null) {
+            savedUser.getFavourites().stream().forEach(savedCode -> {
+                savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+            });
+        }
+
+        savedUserCodes.stream().forEach(savedUserCode -> {
+            if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
+                savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+            }
+        });
+
+        savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
+        userRepository.save(savedUser);
+        return savedUser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public User addFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
@@ -86,6 +110,30 @@ public class UserServiceImpl implements UserService {
 
 
         savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
+        userRepository.save(savedUser);
+        return savedUser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User addMultipleHistoryToUser(User user, List<SavedUserCode> savedUserCodes) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+        List<SavedUserCode> userCodes = new ArrayList<>();
+
+        if (savedUser.getHistory() != null) {
+            userCodes = savedUser.getHistory();
+        }
+
+        List<SavedUserCode> finalUserCodes = userCodes;
+        savedUserCodes.stream().forEach(savedUserCode -> {
+            if (savedUserCode.getDateAdded() == null) {
+                savedUserCode.setDateAdded(new Date());
+            }
+            finalUserCodes.add(savedUserCode);
+        });
+        savedUser.setHistory(finalUserCodes);
         userRepository.save(savedUser);
         return savedUser;
     }

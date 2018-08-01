@@ -82,6 +82,44 @@ public class UserApiController extends BaseController {
         return userService.addFavouriteToUser(user, favourite);
     }
 
+
+
+    /**
+     * Sync multiple history items for a user.
+     *
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/sync/history", method = RequestMethod.PUT)
+    @ApiOperation(value = "Save user history",
+            notes = "Add a history item to users history",
+            response = SavedUserCode.class)
+    public User syncHistory(@RequestBody final List<SavedUserCode> historyList,
+                            final HttpServletRequest request) throws Exception {
+        //Get the user from the request
+        User user = checkIsAuthenticated(request);
+        return userService.addMultipleHistoryToUser(user, historyList);
+    }
+
+
+    /**
+     * Sync multiple favourites for a user.
+     *
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/sync/favourites", method = RequestMethod.PUT)
+    @ApiOperation(value = "Save user history",
+            notes = "Add a history item to users history",
+            response = SavedUserCode.class)
+    public User syncFavourites(@RequestBody final List<SavedUserCode> favouriteList,
+                            final HttpServletRequest request) throws Exception {
+        //Get the user from the request
+        User user = checkIsAuthenticated(request);
+        return userService.addMultipleFavouritesToUser(user, favouriteList);
+    }
+
+
     /**
      * Save a history item for the user.
      *
@@ -112,7 +150,7 @@ public class UserApiController extends BaseController {
             notes = "Deletes a code from user favourites",
             response = SavedUserCode.class)
     public User deleteFavourite(@RequestBody final SavedUserCode favourite,
-                               final HttpServletRequest request) throws Exception {
+                                final HttpServletRequest request) throws Exception {
         //Get the user from the request
         User user = checkIsAuthenticated(request);
 

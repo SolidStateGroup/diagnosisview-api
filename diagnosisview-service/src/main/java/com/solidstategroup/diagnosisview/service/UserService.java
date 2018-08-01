@@ -10,6 +10,17 @@ import java.util.List;
  */
 public interface UserService {
 
+
+    /**
+     * Add multiple favourites items to a user.
+     *
+     * @param user the user to update
+     * @param savedUserCodes the codes to add
+     * @return User the updated user
+     * @throws Exception
+     */
+    User addMultipleFavouritesToUser(final User user, final List<SavedUserCode> savedUserCodes) throws Exception;
+
     /**
      * Add a new favourite to a user.
      *
@@ -19,6 +30,17 @@ public interface UserService {
      * @throws Exception
      */
     User addFavouriteToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
+
+    /**
+     * Add multiple history items to a user.
+     *
+     * @param user the user to update
+     * @param savedUserCodes the codes to add
+     * @return User the updated user
+     * @throws Exception
+     */
+    User addMultipleHistoryToUser(final User user, final List<SavedUserCode> savedUserCodes) throws Exception;
+
 
     /**
      * Add a history item to a user.
