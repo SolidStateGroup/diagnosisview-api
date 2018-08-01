@@ -7,6 +7,7 @@ import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -80,7 +81,7 @@ public class AdminApiController extends BaseController {
      * @param user User user to update
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/user", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete User - TEST PURPOSES ONLY",
             notes = "Pass the user in with an ID to be deleted")
     public User deleteUser(@RequestBody final User user,
@@ -100,13 +101,37 @@ public class AdminApiController extends BaseController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
-    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @RequestMapping(value = "/user", method = RequestMethod.POST)
     @ApiOperation(value = "Create User",
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
     public User createUser(@RequestBody final User user) throws Exception {
+        //TODO Add this back in
+        //isAdminUser(request);
+
         return userService.createOrUpdateUser(user);
     }
 
+
+
+    /**
+     * Update a user.
+     *
+     * @param user User user to create
+     * @return User the updated user
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/user/{userId}", method = RequestMethod.PUT)
+    @ApiOperation(value = "Create User",
+            notes = "Create a user, pass the password in which will then be encrypted",
+            response = User.class)
+    public User createUser(@PathVariable("userId") final Long userId,
+                           @RequestBody final User user) throws Exception {
+        //TODO Add this back in
+        //isAdminUser(request);
+
+        user.setId(userId);
+        return userService.createOrUpdateUser(user);
+    }
 
 }
