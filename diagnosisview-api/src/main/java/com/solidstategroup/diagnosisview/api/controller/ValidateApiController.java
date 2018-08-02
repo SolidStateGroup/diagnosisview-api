@@ -52,9 +52,9 @@ public class ValidateApiController extends BaseController {
     public User validateAndroidReceipt(@RequestBody final String purchase,
                                      final HttpServletRequest request) throws Exception {
         //Get the user from the request
-        User user = checkIsAuthenticated(request);
+        //User user = checkIsAuthenticated(request);
 
-        return userService.verifyAndroidToken(user, purchase);
+        return userService.verifyAndroidToken(new User(), purchase);
     }
 
     /**

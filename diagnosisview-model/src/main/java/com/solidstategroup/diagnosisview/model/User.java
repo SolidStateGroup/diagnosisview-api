@@ -86,9 +86,11 @@ public class User {
     private Date dateCreated;
 
     @Type(type = "SavedUserCodeFieldArrayType")
+    @Column
     private List<SavedUserCode> favourites;
 
     @Type(type = "SavedUserCodeFieldArrayType")
+    @Column
     private List<SavedUserCode> history;
 
     @Type(type = "PaymentFieldArrayType")
