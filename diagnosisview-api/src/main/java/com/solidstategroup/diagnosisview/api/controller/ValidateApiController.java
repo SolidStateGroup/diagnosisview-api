@@ -50,9 +50,9 @@ public class ValidateApiController extends BaseController {
             notes = "Validate an Android receipt",
             response = SavedUserCode.class)
     public User validateAndroidReceipt(@RequestBody final String purchase,
-                                     final HttpServletRequest request) throws Exception {
+                                       final HttpServletRequest request) throws Exception {
         //Get the user from the request
-       User user = checkIsAuthenticated(request);
+        User user = checkIsAuthenticated(request);
 
         return userService.verifyAndroidToken(user, purchase);
     }
@@ -68,12 +68,10 @@ public class ValidateApiController extends BaseController {
             notes = "Validates and iOS receipt against",
             response = SavedUserCode.class)
     public User validateIosReceipt(@RequestBody final Map<String, String> purchase,
-                               final HttpServletRequest request) throws Exception {
+                                   final HttpServletRequest request) throws Exception {
         //Get the user from the request
-        User user = this.getUserFromRequest(request);
-        if (user == null) {
-            throw new Exception("You are not authenticated, please login to save favourites");
-        }
+        User user = checkIsAuthenticated(request);
+
 
         return userService.verifyAppleReceiptData(user, purchase.get("transactionReceipt"));
     }
