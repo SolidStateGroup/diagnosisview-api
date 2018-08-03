@@ -9,8 +9,7 @@ build:
         name: Run Maven upload
         code: |
           echo $GOOGLE_PLAY_KEY > diagnosisview-api/src/main/resources/google-play-key.json
-          cd diagnosisview-api/src/main/resources/
-          ls
+          echo $GOOGLE_PLAY_KEY > diagnosisview-service/src/main/resources/google-play-key.json
           mvn clean install -DskipTests=true -P staging
           cd diagnosisview-api
           mvn -Dfile.encoding=UTF-8 -DskipTests=true beanstalk:clean-previous-versions  beanstalk:upload-source-bundle beanstalk:create-application-version beanstalk:update-environment -f pom.xml -P $WERCKER_GIT_BRANCH

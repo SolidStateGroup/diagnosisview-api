@@ -354,7 +354,7 @@ public class UserServiceImpl implements UserService {
         List<String> files = IOUtils.readLines(this.getClass().getClassLoader()
                 .getResourceAsStream("./"), Charsets.UTF_8);
         files.stream().forEach(file -> log.info(file));
-        
+
         File file = new File(this.getClass().getClassLoader()
                 .getResource("./google-play-key.json").getFile());
 
