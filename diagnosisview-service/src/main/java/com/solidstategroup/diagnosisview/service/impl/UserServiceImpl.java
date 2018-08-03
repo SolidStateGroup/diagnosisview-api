@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -351,12 +352,7 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
-        List<String> files = IOUtils.readLines(this.getClass().getClassLoader()
-                .getResourceAsStream("./"), Charsets.UTF_8);
-        files.stream().forEach(file -> log.info(file));
-
-        File file = new File(this.getClass().getClassLoader()
-                .getResource("./google-play-key.json").getFile());
+        File file = new ClassPathResource("google-play-key.json").getFile();
 
         GoogleCredential credential =
                 GoogleCredential.fromStream(
