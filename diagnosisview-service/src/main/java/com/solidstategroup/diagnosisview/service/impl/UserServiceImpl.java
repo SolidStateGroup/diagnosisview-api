@@ -8,6 +8,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.AndroidPublisherScopes;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
+import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
@@ -204,7 +205,7 @@ public class UserServiceImpl implements UserService {
 
             if (user.getStoredPassword() != null) {
                 //Check the old password
-                User userLogin = this.login(savedUser.getUsername(), savedUser.getOldPassword());
+                User userLogin = this.login(user.getUsername(), user.getOldPassword());
 
                 if (userLogin == null) {
                     throw new NotAuthorisedException("Your password does not appear to be correct. " +
@@ -348,15 +349,16 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
-        File file = new File("google-play-key.json");
-        
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("google-play-key.json").getFile());
+
         GoogleCredential credential =
                 GoogleCredential.fromStream(
                         new FileInputStream(file))
                         .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
-        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
+        Map<String, String> data = new Gson().fromJson(new Gson().toJson(receiptMap.get("data")), Map.class);
         HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -365,14 +367,22 @@ public class UserServiceImpl implements UserService {
                 (httpTransport, jsonFactory, credential)
                 .setApplicationName(androidApplicationName)
                 .build();
-        final AndroidPublisher.Purchases.Products.Get get =
+
+        final AndroidPublisher.Purchases.Subscriptions.Get get =
                 pub.purchases()
-                        .products()
+                        .subscriptions()
                         .get(data.get("packageName"),
                                 data.get("productId"),
                                 data.get("purchaseToken"));
-        final ProductPurchase purchase = get.execute();
+        final SubscriptionPurchase purchase = get.execute();
         log.info("Found google purchase item " + purchase.toPrettyString());
+
+        List<PaymentDetails> payments = user.getPaymentData();
+        payments.add(new PaymentDetails(purchase.toString()));
+        user.setActiveSubscription(true);
+        Map<String, String> response = new Gson().fromJson(purchase.toString(), Map.class);
+
+        user.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
 
         return user;
     }

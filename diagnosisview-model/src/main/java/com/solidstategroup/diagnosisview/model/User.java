@@ -22,6 +22,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -94,7 +95,7 @@ public class User {
     private List<SavedUserCode> history;
 
     @Type(type = "PaymentFieldArrayType")
-    private List<PaymentDetails> paymentData;
+    private List<PaymentDetails> paymentData = new ArrayList<>();
 
     @Transient
     private String oldPassword;
