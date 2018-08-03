@@ -20,8 +20,10 @@ import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
 import lombok.extern.java.Log;
+import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
@@ -349,8 +351,12 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("google-play-key.json").getFile());
+        List<String> files = IOUtils.readLines(this.getClass().getClassLoader()
+                .getResourceAsStream("./"), Charsets.UTF_8);
+        files.stream().forEach(file -> log.info(file));
+        
+        File file = new File(this.getClass().getClassLoader()
+                .getResource("./google-play-key.json").getFile());
 
         GoogleCredential credential =
                 GoogleCredential.fromStream(
