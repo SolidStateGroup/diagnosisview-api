@@ -7,7 +7,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.AndroidPublisherScopes;
-import com.google.api.services.androidpublisher.model.ProductPurchase;
 import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -20,20 +19,14 @@ import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
 import lombok.extern.java.Log;
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -352,11 +345,10 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
-        File file = new ClassPathResource("google-play-key.json").getFile();
+        InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
 
         GoogleCredential credential =
-                GoogleCredential.fromStream(
-                        new FileInputStream(file))
+                GoogleCredential.fromStream(file)
                         .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
