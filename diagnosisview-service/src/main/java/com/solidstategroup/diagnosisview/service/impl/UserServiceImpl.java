@@ -48,9 +48,6 @@ public class UserServiceImpl implements UserService {
     @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
     private String appleUrlString;
 
-    @Value("${ANDROID_SERVICE_ACCOUNT_JSON:NONE}")
-    private String androidServiceAccountJSON;
-
     @Value("${ANDROID_APPLICATION_NAME:NONE}")
     private String androidApplicationName;
 
@@ -209,8 +206,8 @@ public class UserServiceImpl implements UserService {
                 }
 
                 savedUser.setSalt(Utils.generateSalt());
-                savedUser.setPassword(DigestUtils.sha256Hex(
-                        String.format("%s%s", user.getStoredPassword(), user.getStoredSalt())));
+                savedUser.setPassword(DigestUtils.sha256Hex(user.getStoredPassword() +
+                        savedUser.getStoredSalt()));
             }
 
             return userRepository.save(savedUser);
@@ -290,6 +287,9 @@ public class UserServiceImpl implements UserService {
             }
             //Update the user token on a sucessful login
             user.setToken(UUID.randomUUID().toString());
+            if (user.getExpiryDate() == null || user.getExpiryDate().before(new Date())) {
+                user.setActiveSubscription(false);
+            }
             userRepository.save(user);
             return user;
         } else {
@@ -310,7 +310,15 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User getUserByToken(final String token) throws Exception {
-        return userRepository.findOneByToken(token);
+        User user = userRepository.findOneByToken(token);
+
+        if (user.getExpiryDate() == null ||
+                user.getExpiryDate().before(new Date())) {
+            user.setActiveSubscription(false);
+            userRepository.save(user);
+        }
+
+        return user;
     }
 
     /**
@@ -352,7 +360,7 @@ public class UserServiceImpl implements UserService {
                         .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
-        Map<String, String> data = new Gson().fromJson(new Gson().toJson(receiptMap.get("data")), Map.class);
+        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
         HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -377,6 +385,7 @@ public class UserServiceImpl implements UserService {
         Map<String, String> response = new Gson().fromJson(purchase.toString(), Map.class);
 
         user.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
+        userRepository.save(user);
 
         return user;
     }
