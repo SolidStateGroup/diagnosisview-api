@@ -4,6 +4,7 @@ import com.solidstategroup.diagnosisview.model.User
 import com.solidstategroup.diagnosisview.repository.UserRepository
 import com.solidstategroup.diagnosisview.service.UserService
 import com.solidstategroup.diagnosisview.service.impl.UserServiceImpl
+import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
@@ -14,12 +15,15 @@ class UserServiceTest extends Specification {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    AppleReceiptValidation appleReceiptValidation;
+
     UserService userService;
     User user;
 
 
     def setup() {
-        userService = new UserServiceImpl(userRepository);
+        userService = new UserServiceImpl(userRepository, appleReceiptValidation);
         user = new User()
         user.setId(1234L)
         user.username = "testerman"
