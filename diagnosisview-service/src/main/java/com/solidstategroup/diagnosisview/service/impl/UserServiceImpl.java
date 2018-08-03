@@ -348,13 +348,8 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
-        try {
-            FileUtils.writeStringToFile(new File("google-play-key.json"), androidServiceAccountJSON);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         File file = new File("google-play-key.json");
-
+        
         GoogleCredential credential =
                 GoogleCredential.fromStream(
                         new FileInputStream(file))
