@@ -33,13 +33,4 @@ class UserServiceTest extends Specification {
             savedUser != null
             savedUser.username.equals(user.username)
     }
-
-
-    def "Test Android Receipt User"() {
-        when:
-        def savedUser = userService.ve(user.username)
-        then: "should return correct user"
-        savedUser != null
-        savedUser.username.equals(user.username)
-    }
 }
