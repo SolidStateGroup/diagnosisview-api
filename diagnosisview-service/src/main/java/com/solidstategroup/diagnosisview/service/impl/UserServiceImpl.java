@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
     @Value("${ANDROID_APPLICATION_NAME:NONE}")
     private String androidApplicationName;
     private AppleReceiptValidation appleReceiptValidation;
+
     /**
      * Constructor for the dashboard user service.
      *
@@ -176,8 +177,14 @@ public class UserServiceImpl implements UserService {
             return userRepository.save(user);
 
         } else {
-            //Only certain fields can be updated, these are in this section.
-            User savedUser = userRepository.findOneByUsername(user.getUsername());
+            User savedUser = null;
+
+            if (user.getId() != null) {
+                savedUser = userRepository.findOne(user.getId());
+            } else {
+                //Only certain fields can be updated, these are in this section.
+                savedUser = userRepository.findOneByUsername(user.getUsername());
+            }
 
             if (user.getFirstName() != null) {
                 savedUser.setFirstName(user.getFirstName());
