@@ -16,7 +16,7 @@ class UserServiceTest extends Specification {
 
     @Autowired
     @Shared
-    static UserRepository userRepository;
+    UserRepository userRepository;
 
     @Shared
     UserService userService;
