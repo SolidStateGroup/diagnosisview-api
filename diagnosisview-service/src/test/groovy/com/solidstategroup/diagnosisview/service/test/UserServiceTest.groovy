@@ -15,16 +15,17 @@ import spock.lang.Specification
 class UserServiceTest extends Specification {
 
     @Autowired
+    @Shared
     static UserRepository userRepository;
 
     @Shared
-    static UserService userService;
+    UserService userService;
 
     @Shared
-    static User user;
+    User user;
 
     @Shared
-    static SavedUserCode savedCode;
+    SavedUserCode savedCode;
 
 
     def setupSpec() {
