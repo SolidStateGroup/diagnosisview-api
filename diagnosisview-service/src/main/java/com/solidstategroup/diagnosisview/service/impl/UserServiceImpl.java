@@ -50,6 +50,7 @@ public class UserServiceImpl implements UserService {
 
     @Value("${ANDROID_APPLICATION_NAME:NONE}")
     private String androidApplicationName;
+    private AppleReceiptValidation appleReceiptValidation;
 
     /**
      * Constructor for the dashboard user service.
@@ -57,8 +58,10 @@ public class UserServiceImpl implements UserService {
      * @param userRepository the repo to autowire
      */
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository) {
+    public UserServiceImpl(final UserRepository userRepository,
+                           final AppleReceiptValidation appleReceiptValidation) {
         this.userRepository = userRepository;
+        this.appleReceiptValidation = appleReceiptValidation;
     }
 
     /**
@@ -175,8 +178,14 @@ public class UserServiceImpl implements UserService {
             return userRepository.save(user);
 
         } else {
-            //Only certain fields can be updated, these are in this section.
-            User savedUser = userRepository.findOneByUsername(user.getUsername());
+            User savedUser = null;
+
+            if (user.getId() != null) {
+                savedUser = userRepository.findOne(user.getId());
+            } else {
+                //Only certain fields can be updated, these are in this section.
+                savedUser = userRepository.findOneByUsername(user.getUsername());
+            }
 
             if (user.getFirstName() != null) {
                 savedUser.setFirstName(user.getFirstName());
@@ -336,7 +345,7 @@ public class UserServiceImpl implements UserService {
     public User verifyAppleReceiptData(User user, String receipt) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         //validate the receipt using the sandbox (or use false for production)
-        JsonObject responseJson = AppleReceiptValidation.validateReciept(receipt, true);
+        JsonObject responseJson = appleReceiptValidation.validateReciept(receipt, true);
         //prints response
         log.info(responseJson.toString());
 
@@ -344,6 +353,9 @@ public class UserServiceImpl implements UserService {
         List<PaymentDetails> payments = savedUser.getPaymentData();
         payments.add(details);
         savedUser.setPaymentData(payments);
+        Date expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
+                .get("original_purchase_date_ms").toString()));
+        savedUser.setExpiryDate(expiryDate);
         savedUser.setActiveSubscription(true);
         this.createOrUpdateUser(savedUser);
 
