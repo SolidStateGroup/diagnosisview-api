@@ -163,7 +163,8 @@ public class UserServiceImpl implements UserService {
         //this is a new user
         if (user.getId() == null) {
             if (userRepository.findOneByUsername(user.getUsername()) != null) {
-                throw new IllegalStateException("This username already exists. Please try another one");
+                throw new IllegalStateException(String.format("The username %s already exists. Please try another " +
+                        "one", user.getUsername()));
             }
             user.setDateCreated(new Date());
             user.setSalt(Utils.generateSalt());
@@ -238,7 +239,7 @@ public class UserServiceImpl implements UserService {
         });
 
 
-        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
+        if (savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
             savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
         }
 
@@ -261,7 +262,7 @@ public class UserServiceImpl implements UserService {
 
 
         if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
-            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType());
         }
 
 
