@@ -318,8 +318,8 @@ public class UserServiceImpl implements UserService {
                 userRepository.save(user);
             }
             //If the user is not auto-renewing, and the expiry date has past, set them to inactive
-            else if (!user.getAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date
-                    ()))) {
+            else if (!user.isAutoRenewing() && (user.getExpiryDate() == null ||
+                    user.getExpiryDate().before(new Date()))) {
                 user.setActiveSubscription(false);
                 userRepository.save(user);
             }
@@ -351,7 +351,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
         }
         //If the user is not auto-renewing, and the expiry date has past, set them to inactive
-        else if (!user.getAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date()))) {
+        else if (!user.isAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date()))) {
             user.setActiveSubscription(false);
             userRepository.save(user);
         }
