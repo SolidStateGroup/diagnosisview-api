@@ -297,7 +297,9 @@ public class UserServiceImpl implements UserService {
             }
             //Update the user token on a sucessful login
             user.setToken(UUID.randomUUID().toString());
-            if (user.getExpiryDate() == null || user.getExpiryDate().before(new Date())) {
+
+            //If the user is not auto-renewing, and the expiry date has past, set them to inactive
+            if (!user.getAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date()))) {
                 user.setActiveSubscription(false);
             }
             userRepository.save(user);
@@ -322,8 +324,9 @@ public class UserServiceImpl implements UserService {
     public User getUserByToken(final String token) throws Exception {
         User user = userRepository.findOneByToken(token);
 
-        if (user.getExpiryDate() == null ||
-                user.getExpiryDate().before(new Date())) {
+        //If the user is not auto-renewing, and the expiry date has past, set them to inactive
+        if (!user.getAutoRenewing() && (user.getExpiryDate() == null ||
+                user.getExpiryDate().before(new Date()))) {
             user.setActiveSubscription(false);
             userRepository.save(user);
         }
@@ -355,6 +358,9 @@ public class UserServiceImpl implements UserService {
         savedUser.setPaymentData(payments);
         Date expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
                 .get("original_purchase_date_ms").toString()));
+
+        //Hard coded for ios users
+        user.setAutoRenewing(false);
         savedUser.setExpiryDate(expiryDate);
         savedUser.setActiveSubscription(true);
         this.createOrUpdateUser(savedUser);
@@ -397,6 +403,7 @@ public class UserServiceImpl implements UserService {
         user.setActiveSubscription(true);
         Map<String, String> response = new Gson().fromJson(purchase.toString(), Map.class);
 
+        user.setAutoRenewing(Boolean.parseBoolean(response.get("autoRenewing")));
         user.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
         userRepository.save(user);
 

@@ -51,7 +51,7 @@ public class CodeController {
     @RequestMapping(value = "/code", method = RequestMethod.POST)
     @ApiOperation(value = "Create Code",
             notes = "Creates code within DV (unsure if required)",
-            response = User.class)
+            response = Code.class)
     public Code createCode(@RequestBody final Code code) throws Exception {
         return codeService.save(code);
     }
@@ -65,7 +65,7 @@ public class CodeController {
     @RequestMapping(value = "/code", method = RequestMethod.PUT)
     @ApiOperation(value = "Update Code",
             notes = "Update a user, pass the password in which will then be encrypted",
-            response = User.class)
+            response = Code.class)
     public Code updateCode(@RequestBody final Code code) throws Exception {
         return codeService.save(code);
     }

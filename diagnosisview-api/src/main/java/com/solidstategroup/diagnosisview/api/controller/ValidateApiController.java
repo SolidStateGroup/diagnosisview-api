@@ -48,7 +48,7 @@ public class ValidateApiController extends BaseController {
     @RequestMapping(value = "/validate/android", method = RequestMethod.POST)
     @ApiOperation(value = "Validate an Android receipt",
             notes = "Validate an Android receipt",
-            response = SavedUserCode.class)
+            response = User.class)
     public User validateAndroidReceipt(@RequestBody final String purchase,
                                        final HttpServletRequest request) throws Exception {
         //Get the user from the request
@@ -66,7 +66,7 @@ public class ValidateApiController extends BaseController {
     @RequestMapping(value = "/validate/ios", method = RequestMethod.POST)
     @ApiOperation(value = "Validate and iOS receipt",
             notes = "Validates and iOS receipt against",
-            response = SavedUserCode.class)
+            response = User.class)
     public User validateIosReceipt(@RequestBody final Map<String, String> purchase,
                                    final HttpServletRequest request) throws Exception {
         //Get the user from the request

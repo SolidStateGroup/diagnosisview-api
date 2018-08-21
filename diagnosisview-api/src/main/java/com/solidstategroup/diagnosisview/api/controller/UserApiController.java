@@ -73,7 +73,7 @@ public class UserApiController extends BaseController {
     @RequestMapping(value = "/favourites", method = RequestMethod.PUT)
     @ApiOperation(value = "Add a code to favourites",
             notes = "Adds a code to user favourites",
-            response = SavedUserCode.class)
+            response = User.class)
     public User saveFavourite(@RequestBody final SavedUserCode favourite,
                               final HttpServletRequest request) throws Exception {
         //Get the user from the request
@@ -93,7 +93,7 @@ public class UserApiController extends BaseController {
     @RequestMapping(value = "/sync/history", method = RequestMethod.PUT)
     @ApiOperation(value = "Save user history",
             notes = "Add a history item to users history",
-            response = SavedUserCode.class)
+            response = User.class)
     public User syncHistory(@RequestBody final List<SavedUserCode> historyList,
                             final HttpServletRequest request) throws Exception {
         //Get the user from the request
@@ -111,7 +111,7 @@ public class UserApiController extends BaseController {
     @RequestMapping(value = "/sync/favourites", method = RequestMethod.PUT)
     @ApiOperation(value = "Save user history",
             notes = "Add a history item to users history",
-            response = SavedUserCode.class)
+            response = User.class)
     public User syncFavourites(@RequestBody final List<SavedUserCode> favouriteList,
                             final HttpServletRequest request) throws Exception {
         //Get the user from the request
@@ -129,7 +129,7 @@ public class UserApiController extends BaseController {
     @RequestMapping(value = "/history", method = RequestMethod.PUT)
     @ApiOperation(value = "Save user history",
             notes = "Add a history item to users history",
-            response = SavedUserCode.class)
+            response = User.class)
     public User saveHistory(@RequestBody final SavedUserCode history,
                             final HttpServletRequest request) throws Exception {
         //Get the user from the request
@@ -148,7 +148,7 @@ public class UserApiController extends BaseController {
     @RequestMapping(value = "/favourites", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete a code from favourites",
             notes = "Deletes a code from user favourites",
-            response = SavedUserCode.class)
+            response = User.class)
     public User deleteFavourite(@RequestBody final SavedUserCode favourite,
                                 final HttpServletRequest request) throws Exception {
         //Get the user from the request
@@ -166,7 +166,7 @@ public class UserApiController extends BaseController {
     @RequestMapping(value = "/history", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete user history item",
             notes = "Remove a history item to users history",
-            response = SavedUserCode.class)
+            response = User.class)
     public User deleteHistoryItem(@RequestBody final SavedUserCode history,
                                   final HttpServletRequest request) throws Exception {
         //Get the user from the request
