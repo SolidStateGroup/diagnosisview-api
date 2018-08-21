@@ -26,7 +26,7 @@ public class BaseController {
 
     /**
      * Check whether the user for the request is authenticated
-
+     *
      * @param request the request to check
      * @return User the user is the request is authenticated
      * @throws Exception - when the user is not logged in
@@ -46,10 +46,13 @@ public class BaseController {
      * @return Boolean if the user is an admin
      * @throws Exception
      */
-    public Boolean isAdminUser(final HttpServletRequest request) throws Exception {
+    public void isAdminUser(final HttpServletRequest request) throws Exception {
         User user = userService.getUserByToken(getToken(request));
 
-        return user.getRoleType().equals(RoleType.ADMIN);
+        //Throw an error if the user is not an admin
+        if (!user.getRoleType().equals(RoleType.ADMIN)) {
+            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
+        }
     }
 
     /**

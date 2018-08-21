@@ -48,14 +48,13 @@ public class AdminApiController extends BaseController {
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public User login(@RequestBody final User user) throws Exception {
         User loggedInUser = userService.login(user.getUsername(), user.getStoredPassword());
-        //Temp disabled whilst TS is on holiday
-//        if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
-//            throw new IllegalStateException("Please check your username and password.");
-//        }
+
+        if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
+            throw new IllegalStateException("Please check your username and password.");
+        }
         log.info("Logging in Admin - " + loggedInUser.getUsername());
         return loggedInUser;
     }
-
 
     /**
      * Get all users.
@@ -68,12 +67,11 @@ public class AdminApiController extends BaseController {
             notes = "Admin User endpoint to get all users within the DiagnosisView",
             response = User.class)
     public List<User> getAllUsers(HttpServletRequest request) throws Exception {
-        //TODO Add this back in
-        //isAdminUser(request);
+        //Check if the user is an admin
+        isAdminUser(request);
 
         return userService.getAllUsers();
     }
-
 
     /**
      * Update a user.
@@ -86,13 +84,12 @@ public class AdminApiController extends BaseController {
             notes = "Pass the user in with an ID to be deleted")
     public User deleteUser(@RequestBody final User user,
                            HttpServletRequest request) throws Exception {
-        //TODO Add this back in
-        //isAdminUser(request);
+        //Check if the user is an admin
+        isAdminUser(request);
 
         //Soft delete, making user as deleted
         return userService.deleteUser(user);
     }
-
 
     /**
      * Create a user.
@@ -105,14 +102,13 @@ public class AdminApiController extends BaseController {
     @ApiOperation(value = "Create User",
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
-    public User createUser(@RequestBody final User user) throws Exception {
-        //TODO Add this back in
-        //isAdminUser(request);
+    public User createUser(@RequestBody final User user,
+                           HttpServletRequest request) throws Exception {
+        //Check if the user is an admin
+        isAdminUser(request);
 
         return userService.createOrUpdateUser(user, true);
     }
-
-
 
     /**
      * Update a user.
@@ -126,9 +122,10 @@ public class AdminApiController extends BaseController {
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
     public User updateUser(@PathVariable("userId") final Long userId,
-                           @RequestBody final User user) throws Exception {
-        //TODO Add this back in
-        //isAdminUser(request);
+                           @RequestBody final User user,
+                           HttpServletRequest request) throws Exception {
+        //Check if the user is an admin
+        isAdminUser(request);
 
         user.setId(userId);
         return userService.createOrUpdateUser(user, true);
