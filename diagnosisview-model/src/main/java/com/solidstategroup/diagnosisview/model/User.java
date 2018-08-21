@@ -83,7 +83,7 @@ public class User {
     //Field used for android subscriptions
     //When set to false, the expiry date is used
     @Column
-    private Boolean autoRenewing;
+    private boolean autoRenewing;
 
     @Column
     private Date expiryDate;
