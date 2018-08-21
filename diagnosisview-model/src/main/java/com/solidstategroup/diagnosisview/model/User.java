@@ -126,6 +126,22 @@ public class User {
     }
 
     /**
+     * Get the username
+     * @return The username
+     */
+    public String getUsername() {
+        return this.username.toLowerCase().trim();
+    }
+
+    /**
+     * Get the email address
+     * @return The email address
+     */
+    public String getEmailAddress() {
+        return this.username.toLowerCase().trim();
+    }
+
+    /**
      * Get the type of user that is logging in.
      *
      * @return RoleType the role type

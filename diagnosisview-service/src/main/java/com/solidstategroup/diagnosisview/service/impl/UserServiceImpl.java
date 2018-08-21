@@ -170,6 +170,8 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalStateException(String.format("The username %s already exists. Please try another " +
                         "one", user.getUsername()));
             }
+            user.setUsername(user.getUsername());
+            user.setEmailAddress(user.getEmailAddress());
             user.setDateCreated(new Date());
             user.setSalt(Utils.generateSalt());
             user.setPassword(DigestUtils.sha256Hex(user.getStoredPassword() +
@@ -186,7 +188,7 @@ public class UserServiceImpl implements UserService {
                 savedUser = userRepository.findOne(user.getId());
             } else {
                 //Only certain fields can be updated, these are in this section.
-                savedUser = userRepository.findOneByUsername(user.getUsername());
+                savedUser = userRepository.findOneByUsername(user.getUsername().toLowerCase());
             }
 
             if (user.getFirstName() != null) {
@@ -297,7 +299,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User login(final String username, final String password) throws Exception {
-        User user = userRepository.findOneByUsername(username);
+        User user = userRepository.findOneByUsername(username.toLowerCase());
 
         if (user == null) {
             throw new IllegalStateException("Please check your username and password.");
@@ -310,11 +312,18 @@ public class UserServiceImpl implements UserService {
             //Update the user token on a sucessful login
             user.setToken(UUID.randomUUID().toString());
 
-            //If the user is not auto-renewing, and the expiry date has past, set them to inactive
-            if (!user.getAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date()))) {
-                user.setActiveSubscription(false);
+            //Admin users will always have a subscription
+            if (user.getRoleType().equals(RoleType.ADMIN)) {
+                user.setActiveSubscription(true);
+                userRepository.save(user);
             }
-            userRepository.save(user);
+            //If the user is not auto-renewing, and the expiry date has past, set them to inactive
+            else if (!user.getAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date
+                    ()))) {
+                user.setActiveSubscription(false);
+                userRepository.save(user);
+            }
+
             return user;
         } else {
             throw new IllegalStateException("Please check your username and password");
@@ -336,9 +345,13 @@ public class UserServiceImpl implements UserService {
     public User getUserByToken(final String token) throws Exception {
         User user = userRepository.findOneByToken(token);
 
+        //Admin users will always have a subscription
+        if (user.getRoleType().equals(RoleType.ADMIN)) {
+            user.setActiveSubscription(true);
+            userRepository.save(user);
+        }
         //If the user is not auto-renewing, and the expiry date has past, set them to inactive
-        if (!user.getAutoRenewing() && (user.getExpiryDate() == null ||
-                user.getExpiryDate().before(new Date()))) {
+        else if (!user.getAutoRenewing() && (user.getExpiryDate() == null || user.getExpiryDate().before(new Date()))) {
             user.setActiveSubscription(false);
             userRepository.save(user);
         }
