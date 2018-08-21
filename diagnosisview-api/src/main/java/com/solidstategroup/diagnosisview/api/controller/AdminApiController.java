@@ -50,7 +50,7 @@ public class AdminApiController extends BaseController {
         User loggedInUser = userService.login(user.getUsername(), user.getStoredPassword());
 
         if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
-            throw new IllegalStateException("Please check your username and password.");
+            throw new IllegalStateException("You are not authenticated. Please contact support.");
         }
         log.info("Logging in Admin - " + loggedInUser.getUsername());
         return loggedInUser;
