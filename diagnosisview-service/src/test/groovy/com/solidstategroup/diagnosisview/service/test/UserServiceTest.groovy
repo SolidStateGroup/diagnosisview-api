@@ -6,6 +6,7 @@ import com.solidstategroup.diagnosisview.model.User
 import com.solidstategroup.diagnosisview.repository.UserRepository
 import com.solidstategroup.diagnosisview.service.UserService
 import com.solidstategroup.diagnosisview.service.impl.UserServiceImpl
+import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -15,35 +16,35 @@ import spock.lang.Specification
 class UserServiceTest extends Specification {
 
     @Autowired
-    @Shared
     UserRepository userRepository;
 
-    @Shared
+    @Autowired
+    AppleReceiptValidation appleReceiptValidation;
+
     UserService userService;
-
-    @Shared
     User user;
-
-    @Shared
     SavedUserCode savedCode;
 
+    def setup() {
+        userService = new UserServiceImpl(userRepository, appleReceiptValidation);
 
-    def setupSpec() {
-        userService = new UserServiceImpl(userRepository);
+
         user = new User();
         user.username = "testerman3"
         savedCode = new SavedUserCode("CODE", "type", new Date());
         List<SavedUserCode> savedUserCodeList = new ArrayList<>();
         savedUserCodeList.add(savedCode);
-        user = userService.createOrUpdateUser(user)
+        if (userService.getUser(user.username) == null) {
+            user = userService.createOrUpdateUser(user)
+        }
     }
 
     def "Get User"() {
         when:
-            def savedUser = userService.getUser(user.username)
+        def savedUser = userService.getUser(user.username)
         then: "should return correct user"
-            savedUser != null
-            savedUser.username.equals(user.username)
+        savedUser != null
+        savedUser.username.equals(user.username)
     }
 
     def "Test Remove Favourite"() {
