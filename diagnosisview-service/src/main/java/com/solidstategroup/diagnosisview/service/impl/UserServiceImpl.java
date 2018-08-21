@@ -15,6 +15,7 @@ import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
+import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
@@ -174,6 +175,7 @@ public class UserServiceImpl implements UserService {
             user.setPassword(DigestUtils.sha256Hex(user.getStoredPassword() +
                     user.getStoredSalt()));
             user.setToken(UUID.randomUUID().toString());
+            user.setRoleType(RoleType.USER);
 
             return userRepository.save(user);
 
