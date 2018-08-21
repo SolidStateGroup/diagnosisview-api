@@ -109,7 +109,7 @@ public class AdminApiController extends BaseController {
         //TODO Add this back in
         //isAdminUser(request);
 
-        return userService.createOrUpdateUser(user);
+        return userService.createOrUpdateUser(user, true);
     }
 
 
@@ -125,13 +125,13 @@ public class AdminApiController extends BaseController {
     @ApiOperation(value = "Create User",
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
-    public User createUser(@PathVariable("userId") final Long userId,
+    public User updateUser(@PathVariable("userId") final Long userId,
                            @RequestBody final User user) throws Exception {
         //TODO Add this back in
         //isAdminUser(request);
 
         user.setId(userId);
-        return userService.createOrUpdateUser(user);
+        return userService.createOrUpdateUser(user, true);
     }
 
 }

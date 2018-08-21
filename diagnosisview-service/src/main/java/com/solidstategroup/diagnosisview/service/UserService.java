@@ -53,13 +53,14 @@ public interface UserService {
     User addHistoryToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
 
     /**
-     * Create or update a dashboard user.
+     * Create or update a user.
      *
      * @param user the user to create or update
+     * @param isAdmin flag to state whether the user updating the account is an admin.
      * @return User the created or updated user
      * @throws Exception thrown when cannot update user
      */
-    User createOrUpdateUser(final User user) throws Exception;
+    User createOrUpdateUser(final User user, final boolean isAdmin) throws Exception;
 
     /**
      * Delete user.

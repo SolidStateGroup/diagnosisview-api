@@ -75,6 +75,6 @@ public class ApiController extends BaseController {
      */
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public User register(@RequestBody final User user) throws Exception {
-        return userService.createOrUpdateUser(user);
+        return userService.createOrUpdateUser(user, false);
     }
 }

@@ -60,7 +60,7 @@ public class UserApiController extends BaseController {
         user.setId(requestUser.getId());
         user.setUsername(requestUser.getUsername());
 
-         return userService.createOrUpdateUser(user);
+         return userService.createOrUpdateUser(user, false);
     }
 
 

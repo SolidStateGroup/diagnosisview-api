@@ -162,7 +162,7 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
-    public User createOrUpdateUser(final User user) throws Exception {
+    public User createOrUpdateUser(final User user, boolean isAdmin) throws Exception {
         //this is a new user
         if (user.getId() == null) {
             if (userRepository.findOneByUsername(user.getUsername()) != null) {
@@ -206,13 +206,23 @@ public class UserServiceImpl implements UserService {
                 savedUser.setEmailAddress(user.getEmailAddress());
             }
 
-            if (user.getStoredPassword() != null) {
-                //Check the old password
-                User userLogin = this.login(user.getUsername(), user.getOldPassword());
+            if (user.getExpiryDate() != null && isAdmin) {
+                savedUser.setExpiryDate(user.getExpiryDate());
+                if (user.getExpiryDate().after(new Date())) {
+                    savedUser.setActiveSubscription(true);
+                }
+            }
 
-                if (userLogin == null) {
-                    throw new NotAuthorisedException("Your password does not appear to be correct. " +
-                            "Please check and try again.");
+            if (user.getStoredPassword() != null) {
+                //If the user isnt an admin, we need to ensure that the password matches the old one
+                if (!isAdmin) {
+                    //Check the old password
+                    User userLogin = this.login(user.getUsername(), user.getOldPassword());
+
+                    if (userLogin == null) {
+                        throw new NotAuthorisedException("Your password does not appear to be correct. " +
+                                "Please check and try again.");
+                    }
                 }
 
                 savedUser.setSalt(Utils.generateSalt());
@@ -360,10 +370,10 @@ public class UserServiceImpl implements UserService {
                 .get("original_purchase_date_ms").toString()));
 
         //Hard coded for ios users
-        user.setAutoRenewing(false);
+        savedUser.setAutoRenewing(false);
         savedUser.setExpiryDate(expiryDate);
         savedUser.setActiveSubscription(true);
-        this.createOrUpdateUser(savedUser);
+        userRepository.save(savedUser);
 
         return savedUser;
     }
@@ -372,6 +382,8 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
+        User savedUser = this.getUser(user.getUsername());
+
         InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
 
         GoogleCredential credential =
@@ -398,16 +410,16 @@ public class UserServiceImpl implements UserService {
         final SubscriptionPurchase purchase = get.execute();
         log.info("Found google purchase item " + purchase.toPrettyString());
 
-        List<PaymentDetails> payments = user.getPaymentData();
+        List<PaymentDetails> payments = savedUser.getPaymentData();
         payments.add(new PaymentDetails(purchase.toString()));
-        user.setActiveSubscription(true);
+        savedUser.setActiveSubscription(true);
         Map<String, String> response = new Gson().fromJson(purchase.toString(), Map.class);
 
-        user.setAutoRenewing(Boolean.parseBoolean(response.get("autoRenewing")));
-        user.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
-        userRepository.save(user);
+        savedUser.setAutoRenewing(Boolean.parseBoolean(response.get("autoRenewing")));
+        savedUser.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
+        userRepository.save(savedUser);
 
-        return user;
+        return savedUser;
     }
 
 }
