@@ -345,6 +345,10 @@ public class UserServiceImpl implements UserService {
     public User getUserByToken(final String token) throws Exception {
         User user = userRepository.findOneByToken(token);
 
+        if (user == null) {
+            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
+        }
+
         //Admin users will always have a subscription
         if (user.getRoleType().equals(RoleType.ADMIN)) {
             user.setActiveSubscription(true);
@@ -430,7 +434,7 @@ public class UserServiceImpl implements UserService {
         savedUser.setActiveSubscription(true);
         Map<String, String> response = new Gson().fromJson(purchase.toString(), Map.class);
 
-        savedUser.setAutoRenewing(Boolean.parseBoolean(response.get("autoRenewing")));
+        savedUser.setAutoRenewing(Boolean.parseBoolean(response.get("autoRenewing").toString()));
         savedUser.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
         userRepository.save(savedUser);
 
