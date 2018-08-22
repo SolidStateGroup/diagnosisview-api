@@ -432,10 +432,9 @@ public class UserServiceImpl implements UserService {
         List<PaymentDetails> payments = savedUser.getPaymentData();
         payments.add(new PaymentDetails(purchase.toString()));
         savedUser.setActiveSubscription(true);
-        Map<String, String> response = new Gson().fromJson(purchase.toString(), Map.class);
 
-        savedUser.setAutoRenewing(Boolean.parseBoolean(response.get("autoRenewing").toString()));
-        savedUser.setExpiryDate(new Date(Long.parseLong(response.get("expiryTimeMillis"))));
+        savedUser.setAutoRenewing(purchase.getAutoRenewing());
+        savedUser.setExpiryDate(new Date(purchase.getExpiryTimeMillis()));
         userRepository.save(savedUser);
 
         return savedUser;
