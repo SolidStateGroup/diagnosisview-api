@@ -28,7 +28,6 @@ class UserServiceTest extends Specification {
     def setup() {
         userService = new UserServiceImpl(userRepository, appleReceiptValidation);
 
-
         user = new User();
         user.username = "testerman3"
         savedCode = new SavedUserCode("CODE", "type", new Date());
