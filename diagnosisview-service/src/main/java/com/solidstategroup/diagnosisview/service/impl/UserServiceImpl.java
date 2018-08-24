@@ -263,7 +263,7 @@ public class UserServiceImpl implements UserService {
 
 
         if (savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
-            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType());
         }
 
 

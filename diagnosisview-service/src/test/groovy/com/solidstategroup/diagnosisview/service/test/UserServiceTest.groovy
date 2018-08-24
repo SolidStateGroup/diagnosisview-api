@@ -35,7 +35,7 @@ class UserServiceTest extends Specification {
         List<SavedUserCode> savedUserCodeList = new ArrayList<>();
         savedUserCodeList.add(savedCode);
         if (userService.getUser(user.username) == null) {
-            user = userService.createOrUpdateUser(user)
+            user = userService.createOrUpdateUser(user, true)
         }
     }
 
