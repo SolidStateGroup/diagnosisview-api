@@ -42,7 +42,7 @@ public class Code extends AuditModel {
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REFRESH}, orphanRemoval = true)
     private Set<CodeExternalStandard> externalStandards = new HashSet<>();
 
     // from NHS choices initially

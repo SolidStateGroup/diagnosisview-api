@@ -195,8 +195,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             code.setExternalStandards(externalStandards);
 
             codeRepository.save(code);
-
-
         }
     }
 
