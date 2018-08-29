@@ -1,24 +1,14 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
-import com.solidstategroup.diagnosisview.service.UserService;
+import com.solidstategroup.diagnosisview.service.SubscriptionService;
 import lombok.extern.java.Log;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Secured API controller, handles main methods.
@@ -30,15 +20,19 @@ public class TempAdminApiController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private CodeSyncService codeSyncService;
+    private SubscriptionService subscriptionService;
 
     /**
      * Instantiate API controller, includes required services.
      *
      * @param codeSyncService     CodeSync service
+     * @param subscriptionService Subscription service
      */
     @Autowired
-    public TempAdminApiController(final CodeSyncService codeSyncService) {
+    public TempAdminApiController(final CodeSyncService codeSyncService,
+                                  final SubscriptionService subscriptionService) {
         this.codeSyncService = codeSyncService;
+        this.subscriptionService = subscriptionService;
     }
 
 
@@ -52,5 +46,17 @@ public class TempAdminApiController {
     public void syncContent()
             throws Exception {
         codeSyncService.syncCodes();
+    }
+
+    /**
+     * Sync the content from PV
+     *
+     * @throws Exception
+     */
+    @RequestMapping(value = "/android-test", method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public void checkAndroid()
+            throws Exception {
+        subscriptionService.checkSubscriptions();
     }
 }

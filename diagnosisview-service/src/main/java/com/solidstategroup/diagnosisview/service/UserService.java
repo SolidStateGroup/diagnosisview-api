@@ -1,8 +1,11 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.List;
 
 /**
@@ -111,7 +114,15 @@ public interface UserService {
     User getUser(final String username) throws Exception;
 
     /**
-     * Get a user by token.
+     * Get expiring users
+     *
+     * @return the users expiring soon
+     * @throws Exception thrown when cannot update user
+     */
+    List<User> getExpiringUsers() throws Exception;
+
+    /**
+     * Get users that are expiring in the next
      *
      * @param token user token
      * @return the found user
@@ -144,5 +155,13 @@ public interface UserService {
      * @return User the updated user
      */
     User verifyAndroidToken(User user, String receipt) throws Exception;
+
+    /**
+     * Verify an Android purchase against the google play API
+     * @param savedUser - the saved user
+     * @param googleReceipt - the receipt object to verify
+     * @return the updated user
+     */
+    User verifyAndroidPurchase(User savedUser, GoogleReceipt googleReceipt) throws IOException, GeneralSecurityException;
 
 }

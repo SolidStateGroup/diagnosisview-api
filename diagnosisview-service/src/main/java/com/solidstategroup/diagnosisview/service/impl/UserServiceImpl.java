@@ -11,23 +11,28 @@ import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
+import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
+import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
 import lombok.extern.java.Log;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -45,13 +50,13 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
+    private AppleReceiptValidation appleReceiptValidation;
 
     @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
     private String appleUrlString;
 
     @Value("${ANDROID_APPLICATION_NAME:NONE}")
     private String androidApplicationName;
-    private AppleReceiptValidation appleReceiptValidation;
 
     /**
      * Constructor for the dashboard user service.
@@ -342,6 +347,15 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
+    public List<User> getExpiringUsers() throws Exception {
+       return userRepository
+               .findByExpiryDateLessThanEqualAndActiveSubscription(new DateTime().plusWeeks(1).toDate(), true);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public User getUserByToken(final String token) throws Exception {
         User user = userRepository.findOneByToken(token);
 
@@ -381,7 +395,7 @@ public class UserServiceImpl implements UserService {
         //prints response
         log.info(responseJson.toString());
 
-        PaymentDetails details = new PaymentDetails(responseJson.toString());
+        PaymentDetails details = new PaymentDetails(responseJson.toString(),null, PaymentType.IOS);
         List<PaymentDetails> payments = savedUser.getPaymentData();
         payments.add(details);
         savedUser.setPaymentData(payments);
@@ -403,14 +417,25 @@ public class UserServiceImpl implements UserService {
     public User verifyAndroidToken(User user, String receipt) throws Exception {
         User savedUser = this.getUser(user.getUsername());
 
+
+        Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
+        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
+        return verifyAndroidPurchase(savedUser ,
+                new GoogleReceipt(data.get("packageName"), data.get("productId"), data.get("purchaseToken")));
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public User verifyAndroidPurchase(User savedUser, GoogleReceipt googleReceipt) throws IOException,
+            GeneralSecurityException {
+
         InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
 
         GoogleCredential credential =
                 GoogleCredential.fromStream(file)
                         .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
-
-        Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
-        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
         HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
         JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -423,16 +448,16 @@ public class UserServiceImpl implements UserService {
         final AndroidPublisher.Purchases.Subscriptions.Get get =
                 pub.purchases()
                         .subscriptions()
-                        .get(data.get("packageName"),
-                                data.get("productId"),
-                                data.get("purchaseToken"));
+                        .get(googleReceipt.getPackageName(),
+                                googleReceipt.getProductId(),
+                                googleReceipt.getToken());
         final SubscriptionPurchase purchase = get.execute();
         log.info("Found google purchase item " + purchase.toPrettyString());
 
         List<PaymentDetails> payments = savedUser.getPaymentData();
-        payments.add(new PaymentDetails(purchase.toString()));
-        savedUser.setActiveSubscription(true);
+        payments.add(new PaymentDetails(purchase.toString(), googleReceipt, PaymentType.ANDROID));
 
+        savedUser.setActiveSubscription(true);
         savedUser.setAutoRenewing(purchase.getAutoRenewing());
         savedUser.setExpiryDate(new Date(purchase.getExpiryTimeMillis()));
         userRepository.save(savedUser);
