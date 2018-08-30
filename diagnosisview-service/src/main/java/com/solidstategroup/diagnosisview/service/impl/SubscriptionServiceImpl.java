@@ -7,6 +7,7 @@ import com.solidstategroup.diagnosisview.service.SubscriptionService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     UserService userService;
 
     @Override
+    @Scheduled(cron = "0 15 17 * * *")
     public void checkSubscriptions() throws Exception {
         //Get all the users that are expiring soon
         userService.getExpiringUsers().stream().forEach(user -> {

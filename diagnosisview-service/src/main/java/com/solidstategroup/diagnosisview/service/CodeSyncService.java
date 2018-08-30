@@ -10,7 +10,6 @@ public interface CodeSyncService {
     /**
      * Sync Codes from patientview to diagnosisview
      */
-    @Scheduled(cron = "0 14 * * *")
     void syncCodes();
 
 }

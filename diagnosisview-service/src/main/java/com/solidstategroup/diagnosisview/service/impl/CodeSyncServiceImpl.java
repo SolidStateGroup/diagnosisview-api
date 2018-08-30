@@ -36,6 +36,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -100,6 +101,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private LookupTypeRepository lookupTypeRepository;
 
     @Override
+    @Scheduled(cron = "0 15 17 * * *")
     public void syncCodes() {
         try {
             log.info("Starting Code Sync from PatientView");
