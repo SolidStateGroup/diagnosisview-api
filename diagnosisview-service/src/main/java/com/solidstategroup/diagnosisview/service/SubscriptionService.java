@@ -10,7 +10,7 @@ public interface SubscriptionService {
     /**
      * Daily check of subscriptions that are ending in the next month
      */
-    @Scheduled(cron = "0 9 * * *")
+    @Scheduled(cron = "0 15 * * *")
     void checkSubscriptions() throws Exception;
 
 }
