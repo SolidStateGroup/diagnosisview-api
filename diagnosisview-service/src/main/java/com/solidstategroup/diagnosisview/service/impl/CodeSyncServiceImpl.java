@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,10 +124,8 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             }.getType();
             String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
                     fooType);
-            log.info(responseString);
 
             List<Code> codes = gson.fromJson(contentString, fooType);
-            System.out.println(responseString);
 
             codes.stream().forEach(code -> updateCode(code));
             log.info("Finished Code Sync from PatientView");
@@ -172,9 +171,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
 
             //Remove code related fields, this stops exceptions being thrown
-            code.setLinks(null);
-            code.setCodeCategories(null);
-            code.setExternalStandards(null);
+            code.setLinks(new HashSet<>());
+            code.setCodeCategories(new HashSet<>());
+            code.setExternalStandards(new HashSet<>());
 
             codeRepository.save(code);
 
