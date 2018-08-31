@@ -140,7 +140,10 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         Code existingCode = codeRepository.findOne(code.getId());
 
         //If there is a code, or it has been updated, update
-        if (existingCode == null || existingCode.getLastUpdate().before(code.getLastUpdate())) {
+        if (existingCode == null || existingCode.getLinks().size() != code.getLinks().size() ||
+                existingCode.getExternalStandards().size() != code.getExternalStandards().size() ||
+                existingCode.getCodeCategories().size() != code.getCodeCategories().size() ||
+                existingCode.getLastUpdate().before(code.getLastUpdate())) {
 
             lookupTypeRepository.save(code.getStandardType().getLookupType());
             lookupRepository.save(code.getStandardType());
