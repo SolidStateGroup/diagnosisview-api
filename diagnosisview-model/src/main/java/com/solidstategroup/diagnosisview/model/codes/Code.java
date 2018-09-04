@@ -28,7 +28,7 @@ public class Code extends AuditModel {
     @Column(name = "code")
     private String code;
 
-    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CodeCategory> codeCategories = new HashSet<>();
 
     @OneToOne

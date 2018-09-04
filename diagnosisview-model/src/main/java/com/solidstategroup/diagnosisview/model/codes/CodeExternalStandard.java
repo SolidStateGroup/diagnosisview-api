@@ -28,7 +28,7 @@ public class CodeExternalStandard extends BaseModel {
     @Column(name = "code")
     private String codeString;
 
-    @OneToOne(cascade = CascadeType.MERGE)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "external_standard_id", nullable = false)
     private ExternalStandard externalStandard;
 
