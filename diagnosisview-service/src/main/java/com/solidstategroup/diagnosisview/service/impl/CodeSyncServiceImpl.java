@@ -102,7 +102,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private LookupTypeRepository lookupTypeRepository;
 
     @Override
-    @Scheduled(cron = "0 0 */2 * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void syncCodes() {
         try {
             log.info("Starting Code Sync from PatientView");
@@ -135,7 +135,8 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
     }
 
-    private void updateCode(Code code) {
+    @org.springframework.transaction.annotation.Transactional
+    protected void updateCode(Code code) {
         Code existingCode = codeRepository.findOne(code.getId());
 
         //If there is a code, or it has been updated, update
