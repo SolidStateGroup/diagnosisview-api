@@ -102,7 +102,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private LookupTypeRepository lookupTypeRepository;
 
     @Override
-    @Scheduled(cron = "0 15 17 * * *")
+    @Scheduled(cron = "0 15 14 * * *")
     public void syncCodes() {
         try {
             log.info("Starting Code Sync from PatientView");
