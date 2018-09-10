@@ -196,6 +196,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                 linkRepository.save(link);
             }
 
+            code.setLinks(links);
             code.setCodeCategories(codeCategories);
             code.setExternalStandards(externalStandards);
 
