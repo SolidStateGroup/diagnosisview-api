@@ -1,8 +1,8 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
-import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.UserService;
@@ -96,6 +96,21 @@ public class CodeController {
             response = CodeDto[].class)
     public List<CodeDto> getAllCodes() throws Exception {
         return codeService.getAllCodes();
+    }
+
+
+    /**
+     * Get all categories.
+     *
+     * @return List all categories for ccode
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/category", method = RequestMethod.GET)
+    @ApiOperation(value = "Get All Categories",
+            notes = "Get all categories from DiagnosisView",
+            response = CategoryDto[].class)
+    public List<CategoryDto> getAllCategories() throws Exception {
+        return codeService.getAllCategories();
     }
 
 

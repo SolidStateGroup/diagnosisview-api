@@ -1,9 +1,12 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
+import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
+import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import lombok.extern.java.Log;
@@ -27,6 +30,26 @@ public class CodeServiceImpl implements CodeService {
     @Autowired
     private CodeRepository codeRepository;
 
+    @Autowired
+    private CodeCategoryRepository categoryRepository;
+
+
+    @Override
+    @Cacheable("getAllCategories")
+    public List<CategoryDto> getAllCategories() {
+        List<CodeCategory> categories = categoryRepository.findAll();
+        ArrayList<CategoryDto> categoryDtos = new ArrayList<>();
+
+        categories.stream().forEach(codeCategory -> categoryDtos
+                .add(new CategoryDto(codeCategory.getCategory().getNumber(),
+                        codeCategory.getCategory().getIcd10Description(),
+                        codeCategory.getCategory().getFriendlyDescription(),
+                        codeCategory.getCategory().isHidden())));
+
+        return categoryDtos;
+    }
+
+
     @Override
     @Cacheable("getAllCodes")
     public List<CodeDto> getAllCodes() {
@@ -35,12 +58,22 @@ public class CodeServiceImpl implements CodeService {
         codeList.parallelStream().forEach(code -> {
             CodeDto codeDto = new CodeDto();
             codeDto.setCode(code.getCode());
-            ArrayList<LinkDto> linkDtos = new ArrayList<LinkDto>();
+            ArrayList<LinkDto> linkDtos = new ArrayList<>();
+            ArrayList<CategoryDto> categoryDtos = new ArrayList<>();
 
             code.getLinks().stream().forEach(link -> linkDtos
                     .add(new LinkDto(link.getLinkType(), link.getDifficultyLevel(), link.getLink())));
 
             codeDto.setLinks(new HashSet<>(linkDtos));
+
+            code.getCodeCategories().stream().forEach(codeCategory -> categoryDtos
+                    .add(new CategoryDto(codeCategory.getCategory().getNumber(),
+                            codeCategory.getCategory().getIcd10Description(),
+                            codeCategory.getCategory().getFriendlyDescription(),
+                            codeCategory.getCategory().isHidden())));
+
+            codeDto.setCategories(new HashSet<>(categoryDtos));
+
 
             if (code.isRemovedExternally() || code.isHideFromPatients()) {
                 codeDto.setDeleted(true);

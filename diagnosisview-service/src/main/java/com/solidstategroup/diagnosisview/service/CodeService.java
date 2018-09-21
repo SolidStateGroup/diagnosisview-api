@@ -1,8 +1,7 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
-import com.solidstategroup.diagnosisview.model.SavedUserCode;
-import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 
 import java.util.List;
@@ -11,6 +10,12 @@ import java.util.List;
  * Interface to interact with dashboard users.
  */
 public interface CodeService {
+
+    /**
+     * Get All categories
+     * @return List category dtos
+     */
+    List<CategoryDto> getAllCategories();
 
     /**
      * Get All codes

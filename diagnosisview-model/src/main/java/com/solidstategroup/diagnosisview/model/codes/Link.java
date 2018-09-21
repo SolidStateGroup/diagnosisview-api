@@ -85,7 +85,10 @@ public class Link extends AuditModel {
     }
 
     public DifficultyLevel getDifficultyLevel() {
-        return DifficultyLevel.GREEN;
+        if (difficultyLevel == null) {
+            return DifficultyLevel.GREEN;
+        }
+        return difficultyLevel;
     }
 
     public void setDifficultyLevel(DifficultyLevel difficultyLevel) {

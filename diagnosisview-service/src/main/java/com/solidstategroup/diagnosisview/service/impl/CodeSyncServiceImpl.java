@@ -192,6 +192,13 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             //Add in code specific links
             for (Link link : links) {
+                Link existingLink = linkRepository.getOne(link.getId());
+
+                //Ensure that difficulty is not overwritten
+                if (existingLink != null) {
+                    link.setDifficultyLevel(existingLink.getDifficultyLevel());
+                }
+
                 link.setCode(code);
                 linkRepository.save(link);
             }

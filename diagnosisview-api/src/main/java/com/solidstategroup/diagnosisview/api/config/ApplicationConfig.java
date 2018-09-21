@@ -31,7 +31,8 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     public CacheManager cacheManager() {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(Arrays.asList(
-                new ConcurrentMapCache("getAllCodes")
+                new ConcurrentMapCache("getAllCodes"),
+                new ConcurrentMapCache("getAllCategories")
         ));
         return cacheManager;
     }

@@ -1,8 +1,13 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
+import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
+import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
@@ -26,6 +31,8 @@ public class AdminApiController extends BaseController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
+    private LinkRepository linkRepository;
+    private ExternalStandardRepository externalStandardRepository;
 
     /**
      * Instantiate API controller, includes required services.
@@ -109,6 +116,58 @@ public class AdminApiController extends BaseController {
 
         return userService.createOrUpdateUser(user, true);
     }
+
+
+    /**
+     * Update a DV link
+     *
+     * @param link Link the link the update
+     * @return Link the updated Link
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/code/link", method = RequestMethod.PUT)
+    @ApiOperation(value = "Update Link",
+            notes = "Updates a link with DV editible fields.",
+            response = Link.class)
+    public Link updateLink(@RequestBody final Link link,
+                           HttpServletRequest request) throws Exception {
+        //Check if the user is an admin
+        isAdminUser(request);
+
+        Link existingLink = linkRepository.getOne(link.getId());
+
+        if (existingLink == null) {
+            throw new BadRequestException("The link does not exist within DiagnosisView.");
+
+        }
+        //Currently you can only update certain fields
+        existingLink.setDifficultyLevel(link.getDifficultyLevel());
+
+        return linkRepository.save(existingLink);
+    }
+
+
+
+    /**
+     * Return all external standards within PV
+     *
+     * @return List the external standards within diagnosisview
+     * @throws Exception thrown adding projects config
+     */
+    @RequestMapping(value = "/code/external-standards", method = RequestMethod.GET)
+    @ApiOperation(value = "Get External Standards",
+            notes = "Get all external standards within DV",
+            response = User.class)
+    public List<ExternalStandard> getExternalStandards(HttpServletRequest request) throws Exception {
+        //Check if the user is an admin
+        isAdminUser(request);
+
+        return externalStandardRepository.findAll();
+    }
+
+
+
+
 
     /**
      * Update a user.
