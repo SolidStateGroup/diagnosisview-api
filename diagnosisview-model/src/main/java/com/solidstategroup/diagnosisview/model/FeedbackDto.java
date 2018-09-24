@@ -5,9 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class PasswordResetDto {
-    private String newPassword;
-    private String resetCode;
-    private String username;
+public class FeedbackDto {
+    private String body;
 
 }

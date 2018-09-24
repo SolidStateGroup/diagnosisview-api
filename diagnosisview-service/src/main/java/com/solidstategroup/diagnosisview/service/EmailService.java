@@ -9,10 +9,20 @@ import java.io.IOException;
  */
 public interface EmailService {
 
+    /**
+     * Send a forgotten password email to a user
+     * @param user the user requesting the forgotten password email
+     * @param resetCode the generated code to be added to the email
+     * @throws IOException
+     */
     void sendForgottenPasswordEmail(final User user, final String resetCode) throws IOException;
 
-
-    void sendFeedback(String subject, String message);
+    /**
+     * Send feedback to the DV team
+     * @param user the user sending the feedback, if logged in
+     * @param message the message being sent
+     */
+    void sendFeedback(final User user, final String message);
 
 
 }

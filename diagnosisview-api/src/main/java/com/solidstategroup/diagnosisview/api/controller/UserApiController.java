@@ -1,9 +1,11 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solidstategroup.diagnosisview.model.FeedbackDto;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Secured API controller, handles main methods.
@@ -29,6 +30,7 @@ public class UserApiController extends BaseController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
+    private EmailService emailService;
 
     /**
      * Instantiate API controller, includes required services.
@@ -36,9 +38,11 @@ public class UserApiController extends BaseController {
      * @param userService UserService manages the dashboard users
      */
     @Autowired
-    public UserApiController(final UserService userService) {
+    public UserApiController(final UserService userService,
+                             final EmailService emailService) {
         super();
         this.userService = userService;
+        this.emailService = emailService;
     }
 
 
@@ -61,29 +65,49 @@ public class UserApiController extends BaseController {
         user.setId(requestUser.getId());
         user.setUsername(requestUser.getUsername());
 
-         return userService.createOrUpdateUser(user, false);
+        return userService.createOrUpdateUser(user, false);
     }
 
 
-
-    @RequestMapping(value = "/forgotten-password", method = RequestMethod.POST)
-    @ApiOperation(value = "Forgotten password",
-            notes = "Sends a reset password email to a user",
-            response = User.class)
-    public void forgottenPassword(@RequestBody final User user,
-                           final HttpServletRequest request) throws Exception {
-        //TODO Implement
-
+    /**
+     * Send feedback to DV team
+     * @param feedbackDto FeedbackDto
+     * @throws Exception
+     */
+    @RequestMapping(value = "/feedback", method = RequestMethod.POST)
+    @ApiOperation(value = "Feedback",
+            notes = "Sends feedback to DV team")
+    public void sendDVFeedback(@RequestBody final FeedbackDto feedbackDto,
+                               final HttpServletRequest request) throws Exception {
+        User user = getUserFromRequest(request);
+        emailService.sendFeedback(user, feedbackDto.getBody());
     }
 
+    /**
+     * Reset a users password using the passed in reset code
+     *
+     * @param passwordResetDto - the required fields to reset a password
+     * @throws Exception
+     */
     @RequestMapping(value = "/reset-password", method = RequestMethod.POST)
     @ApiOperation(value = "Reset password",
-            notes = "Reset the password of a user with the given reset code",
-            response = User.class)
-    public void forgottenPassword(@RequestBody final PasswordResetDto passwordResetDto,
-                                  final HttpServletRequest request) throws Exception {
-        //TODO Implement
+            notes = "Reset the password of a user with the given reset code")
+    public void resetPassword(@RequestBody final PasswordResetDto passwordResetDto) throws Exception {
+        userService.resetPassword(passwordResetDto);
 
+    }
+
+    /**
+     * Send a forgotten password email to a user
+     *
+     * @param user the user to sent the request for
+     * @throws Exception
+     */
+    @RequestMapping(value = "/forgotten-password", method = RequestMethod.POST)
+    @ApiOperation(value = "Forgotten password",
+            notes = "Sends a reset password email to a user")
+    public void forgottenPassword(@RequestBody final User user) throws Exception {
+        userService.sendResetPassword(userService.getUser(user.getUsername()));
     }
 
     /**
@@ -103,7 +127,6 @@ public class UserApiController extends BaseController {
 
         return userService.addFavouriteToUser(user, favourite);
     }
-
 
 
     /**
@@ -135,7 +158,7 @@ public class UserApiController extends BaseController {
             notes = "Add a history item to users history",
             response = User.class)
     public User syncFavourites(@RequestBody final List<SavedUserCode> favouriteList,
-                            final HttpServletRequest request) throws Exception {
+                               final HttpServletRequest request) throws Exception {
         //Get the user from the request
         User user = checkIsAuthenticated(request);
         return userService.addMultipleFavouritesToUser(user, favouriteList);

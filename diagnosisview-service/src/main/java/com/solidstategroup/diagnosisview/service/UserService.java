@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.service;
 
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
+import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 
@@ -149,11 +150,10 @@ public interface UserService {
 
     /**
      * Reset the users password using the reset code they enter
-     * @param user - User the user to reset
-     * @param resetCode String the users
+     * @param passwordResetDto The required params to reset a password
      * @return
      */
-    User resetPassword(final User user, final String resetCode);
+    User resetPassword(final PasswordResetDto passwordResetDto) throws Exception;
 
 
     /**

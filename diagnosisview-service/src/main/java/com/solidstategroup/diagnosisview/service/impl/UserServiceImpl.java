@@ -10,8 +10,10 @@ import com.google.api.services.androidpublisher.AndroidPublisherScopes;
 import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
+import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
@@ -415,8 +417,29 @@ public class UserServiceImpl implements UserService {
      * {@inheritDoc}
      */
     @Override
-    public User resetPassword(User user, String resetCode) {
-        return null;
+    public User resetPassword(final PasswordResetDto resetDto) throws Exception {
+        //Get the user from the db
+        User user = this.getUser(resetDto.getUsername());
+
+        //If the user doesnt exist, throw an error
+        if (user == null) {
+            throw new BadRequestException("We were unable to validate your request. " +
+                    "Please check your username and reset code.");
+        }
+
+        //Check the reset code hasnt expired
+        if (user.getResetExpiryDate().before(new Date())) {
+            throw new BadRequestException("Your request has expired. Please request a new reset code");
+        }
+        //Check the reset code is ok
+        if (!user.getResetCode().equals(resetDto.getResetCode())) {
+            throw new BadRequestException("We were unable to validate your request. " +
+                    "Please check your username and reset code.");
+        }
+
+        //Update the password and salt
+        user.setPassword(resetDto.getNewPassword());
+        return this.createOrUpdateUser(user, true);
     }
 
 

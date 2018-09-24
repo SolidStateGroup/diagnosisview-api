@@ -23,11 +23,8 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 
 /**
@@ -37,13 +34,11 @@ import java.util.List;
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    // Replace sender@example.com with your "From" address.
-    // This address must be verified with Amazon SES.
-    @Value("${ALERT_EMAILS_FROM:ALERT_EMAILS_FROM}")
+    @Value("${EMAILS_FROM:EMAILS_FROM}")
     private String from;
 
-    @Value("${ALERT_EMAILS_SUBJECT:Error}")
-    private String subject;
+    @Value("${FEEDBACK_EMAIL:FEEDBACK_EMAIL}")
+    private String feedbackEmail;
 
 
     @Value("${ALERT_EMAILS_ACCESS_ID:ACCESS_KEY}")
@@ -53,6 +48,10 @@ public class EmailServiceImpl implements EmailService {
     @Value("${ALERT_EMAILS_ACCESS_SECRET:ACCESS_SECRET}")
     private String accessToken;
 
+
+    private final String resetPasswordSubject = "DiagnosisView Reset Password";
+    private final String feedbackSubject = "DiagnosisView Feedback";
+
     /**
      * {@inheritDoc}.
      */
@@ -60,13 +59,19 @@ public class EmailServiceImpl implements EmailService {
     public void sendForgottenPasswordEmail(final User user, final String resetCode) throws IOException {
 
         try {
-            String html = generateEmail(user, resetCode);
+            String html = generateResetPasswordEmail(user, resetCode);
+            AmazonSimpleEmailService client;
 
-            AmazonSimpleEmailService client =
-                    AmazonSimpleEmailServiceClientBuilder.standard()
-                            .withCredentials(new AWSStaticCredentialsProvider(
-                                    new BasicAWSCredentials(accessId, accessToken)))
-                            .withRegion(Regions.EU_WEST_1).build();
+            if (accessId != null && accessToken != null) {
+                client = AmazonSimpleEmailServiceClientBuilder.standard()
+                        .withCredentials(new AWSStaticCredentialsProvider(
+                                new BasicAWSCredentials(accessId, accessToken)))
+                        .withRegion(Regions.EU_WEST_1).build();
+            } else {
+                client = AmazonSimpleEmailServiceClientBuilder.standard()
+                        .withRegion(Regions.EU_WEST_1).build();
+            }
+
             SendEmailRequest request = new SendEmailRequest()
                     .withDestination(
                             new Destination().withToAddresses(user.getEmailAddress()))
@@ -74,7 +79,7 @@ public class EmailServiceImpl implements EmailService {
                             .withBody(new Body()
                                     .withHtml(new Content().withCharset("UTF-8").withData(html)))
                             .withSubject(new Content()
-                                    .withCharset("UTF-8").withData(subject + " " + getCurrentTimeStamp())))
+                                    .withCharset("UTF-8").withData(resetPasswordSubject)))
                     .withSource(from);
             client.sendEmail(request);
             log.info("Error Email Sent");
@@ -84,18 +89,58 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendFeedback(String subject, String message) {
+    public void sendFeedback(final User user, final String message) {
 
+        try {
+            String html = generateFeedbackEmail(user, message);
+
+            AmazonSimpleEmailService client =
+                    AmazonSimpleEmailServiceClientBuilder.standard()
+                            .withCredentials(new AWSStaticCredentialsProvider(
+                                    new BasicAWSCredentials(accessId, accessToken)))
+                            .withRegion(Regions.EU_WEST_1).build();
+
+            //Prepare the send email request.
+            SendEmailRequest request = new SendEmailRequest()
+                    .withDestination(
+                            new Destination().withToAddresses(user.getEmailAddress()))
+                    .withMessage(new Message()
+                            .withBody(new Body()
+                                    .withHtml(new Content().withCharset("UTF-8").withData(html)))
+                            .withSubject(new Content()
+                                    .withCharset("UTF-8").withData(feedbackSubject)))
+                    .withSource(from);
+            client.sendEmail(request);
+            log.info("Error Email Sent");
+        } catch (Exception ex) {
+            log.severe(String.format("The email was not sent. Error message: %s", ex.getMessage()));
+        }
     }
 
 
-    private String generateEmail(final User user, final String resetCode) throws IOException {
+    private String generateFeedbackEmail(final User user, final String body) throws IOException {
+        MustacheFactory mf = new DefaultMustacheFactory();
+        Mustache m = mf.compile("feedback-email.mustache");
+
+        HashMap<String, String> content = new HashMap<>();
+        content.put("body", body);
+
+        if (user != null) {
+            content.put("username", "Sent from user: " + user.getUsername());
+        }
+
+        StringWriter writer = new StringWriter();
+        m.execute(writer, content).flush();
+        return writer.toString();
+    }
+
+    private String generateResetPasswordEmail(final User user, final String resetCode) throws IOException {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache m = mf.compile("reset-password.mustache");
 
         HashMap<String, String> content = new HashMap<>();
-        content.put("title", "hello");
-        content.put("text", "main content");
+        content.put("name", user.getFirstName());
+        content.put("code", resetCode);
 
         StringWriter writer = new StringWriter();
         m.execute(writer, content).flush();
