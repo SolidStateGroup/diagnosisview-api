@@ -62,7 +62,7 @@ public class ApiController extends BaseController {
      */
     @RequestMapping(value = "/account", method = RequestMethod.GET)
     public User getAccount(final HttpServletRequest request) throws Exception {
-        return this.getUserFromRequest(request);
+        return this.checkIsAuthenticated(request);
     }
 
 

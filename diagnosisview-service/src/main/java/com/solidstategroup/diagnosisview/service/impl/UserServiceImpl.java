@@ -366,8 +366,9 @@ public class UserServiceImpl implements UserService {
     public User getUserByToken(final String token) throws Exception {
         User user = userRepository.findOneByToken(token);
 
+        //If no user is found, return null
         if (user == null) {
-            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
+            return null;
         }
 
         //Admin users will always have a subscription

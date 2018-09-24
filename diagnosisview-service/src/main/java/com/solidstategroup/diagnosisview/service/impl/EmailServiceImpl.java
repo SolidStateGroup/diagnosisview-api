@@ -41,11 +41,11 @@ public class EmailServiceImpl implements EmailService {
     private String feedbackEmail;
 
 
-    @Value("${ALERT_EMAILS_ACCESS_ID:ACCESS_KEY}")
+    @Value("${ACCESS_KEY:ACCESS_KEY}")
     private String accessId;
 
 
-    @Value("${ALERT_EMAILS_ACCESS_SECRET:ACCESS_SECRET}")
+    @Value("${ACCESS_SECRET:ACCESS_SECRET}")
     private String accessToken;
 
 
@@ -103,7 +103,7 @@ public class EmailServiceImpl implements EmailService {
             //Prepare the send email request.
             SendEmailRequest request = new SendEmailRequest()
                     .withDestination(
-                            new Destination().withToAddresses(user.getEmailAddress()))
+                            new Destination().withToAddresses(feedbackEmail))
                     .withMessage(new Message()
                             .withBody(new Body()
                                     .withHtml(new Content().withCharset("UTF-8").withData(html)))

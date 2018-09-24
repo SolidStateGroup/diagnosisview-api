@@ -49,6 +49,9 @@ public class BaseController {
     public void isAdminUser(final HttpServletRequest request) throws Exception {
         User user = userService.getUserByToken(getToken(request));
 
+        if (user == null) {
+            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
+        }
         //Throw an error if the user is not an admin
         if (!user.getRoleType().equals(RoleType.ADMIN)) {
             throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
@@ -67,10 +70,6 @@ public class BaseController {
         if (StringUtils.isEmpty(token) || "undefined".equals(token)) {
             // not in header
             token = request.getParameter("token");
-        }
-
-        if (token == null) {
-            throw new NotAuthorisedException("You are not authenticated, please try logging in again.");
         }
 
         return token;

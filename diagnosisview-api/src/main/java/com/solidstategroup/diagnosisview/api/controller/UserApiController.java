@@ -215,7 +215,7 @@ public class UserApiController extends BaseController {
     public User deleteHistoryItem(@RequestBody final SavedUserCode history,
                                   final HttpServletRequest request) throws Exception {
         //Get the user from the request
-        User user = this.getUserFromRequest(request);
+        User user = this.checkIsAuthenticated(request);
         if (user == null) {
             throw new Exception("You are not authenticated, please login to save favourites");
         }
