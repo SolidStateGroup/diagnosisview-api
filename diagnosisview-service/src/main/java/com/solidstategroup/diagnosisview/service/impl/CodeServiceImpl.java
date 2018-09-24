@@ -6,8 +6,10 @@ import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
+import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,8 @@ public class CodeServiceImpl implements CodeService {
     @Autowired
     private CodeCategoryRepository categoryRepository;
 
+    @Autowired
+    private LinkRepository linkRepository;
 
     @Override
     @Cacheable("getAllCategories")
@@ -95,6 +99,20 @@ public class CodeServiceImpl implements CodeService {
     @Override
     public Code getCode(String code) {
         return codeRepository.findOneByCode(code);
+    }
+
+    @Override
+    public Link getLink(Long id) {
+        return linkRepository.getOne(id);
+    }
+
+    @Override
+    public Link saveLink(Link link) {
+        Link existingLink = linkRepository.getOne(link.getId());
+        //Currently you can only update certain fields
+        existingLink.setDifficultyLevel(link.getDifficultyLevel());
+
+        return linkRepository.save(existingLink);
     }
 
     @Override

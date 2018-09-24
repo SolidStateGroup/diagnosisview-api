@@ -3,6 +3,7 @@ package com.solidstategroup.diagnosisview.service;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 
 import java.util.List;
 
@@ -26,9 +27,25 @@ public interface CodeService {
     /**
      * Get a code by a given code
      * @param code the code to lookup
-     * @return rhw found code
+     * @return the found code
      */
     Code getCode(String code);
+
+
+    /**
+     * Get a link by the id
+     * @param id Id of the code being sent
+     * @return rhw found code
+     */
+    Link getLink(Long id);
+
+
+    /**
+     * Save a link with update fields.
+     * @param link the link to save
+     * @return the updated link
+     */
+    Link saveLink(Link link);
 
     /**
      * Delete a code from the db

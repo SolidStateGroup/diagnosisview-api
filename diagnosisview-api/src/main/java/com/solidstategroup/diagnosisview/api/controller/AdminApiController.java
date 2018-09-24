@@ -7,7 +7,7 @@ import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.LinkRepository;
+import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
@@ -31,7 +31,7 @@ public class AdminApiController extends BaseController {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
-    private LinkRepository linkRepository;
+    private CodeService codeService;
     private ExternalStandardRepository externalStandardRepository;
 
     /**
@@ -40,9 +40,11 @@ public class AdminApiController extends BaseController {
      * @param userService UserService manages the dashboard users
      */
     @Autowired
-    public AdminApiController(final UserService userService) {
+    public AdminApiController(final UserService userService,
+                              final CodeService codeService) {
         super();
         this.userService = userService;
+        this.codeService = codeService;
     }
 
     /**
@@ -117,7 +119,6 @@ public class AdminApiController extends BaseController {
         return userService.createOrUpdateUser(user, true);
     }
 
-
     /**
      * Update a DV link
      *
@@ -134,19 +135,14 @@ public class AdminApiController extends BaseController {
         //Check if the user is an admin
         isAdminUser(request);
 
-        Link existingLink = linkRepository.getOne(link.getId());
+        Link existingLink = codeService.getLink(link.getId());
 
         if (existingLink == null) {
             throw new BadRequestException("The link does not exist within DiagnosisView.");
 
         }
-        //Currently you can only update certain fields
-        existingLink.setDifficultyLevel(link.getDifficultyLevel());
-
-        return linkRepository.save(existingLink);
+        return codeService.saveLink(link);
     }
-
-
 
     /**
      * Return all external standards within PV
@@ -164,10 +160,6 @@ public class AdminApiController extends BaseController {
 
         return externalStandardRepository.findAll();
     }
-
-
-
-
 
     /**
      * Update a user.
