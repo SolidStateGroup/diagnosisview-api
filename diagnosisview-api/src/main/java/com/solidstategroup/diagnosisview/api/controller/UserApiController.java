@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.service.UserService;
@@ -63,6 +64,27 @@ public class UserApiController extends BaseController {
          return userService.createOrUpdateUser(user, false);
     }
 
+
+
+    @RequestMapping(value = "/forgotten-password", method = RequestMethod.POST)
+    @ApiOperation(value = "Forgotten password",
+            notes = "Sends a reset password email to a user",
+            response = User.class)
+    public void forgottenPassword(@RequestBody final User user,
+                           final HttpServletRequest request) throws Exception {
+        //TODO Implement
+
+    }
+
+    @RequestMapping(value = "/reset-password", method = RequestMethod.POST)
+    @ApiOperation(value = "Reset password",
+            notes = "Reset the password of a user with the given reset code",
+            response = User.class)
+    public void forgottenPassword(@RequestBody final PasswordResetDto passwordResetDto,
+                                  final HttpServletRequest request) throws Exception {
+        //TODO Implement
+
+    }
 
     /**
      * Save a favourite for the user.

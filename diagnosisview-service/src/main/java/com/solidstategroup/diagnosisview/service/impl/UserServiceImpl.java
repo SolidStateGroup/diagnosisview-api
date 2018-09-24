@@ -19,10 +19,12 @@ import com.solidstategroup.diagnosisview.model.Utils;
 import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
+import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
 import lombok.extern.java.Log;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +53,7 @@ public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
     private AppleReceiptValidation appleReceiptValidation;
+    private EmailService emailService;
 
     @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
     private String appleUrlString;
@@ -65,9 +68,11 @@ public class UserServiceImpl implements UserService {
      */
     @Autowired
     public UserServiceImpl(final UserRepository userRepository,
-                           final AppleReceiptValidation appleReceiptValidation) {
+                           final AppleReceiptValidation appleReceiptValidation,
+                           final EmailService emailService) {
         this.userRepository = userRepository;
         this.appleReceiptValidation = appleReceiptValidation;
+        this.emailService = emailService;
     }
 
     /**
@@ -348,8 +353,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<User> getExpiringUsers() throws Exception {
-       return userRepository
-               .findByExpiryDateLessThanEqualAndActiveSubscription(new DateTime().plusWeeks(1).toDate(), true);
+        return userRepository
+                .findByExpiryDateLessThanEqualAndActiveSubscription(new DateTime().plusWeeks(1).toDate(), true);
     }
 
     /**
@@ -388,6 +393,36 @@ public class UserServiceImpl implements UserService {
     /**
      * {@inheritDoc}
      */
+    @Override
+    public void sendResetPassword(User user) throws Exception {
+        int length = 6;
+        boolean useLetters = true;
+        boolean useNumbers = true;
+        String generatedString = RandomStringUtils.random(length, useLetters, useNumbers);
+
+
+        User existingUser = userRepository.findOneByUsername(user.getUsername());
+        if (existingUser.getResetExpiryDate() == null || existingUser.getResetExpiryDate().before(new Date())) {
+            existingUser.setResetCode(generatedString);
+            DateTime oneDayAdded = new DateTime().plusDays(1);
+            existingUser.setResetExpiryDate(oneDayAdded.toDate());
+        }
+
+        emailService.sendForgottenPasswordEmail(user, existingUser.getResetCode());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public User resetPassword(User user, String resetCode) {
+        return null;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
     public User verifyAppleReceiptData(User user, String receipt) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         //validate the receipt using the sandbox (or use false for production)
@@ -395,7 +430,7 @@ public class UserServiceImpl implements UserService {
         //prints response
         log.info(responseJson.toString());
 
-        PaymentDetails details = new PaymentDetails(responseJson.toString(),null, PaymentType.IOS);
+        PaymentDetails details = new PaymentDetails(responseJson.toString(), null, PaymentType.IOS);
         List<PaymentDetails> payments = savedUser.getPaymentData();
         payments.add(details);
         savedUser.setPaymentData(payments);
@@ -420,7 +455,7 @@ public class UserServiceImpl implements UserService {
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
         Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
-        return verifyAndroidPurchase(savedUser ,
+        return verifyAndroidPurchase(savedUser,
                 new GoogleReceipt(data.get("packageName"), data.get("productId"), data.get("purchaseToken")));
     }
 

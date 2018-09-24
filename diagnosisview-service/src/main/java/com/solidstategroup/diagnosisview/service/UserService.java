@@ -138,6 +138,24 @@ public interface UserService {
      */
     List<User> getAllUsers() throws Exception;
 
+
+    /**
+     * Send the code to allow a user to reset their password
+     * @param user  - User to reset password of
+     * @throws Exception
+     */
+    void sendResetPassword(final User user) throws Exception;
+
+
+    /**
+     * Reset the users password using the reset code they enter
+     * @param user - User the user to reset
+     * @param resetCode String the users
+     * @return
+     */
+    User resetPassword(final User user, final String resetCode);
+
+
     /**
      * Validates the Apple receipt against the api
      *

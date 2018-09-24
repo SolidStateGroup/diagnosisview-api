@@ -1,14 +1,18 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.model.User;
+
+import java.io.IOException;
+
 /**
- * Service to handle building sector DTOs from data retrieved from KeyedIn.
+ * Service to handle sending emails to sers when resetting a password
  */
 public interface EmailService {
 
-    /**
-     * Sends an alert email when a system issue occurs.
-     *
-     * @param message - Exception message to send
-     */
-    void sendAlertEmail(final String message);
+    void sendForgottenPasswordEmail(final User user, final String resetCode) throws IOException;
+
+
+    void sendFeedback(String subject, String message);
+
+
 }

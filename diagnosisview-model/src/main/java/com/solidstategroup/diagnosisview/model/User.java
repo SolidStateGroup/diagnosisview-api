@@ -80,6 +80,14 @@ public class User {
     @Column
     private String salt;
 
+    @Getter(AccessLevel.PRIVATE)
+    @Column
+    private String resetCode;
+
+    @Getter(AccessLevel.PRIVATE)
+    @Column
+    private Date resetExpiryDate;
+
     //Field used for android subscriptions
     //When set to false, the expiry date is used
     @Column
@@ -126,7 +134,28 @@ public class User {
     }
 
     /**
+     * Retruns the date the reset code expires
+     *
+     * @return Date reset code expiry date
+     */
+    @JsonIgnore
+    public Date getResetExpiryDate() {
+        return this.resetExpiryDate;
+    }
+
+    /**
+     * Returns the reset code
+     *
+     * @return String the reset code
+     */
+    @JsonIgnore
+    public String getResetCode() {
+        return this.resetCode;
+    }
+
+    /**
      * Get the username
+     *
      * @return The username
      */
     public String getUsername() {
@@ -135,6 +164,7 @@ public class User {
 
     /**
      * Get the email address
+     *
      * @return The email address
      */
     public String getEmailAddress() {

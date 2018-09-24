@@ -11,15 +11,22 @@ import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
+import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -34,11 +41,6 @@ public class EmailServiceImpl implements EmailService {
     // This address must be verified with Amazon SES.
     @Value("${ALERT_EMAILS_FROM:ALERT_EMAILS_FROM}")
     private String from;
-
-    // Replace recipient@example.com with a "To" address. If your account
-    // is still in the sandbox, this address must be verified.
-    @Value("${ALERT_EMAILS_TO:ALERT_EMAILS_TO}")
-    private String to;
 
     @Value("${ALERT_EMAILS_SUBJECT:Error}")
     private String subject;
@@ -55,10 +57,10 @@ public class EmailServiceImpl implements EmailService {
      * {@inheritDoc}.
      */
     @Override
-    public void sendAlertEmail(final String message) {
+    public void sendForgottenPasswordEmail(final User user, final String resetCode) throws IOException {
 
         try {
-            List<String> list = new ArrayList<>(Arrays.asList(to.split(",")));
+            String html = generateEmail(user, resetCode);
 
             AmazonSimpleEmailService client =
                     AmazonSimpleEmailServiceClientBuilder.standard()
@@ -67,11 +69,10 @@ public class EmailServiceImpl implements EmailService {
                             .withRegion(Regions.EU_WEST_1).build();
             SendEmailRequest request = new SendEmailRequest()
                     .withDestination(
-                            new Destination().withToAddresses(list))
+                            new Destination().withToAddresses(user.getEmailAddress()))
                     .withMessage(new Message()
                             .withBody(new Body()
-                                    .withText(new Content()
-                                            .withCharset("UTF-8").withData(message)))
+                                    .withHtml(new Content().withCharset("UTF-8").withData(html)))
                             .withSubject(new Content()
                                     .withCharset("UTF-8").withData(subject + " " + getCurrentTimeStamp())))
                     .withSource(from);
@@ -80,6 +81,25 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception ex) {
             log.severe(String.format("The email was not sent. Error message: %s", ex.getMessage()));
         }
+    }
+
+    @Override
+    public void sendFeedback(String subject, String message) {
+
+    }
+
+
+    private String generateEmail(final User user, final String resetCode) throws IOException {
+        MustacheFactory mf = new DefaultMustacheFactory();
+        Mustache m = mf.compile("reset-password.mustache");
+
+        HashMap<String, String> content = new HashMap<>();
+        content.put("title", "hello");
+        content.put("text", "main content");
+
+        StringWriter writer = new StringWriter();
+        m.execute(writer, content).flush();
+        return writer.toString();
     }
 
     /**
