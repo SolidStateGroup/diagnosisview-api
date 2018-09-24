@@ -4,10 +4,10 @@ package com.solidstategroup.diagnosisview.service.impl;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
+import com.solidstategroup.diagnosisview.model.codes.Category;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
+import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -33,7 +33,7 @@ public class CodeServiceImpl implements CodeService {
     private CodeRepository codeRepository;
 
     @Autowired
-    private CodeCategoryRepository categoryRepository;
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private LinkRepository linkRepository;
@@ -41,14 +41,14 @@ public class CodeServiceImpl implements CodeService {
     @Override
     @Cacheable("getAllCategories")
     public List<CategoryDto> getAllCategories() {
-        List<CodeCategory> categories = categoryRepository.findAll();
+        List<Category> categories = categoryRepository.findAll();
         ArrayList<CategoryDto> categoryDtos = new ArrayList<>();
 
-        categories.stream().forEach(codeCategory -> categoryDtos
-                .add(new CategoryDto(codeCategory.getCategory().getNumber(),
-                        codeCategory.getCategory().getIcd10Description(),
-                        codeCategory.getCategory().getFriendlyDescription(),
-                        codeCategory.getCategory().isHidden())));
+        categories.stream().forEach(category -> categoryDtos
+                .add(new CategoryDto(category.getNumber(),
+                        category.getIcd10Description(),
+                        category.getFriendlyDescription(),
+                        category.isHidden())));
 
         return categoryDtos;
     }
