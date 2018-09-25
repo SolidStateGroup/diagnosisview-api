@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import springfox.documentation.annotations.Cacheable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -89,10 +90,12 @@ public class CodeServiceImpl implements CodeService {
 
             codeDto.setFriendlyName(code.getPatientFriendlyName());
 
-            codeDtoList.add(codeDto);
+            if (codeDto != null) {
+                codeDtoList.add(codeDto);
+            }
         });
 
-        codeDtoList.sort(Comparator.comparing(CodeDto::getFriendlyName));
+        Collections.sort(codeDtoList, Comparator.comparing(CodeDto::getFriendlyName));
 
         return codeDtoList;
     }

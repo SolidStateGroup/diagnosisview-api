@@ -35,14 +35,15 @@ public class Code extends AuditModel {
     @JoinColumn(name = "type_id")
     private Lookup codeType;
 
-    @Column(name = "display_order" )
+    @Column(name = "display_order")
     private Integer displayOrder;
 
     // called Name in ui
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH}, orphanRemoval = true)
+    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH},
+            orphanRemoval = true)
     private Set<CodeExternalStandard> externalStandards = new HashSet<>();
 
     // from NHS choices initially

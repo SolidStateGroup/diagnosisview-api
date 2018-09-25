@@ -33,6 +33,9 @@ public class Lookup extends AuditModel {
     @Column(name = "display_order")
     private Long displayOrder;
 
+    @Column(name = "dv_only")
+    private Boolean dvOnly;
+
     public String getValue() {
         return value;
     }
@@ -71,5 +74,16 @@ public class Lookup extends AuditModel {
 
     public void setDisplayOrder(Long displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public Boolean getDvOnly() {
+        if (dvOnly == null) {
+            return false;
+        }
+        return dvOnly;
+    }
+
+    public void setDvOnly(Boolean dvOnly) {
+        this.dvOnly = dvOnly;
     }
 }

@@ -9,4 +9,11 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface LookupRepository extends JpaRepository<Lookup, Long> {
+
+    /**
+     * Find a lookup value by the given value
+     * @param value - the lookup value
+     * @return the found Lookup
+     */
+    Lookup findOneByValue(final String value);
 }

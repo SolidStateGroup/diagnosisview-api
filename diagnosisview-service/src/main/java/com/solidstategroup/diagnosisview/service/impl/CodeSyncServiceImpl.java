@@ -12,6 +12,7 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
@@ -101,6 +102,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     @Autowired
     private LookupTypeRepository lookupTypeRepository;
 
+    private Lookup niceLinksLookup;
+    private Lookup userLink;
+
     @Override
     @Scheduled(cron = "0 0 */2 * * *")
     public void syncCodes() {
@@ -127,6 +131,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             List<Code> codes = gson.fromJson(contentString, fooType);
 
+            //Get the NICE lookup if it exists
+            populatDVLookups();
+
             codes.stream().forEach(code -> updateCode(code));
             log.info("Finished Code Sync from PatientView");
         } catch (IOException e) {
@@ -134,6 +141,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         }
 
     }
+
 
     @org.springframework.transaction.annotation.Transactional
     protected void updateCode(Code code) {
@@ -162,8 +170,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             //Check if code category exists
             for (Link link : code.getLinks()) {
-                lookupTypeRepository.save(link.getLinkType().getLookupType());
-                lookupRepository.save(link.getLinkType());
+                //If the lookupValue is a DV only value, then dont save as it will overlap
+                //In future this may need to be a check against all DV only lookup values
+                if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
+                    link.setLinkType(userLink);
+                } else {
+                    lookupTypeRepository.save(link.getLinkType().getLookupType());
+                    lookupRepository.save(link.getLinkType());
+                }
             }
 
             Set<Link> links = code.getLinks();
@@ -194,6 +208,11 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             for (Link link : links) {
                 Link existingLink = linkRepository.getOne(link.getId());
 
+                //If the link is a nice link, we should categorise it as such
+                //In the future this maybe extended into its own function
+                if (link.getLink().contains("nice.org.uk")) {
+                    link.setLinkType(niceLinksLookup);
+                }
                 //Ensure that difficulty is not overwritten
                 if (existingLink != null) {
                     link.setDifficultyLevel(existingLink.getDifficultyLevel());
@@ -210,6 +229,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             codeRepository.save(code);
         }
+    }
+
+    /**
+     * Populates the DiagnosisView specific lookup values
+     */
+    private void populatDVLookups() {
+        niceLinksLookup = lookupRepository.findOneByValue("NICE_CKS");
+        userLink = lookupRepository.findOneByValue("CUSTOM");
     }
 
     /**
