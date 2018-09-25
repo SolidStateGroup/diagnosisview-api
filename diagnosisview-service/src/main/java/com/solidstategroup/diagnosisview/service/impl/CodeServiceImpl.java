@@ -117,6 +117,7 @@ public class CodeServiceImpl implements CodeService {
         Link existingLink = linkRepository.getOne(link.getId());
         //Currently you can only update certain fields
         existingLink.setDifficultyLevel(link.getDifficultyLevel());
+        existingLink.setFreeLink(link.getFreeLink());
 
         return linkRepository.save(existingLink);
     }
