@@ -43,6 +43,9 @@ public class Link extends AuditModel {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
+    @Column(name = "free_link", nullable = false)
+    private Boolean freeLink;
+
     public Lookup getLinkType() {
         return linkType;
     }
@@ -93,5 +96,16 @@ public class Link extends AuditModel {
 
     public void setDifficultyLevel(DifficultyLevel difficultyLevel) {
         this.difficultyLevel = difficultyLevel;
+    }
+
+    public Boolean getFreeLink() {
+        if (freeLink == null) {
+            return true;
+        }
+        return freeLink;
+    }
+
+    public void setFreeLink(Boolean freeLink) {
+        this.freeLink = freeLink;
     }
 }
