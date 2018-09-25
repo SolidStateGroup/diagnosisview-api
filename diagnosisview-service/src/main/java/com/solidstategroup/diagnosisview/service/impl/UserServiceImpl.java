@@ -321,8 +321,6 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalStateException("This account has been deleted. " +
                         "Please contact support@diagnosisview.org.");
             }
-            //Update the user token on a sucessful login
-            user.setToken(UUID.randomUUID().toString());
 
             //Admin users will always have a subscription
             if (user.getRoleType().equals(RoleType.ADMIN)) {
