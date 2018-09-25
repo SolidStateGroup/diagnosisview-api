@@ -407,6 +407,7 @@ public class UserServiceImpl implements UserService {
             existingUser.setResetCode(generatedString);
             DateTime oneDayAdded = new DateTime().plusHours(1);
             existingUser.setResetExpiryDate(oneDayAdded.toDate());
+            userRepository.save(existingUser);
         }
 
         emailService.sendForgottenPasswordEmail(user, existingUser.getResetCode());
