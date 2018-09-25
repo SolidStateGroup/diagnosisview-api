@@ -206,7 +206,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             //Add in code specific links
             for (Link link : links) {
-                Link existingLink = linkRepository.getOne(link.getId());
+                Link existingLink = linkRepository.findOne(link.getId());
 
                 //If the link is a nice link, we should categorise it as such
                 //In the future this maybe extended into its own function

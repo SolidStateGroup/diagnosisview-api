@@ -109,12 +109,12 @@ public class CodeServiceImpl implements CodeService {
 
     @Override
     public Link getLink(Long id) {
-        return linkRepository.getOne(id);
+        return linkRepository.findOne(id);
     }
 
     @Override
     public Link saveLink(Link link) {
-        Link existingLink = linkRepository.getOne(link.getId());
+        Link existingLink = linkRepository.findOne(link.getId());
         //Currently you can only update certain fields
         existingLink.setDifficultyLevel(link.getDifficultyLevel());
         existingLink.setFreeLink(link.getFreeLink());

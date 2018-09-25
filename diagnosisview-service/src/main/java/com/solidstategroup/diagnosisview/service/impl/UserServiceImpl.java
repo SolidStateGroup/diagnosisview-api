@@ -405,7 +405,7 @@ public class UserServiceImpl implements UserService {
         User existingUser = userRepository.findOneByUsername(user.getUsername());
         if (existingUser.getResetExpiryDate() == null || existingUser.getResetExpiryDate().before(new Date())) {
             existingUser.setResetCode(generatedString);
-            DateTime oneDayAdded = new DateTime().plusDays(1);
+            DateTime oneDayAdded = new DateTime().plusHours(1);
             existingUser.setResetExpiryDate(oneDayAdded.toDate());
         }
 
