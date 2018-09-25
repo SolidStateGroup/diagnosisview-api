@@ -94,8 +94,10 @@ public class CodeServiceImpl implements CodeService {
                 codeDtoList.add(codeDto);
             }
         });
+        codeDtoList.removeAll(Collections.singleton(null));
 
-        Collections.sort(codeDtoList, Comparator.comparing(CodeDto::getFriendlyName));
+        codeDtoList.sort(Comparator.comparing(CodeDto::getFriendlyName,
+                Comparator.nullsFirst(Comparator.naturalOrder())));
 
         return codeDtoList;
     }
