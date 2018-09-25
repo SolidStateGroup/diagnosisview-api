@@ -82,7 +82,7 @@ public class EmailServiceImpl implements EmailService {
                                     .withCharset("UTF-8").withData(resetPasswordSubject)))
                     .withSource(from);
             client.sendEmail(request);
-            log.info("Error Email Sent");
+            log.info("Forgotten password Email Sent to " + user.getEmailAddress());
         } catch (Exception ex) {
             log.severe(String.format("The email was not sent. Error message: %s", ex.getMessage()));
         }
@@ -111,7 +111,7 @@ public class EmailServiceImpl implements EmailService {
                                     .withCharset("UTF-8").withData(feedbackSubject)))
                     .withSource(from);
             client.sendEmail(request);
-            log.info("Error Email Sent");
+            log.info("Feedback Email Sent");
         } catch (Exception ex) {
             log.severe(String.format("The email was not sent. Error message: %s", ex.getMessage()));
         }

@@ -401,7 +401,7 @@ public class UserServiceImpl implements UserService {
         int length = 6;
         boolean useLetters = true;
         boolean useNumbers = true;
-        String generatedString = RandomStringUtils.random(length, useLetters, useNumbers);
+        String generatedString = RandomStringUtils.random(length, useLetters, useNumbers).toUpperCase();
 
 
         User existingUser = userRepository.findOneByUsername(user.getUsername());
@@ -433,7 +433,7 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Your request has expired. Please request a new reset code");
         }
         //Check the reset code is ok
-        if (!user.getResetCode().equals(resetDto.getResetCode())) {
+        if (!user.getResetCode().equals(resetDto.getResetCode().toUpperCase())) {
             throw new BadRequestException("We were unable to validate your request. " +
                     "Please check your username and reset code.");
         }
