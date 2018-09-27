@@ -105,7 +105,7 @@ public class Link extends AuditModel {
 
     public Boolean getFreeLink() {
         if (freeLink == null) {
-            return true;
+            return false;
         }
         return freeLink;
     }
