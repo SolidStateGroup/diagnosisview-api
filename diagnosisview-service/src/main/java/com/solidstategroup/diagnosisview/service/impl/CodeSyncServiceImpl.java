@@ -13,6 +13,7 @@ import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
@@ -212,6 +213,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                 //In the future this maybe extended into its own function
                 if (link.getLink().contains("nice.org.uk")) {
                     link.setLinkType(niceLinksLookup);
+                    if (existingLink == null || existingLink.hasDifficultyLevelSet()) {
+                        link.setDifficultyLevel(DifficultyLevel.AMBER);
+                    }
                 }
                 //Ensure that difficulty is not overwritten
                 if (existingLink != null) {

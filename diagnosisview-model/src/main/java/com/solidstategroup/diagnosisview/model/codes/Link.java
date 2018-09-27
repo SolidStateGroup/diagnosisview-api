@@ -98,6 +98,11 @@ public class Link extends AuditModel {
         this.difficultyLevel = difficultyLevel;
     }
 
+
+    public boolean hasDifficultyLevelSet() {
+        return this.difficultyLevel != null;
+    }
+
     public Boolean getFreeLink() {
         if (freeLink == null) {
             return true;
