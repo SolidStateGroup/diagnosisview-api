@@ -1,5 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -15,6 +17,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "pv_lookup_value")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Lookup extends AuditModel {
 
     @Column(name = "value")

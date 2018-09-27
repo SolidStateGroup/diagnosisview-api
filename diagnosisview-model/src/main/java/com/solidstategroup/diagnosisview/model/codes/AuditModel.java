@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.solidstategroup.diagnosisview.model.User;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -19,6 +20,7 @@ import java.util.Date;
  * Created on 03/06/2014
  */
 @MappedSuperclass
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class AuditModel extends SimpleAuditModel {
 
     @Column(name = "last_update_date")

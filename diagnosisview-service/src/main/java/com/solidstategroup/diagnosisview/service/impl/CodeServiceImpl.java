@@ -68,7 +68,7 @@ public class CodeServiceImpl implements CodeService {
 
             code.getLinks().stream().forEach(link -> linkDtos
                     .add(new LinkDto(link.getLinkType(), link.getDifficultyLevel(),
-                            link.getLink(), link.getFreeLink())));
+                            link.getLink(), link.getName(), link.getFreeLink())));
 
             codeDto.setLinks(new HashSet<>(linkDtos));
 
