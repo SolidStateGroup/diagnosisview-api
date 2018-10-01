@@ -275,12 +275,12 @@ public class UserServiceImpl implements UserService {
         User savedUser = this.getUser(user.getUsername());
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
         savedUser.getFavourites().stream().forEach(savedCode -> {
-            savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+            savedCodesMap.put(savedUserCode.getLinkId() + savedCode.getCode() + savedCode.getType(), savedCode);
         });
 
 
-        if (savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
-            savedCodesMap.remove(savedUserCode.getCode() + savedUserCode.getType());
+        if (savedCodesMap.containsKey(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType())) {
+            savedCodesMap.remove(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType());
         }
 
 
