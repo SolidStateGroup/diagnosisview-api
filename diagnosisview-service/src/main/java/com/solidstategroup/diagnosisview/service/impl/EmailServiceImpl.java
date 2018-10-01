@@ -23,8 +23,10 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
@@ -38,7 +40,7 @@ public class EmailServiceImpl implements EmailService {
     private String from;
 
     @Value("${FEEDBACK_EMAIL:FEEDBACK_EMAIL}")
-    private String feedbackEmail;
+    private String feedbackEmails;
 
 
     @Value("${ACCESS_KEY:ACCESS_KEY}")
@@ -84,7 +86,7 @@ public class EmailServiceImpl implements EmailService {
 
         try {
             String html = generateFeedbackEmail(user, message);
-
+            List<String> feedbackEmail = Arrays.asList(feedbackEmails.split(","));
             AmazonSimpleEmailService client = generateEmailService();
 
             //Prepare the send email request.
