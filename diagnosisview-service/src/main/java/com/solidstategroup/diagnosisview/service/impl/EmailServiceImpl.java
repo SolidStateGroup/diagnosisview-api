@@ -111,7 +111,7 @@ public class EmailServiceImpl implements EmailService {
      * Generates a simple email service to send emails from DV.org
      * @return the email service
      */
-    private AmazonSimpleEmailService generateEmailService() {
+    protected AmazonSimpleEmailService generateEmailService() {
         AmazonSimpleEmailService client;
 
         if ((accessId == null && accessToken == null) || (accessToken.length() == 0 && accessId.length() == 0)) {
@@ -127,7 +127,7 @@ public class EmailServiceImpl implements EmailService {
         return client;
     }
 
-    private String generateFeedbackEmail(final User user, final String body) throws IOException {
+    protected String generateFeedbackEmail(final User user, final String body) throws IOException {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache m = mf.compile("feedback-email.mustache");
 

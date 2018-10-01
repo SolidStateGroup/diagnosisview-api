@@ -4,6 +4,7 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import com.solidstategroup.diagnosisview.model.SavedUserCode
 import com.solidstategroup.diagnosisview.model.User
 import com.solidstategroup.diagnosisview.repository.UserRepository
+import com.solidstategroup.diagnosisview.service.EmailService
 import com.solidstategroup.diagnosisview.service.UserService
 import com.solidstategroup.diagnosisview.service.impl.UserServiceImpl
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation
@@ -19,6 +20,9 @@ class UserServiceTest extends Specification {
     UserRepository userRepository;
 
     @Autowired
+    EmailService emailService;
+
+    @Autowired
     AppleReceiptValidation appleReceiptValidation;
 
     UserService userService;
@@ -26,11 +30,11 @@ class UserServiceTest extends Specification {
     SavedUserCode savedCode;
 
     def setup() {
-        userService = new UserServiceImpl(userRepository, appleReceiptValidation);
+        userService = new UserServiceImpl(userRepository, appleReceiptValidation, emailService);
 
         user = new User();
         user.username = "testerman3"
-        savedCode = new SavedUserCode("CODE", "type", new Date());
+        savedCode = new SavedUserCode(1L, "CODE", "type", new Date());
         List<SavedUserCode> savedUserCodeList = new ArrayList<>();
         savedUserCodeList.add(savedCode);
         if (userService.getUser(user.username) == null) {
@@ -38,15 +42,15 @@ class UserServiceTest extends Specification {
         }
     }
 
-    def "Get User"() {
+    def 'Get User'() {
         when:
         def savedUser = userService.getUser(user.username)
-        then: "should return correct user"
+        then: 'should return correct user'
         savedUser != null
         savedUser.username.equals(user.username)
     }
 
-    def "Test Remove Favourite"() {
+    def 'Test Remove Favourite'() {
         when:
         userService.addFavouriteToUser(user, savedCode);
         and:

@@ -1,4 +1,4 @@
-package com.solidstategroup.diagnosisview.service.test
+package com.solidstategroup.diagnosisview.service.implt
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import com.solidstategroup.diagnosisview.model.SavedUserCode
@@ -13,19 +13,19 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 
-@ContextConfiguration(classes = TestServiceConfig)
 class EmailServiceTest extends Specification {
 
     EmailServiceImpl emailService;
+    User user = new User(username:'testerman6')
 
     def setup() {
         emailService = new EmailServiceImpl()
     }
 
-    def "Generate Reset Email"() {
+    def 'Generate Reset Email'() {
         when:
-            def content = emailService.generateEmail(new User(), "CODE");
-        then: "should contain the code"
-            content.contains("CODE");
+            def content = emailService.generateFeedbackEmail(user, 'CODE')
+        then: 'should contain the code'
+            content.contains('CODE')
     }
 }

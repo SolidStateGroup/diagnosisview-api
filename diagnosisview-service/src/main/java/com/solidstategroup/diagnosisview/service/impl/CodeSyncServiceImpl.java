@@ -219,7 +219,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                 }
                 //Ensure that difficulty is not overwritten
                 if (existingLink != null) {
-                    link.setDifficultyLevel(existingLink.getDifficultyLevel());
+                    if (existingLink.hasDifficultyLevelSet()) {
+                        link.setDifficultyLevel(existingLink.getDifficultyLevel());
+                    }
                     link.setFreeLink(existingLink.getFreeLink());
                 }
 
