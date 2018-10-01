@@ -17,9 +17,18 @@ import java.util.Date;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SavedUserCode {
 
+    @ApiModelProperty(example = "123L")
+    private Long linkId;
     @ApiModelProperty(example = "coma")
     private String code;
     @ApiModelProperty(example = "MEDLINE_PLUS")
     private String type;
     private Date dateAdded;
+
+    public Long getLinkId() {
+        if (linkId == null) {
+            return 0L;
+        }
+        return linkId;
+    }
 }

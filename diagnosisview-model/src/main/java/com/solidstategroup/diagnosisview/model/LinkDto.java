@@ -10,6 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LinkDto {
+    private Long id;
     private Lookup linkType;
     private DifficultyLevel difficultyLevel;
     private String link;

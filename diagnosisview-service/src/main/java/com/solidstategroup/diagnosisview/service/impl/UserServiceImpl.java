@@ -86,13 +86,16 @@ public class UserServiceImpl implements UserService {
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
         if (savedUser.getFavourites() != null) {
             savedUser.getFavourites().stream().forEach(savedCode -> {
-                savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+                savedCodesMap.put(savedCode.getLinkId() + savedCode.getCode() + savedCode.getType(), savedCode);
             });
         }
 
         savedUserCodes.stream().forEach(savedUserCode -> {
-            if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
-                savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+            if (!savedCodesMap
+                    .containsKey(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType())) {
+                savedCodesMap
+                        .put(savedUserCode.getLinkId() + savedUserCode.getCode() +
+                                savedUserCode.getType(), savedUserCode);
             }
         });
 
@@ -110,12 +113,14 @@ public class UserServiceImpl implements UserService {
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
         if (savedUser.getFavourites() != null) {
             savedUser.getFavourites().stream().forEach(savedCode -> {
-                savedCodesMap.put(savedCode.getCode() + savedCode.getType(), savedCode);
+                savedCodesMap.put(savedCode.getLinkId() + savedCode.getCode() + savedCode.getType(), savedCode);
             });
         }
 
-        if (!savedCodesMap.containsKey(savedUserCode.getCode() + savedUserCode.getType())) {
-            savedCodesMap.put(savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
+        if (!savedCodesMap
+                .containsKey(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType())) {
+            savedCodesMap
+                    .put(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
         }
 
 
