@@ -444,6 +444,8 @@ public class UserServiceImpl implements UserService {
 
         //Update the password and salt
         user.setPassword(resetDto.getNewPassword());
+        user.setResetExpiryDate(null);
+        user.setResetCode(null);
         return this.createOrUpdateUser(user, true);
     }
 
