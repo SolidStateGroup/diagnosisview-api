@@ -103,6 +103,10 @@ public class Link extends AuditModel {
         return this.difficultyLevel != null;
     }
 
+    public boolean hasFreeLinkSet() {
+        return this.freeLink != null;
+    }
+
     public Boolean getFreeLink() {
         if (freeLink == null) {
             return false;

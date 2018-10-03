@@ -209,21 +209,25 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             for (Link link : links) {
                 Link existingLink = linkRepository.findOne(link.getId());
 
-                //If the link is a nice link, we should categorise it as such
-                //In the future this maybe extended into its own function
-                if (link.getLink().contains("nice.org.uk")) {
-                    link.setLinkType(niceLinksLookup);
-                    if (existingLink == null || existingLink.hasDifficultyLevelSet()) {
-                        link.setDifficultyLevel(DifficultyLevel.AMBER);
-                    }
-                }
                 //Ensure that difficulty is not overwritten
                 if (existingLink != null) {
                     if (existingLink.hasDifficultyLevelSet()) {
                         link.setDifficultyLevel(existingLink.getDifficultyLevel());
                     }
-                    link.setFreeLink(existingLink.getFreeLink());
+                    if (existingLink.hasFreeLinkSet()) {
+                        link.setFreeLink(existingLink.getFreeLink());
+                    }
                 }
+
+                //If the link is a NICE link, we should categorise it as such
+                //In the future this maybe extended into its own function
+                if (link.getLink().contains("nice.org.uk")) {
+                    link.setLinkType(niceLinksLookup);
+                    if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
+                        link.setDifficultyLevel(DifficultyLevel.AMBER);
+                    }
+                }
+
 
                 link.setCode(code);
                 linkRepository.save(link);
