@@ -171,6 +171,9 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             //Check if code category exists
             for (Link link : code.getLinks()) {
+                Link existingLink = linkRepository.findOne(link.getId());
+                link = checkLink(existingLink, link);
+
                 //If the lookupValue is a DV only value, then dont save as it will overlap
                 //In future this may need to be a check against all DV only lookup values
                 if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
@@ -209,26 +212,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             for (Link link : links) {
                 Link existingLink = linkRepository.findOne(link.getId());
 
-                //Ensure that difficulty is not overwritten
-                if (existingLink != null) {
-                    if (existingLink.hasDifficultyLevelSet()) {
-                        link.setDifficultyLevel(existingLink.getDifficultyLevel());
-                    }
-                    if (existingLink.hasFreeLinkSet()) {
-                        link.setFreeLink(existingLink.getFreeLink());
-                    }
-                }
-
-                //If the link is a NICE link, we should categorise it as such
-                //In the future this maybe extended into its own function
-                if (link.getLink().contains("nice.org.uk")) {
-                    link.setLinkType(niceLinksLookup);
-                    if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
-                        link.setDifficultyLevel(DifficultyLevel.AMBER);
-                    }
-                }
-
-
+                link = checkLink(existingLink, link);
                 link.setCode(code);
                 linkRepository.save(link);
             }
@@ -239,6 +223,36 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             codeRepository.save(code);
         }
+    }
+
+    /**
+     * Check an existing link and see if it has the difficulty set etc
+     *
+     * @param existingLink
+     * @param link
+     * @return
+     */
+    private Link checkLink(Link existingLink, Link link) {
+        //Ensure that difficulty is not overwritten
+        if (existingLink != null) {
+            if (existingLink.hasDifficultyLevelSet()) {
+                link.setDifficultyLevel(existingLink.getDifficultyLevel());
+            }
+            if (existingLink.hasFreeLinkSet()) {
+                link.setFreeLink(existingLink.getFreeLink());
+            }
+        }
+
+        //If the link is a NICE link, we should categorise it as such
+        //In the future this maybe extended into its own function
+        if (link.getLink().contains("nice.org.uk")) {
+            link.setLinkType(niceLinksLookup);
+            if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
+                link.setDifficultyLevel(DifficultyLevel.AMBER);
+            }
+        }
+
+        return link;
     }
 
     /**

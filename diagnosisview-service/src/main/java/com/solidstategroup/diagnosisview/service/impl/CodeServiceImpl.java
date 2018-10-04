@@ -19,6 +19,7 @@ import springfox.documentation.annotations.Cacheable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -122,6 +123,7 @@ public class CodeServiceImpl implements CodeService {
         if (link.hasFreeLinkSet()) {
             existingLink.setFreeLink(link.getFreeLink());
         }
+        existingLink.setLastUpdate(new Date());
 
         return linkRepository.save(existingLink);
     }
