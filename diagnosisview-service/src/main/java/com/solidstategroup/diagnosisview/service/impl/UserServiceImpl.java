@@ -467,7 +467,7 @@ public class UserServiceImpl implements UserService {
         payments.add(details);
         savedUser.setPaymentData(payments);
         Date expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
-                .get("original_purchase_date_ms").toString()));
+                .get("receipt_creation_date_ms").toString()));
 
         //Hard coded for ios users
         savedUser.setAutoRenewing(false);
