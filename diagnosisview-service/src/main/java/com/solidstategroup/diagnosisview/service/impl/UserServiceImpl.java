@@ -466,8 +466,21 @@ public class UserServiceImpl implements UserService {
         List<PaymentDetails> payments = savedUser.getPaymentData();
         payments.add(details);
         savedUser.setPaymentData(payments);
-        Date expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
-                .get("receipt_creation_date_ms").toString()));
+        Date expiryDate;
+
+        //If the application is the test application, then add 1 hour to the expiry time,
+        // otherwise, assume it is the production application and allow 1  year as the expiry time
+        if (responseJson.get("bundle_id").toString().equals("com.solidstategroup.dvmobile.test")) {
+            expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
+                    .get("receipt_creation_date_ms").toString()));
+            DateTime plusOneHour = new DateTime(expiryDate).plusHours(1);
+            expiryDate = plusOneHour.toDate();
+        } else {
+            expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
+                    .get("receipt_creation_date_ms").toString()));
+            DateTime plusOneHour = new DateTime(expiryDate).plusYears(1);
+            expiryDate = plusOneHour.toDate();
+        }
 
         //Hard coded for ios users
         savedUser.setAutoRenewing(false);
