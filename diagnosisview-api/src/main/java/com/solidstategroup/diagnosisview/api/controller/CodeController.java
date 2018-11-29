@@ -53,7 +53,12 @@ public class CodeController {
             notes = "Creates code within DV (unsure if required)",
             response = Code.class)
     public Code createCode(@RequestBody final Code code) throws Exception {
-        return codeService.save(code);
+        codeService.save(code);
+        code.getLinks().stream().forEach(link -> {
+            codeService.saveLink(link);
+        });
+
+        return code;
     }
 
 
@@ -67,7 +72,12 @@ public class CodeController {
             notes = "Update a user, pass the password in which will then be encrypted",
             response = Code.class)
     public Code updateCode(@RequestBody final Code code) throws Exception {
-        return codeService.save(code);
+        codeService.save(code);
+        code.getLinks().stream().forEach(link -> {
+            codeService.saveLink(link);
+        });
+
+        return code;
     }
 
 
