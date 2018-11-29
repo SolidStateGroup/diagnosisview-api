@@ -140,9 +140,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-
 
     @org.springframework.transaction.annotation.Transactional
     protected void updateCode(Code code) {
@@ -187,7 +185,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             Set<Link> links = code.getLinks();
             Set<CodeCategory> codeCategories = code.getCodeCategories();
             Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
-
 
             //Remove code related fields, this stops exceptions being thrown
             code.setLinks(new HashSet<>());
@@ -243,9 +240,13 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             }
         }
 
+        if (existingLink == null) {
+            link.setFreeLink(false);
+        }
+
         //If the link is a NICE link, we should categorise it as such
         //In the future this maybe extended into its own function
-        if (link.getLink().contains("nice.org.uk")) {
+        if (link.getLink() != null && link.getLink().contains("nice.org.uk")) {
             link.setLinkType(niceLinksLookup);
             if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
                 link.setDifficultyLevel(DifficultyLevel.AMBER);
