@@ -1,14 +1,13 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
+import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.CodeService;
-import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,23 +22,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @Log
-public class CodeController {
+public class CodeController extends BaseController {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private UserService userService;
     private CodeService codeService;
 
     /**
      * Instantiate API controller, includes required services.
-     *
-     * @param userService UserService manages the dashboard users
      */
-    @Autowired
-    public CodeController(final UserService userService, final CodeService codeService) {
-        this.userService = userService;
+    public CodeController(final CodeService codeService) {
+        super();
         this.codeService = codeService;
     }
-
 
     /**
      * Create a code within DV.
@@ -52,10 +45,9 @@ public class CodeController {
     @ApiOperation(value = "Create Code",
             notes = "Creates code within DV (unsure if required)",
             response = Code.class)
-    public Code createCode(@RequestBody final Code code) throws Exception {
+    public Code createCode(@RequestBody final Code code) {
         return codeService.save(code);
     }
-
 
     /**
      * @param code
@@ -66,21 +58,19 @@ public class CodeController {
     @ApiOperation(value = "Update Code",
             notes = "Update a user, pass the password in which will then be encrypted",
             response = Code.class)
-    public Code updateCode(@RequestBody final Code code) throws Exception {
+    public Code updateCode(@RequestBody final Code code) {
         return codeService.save(code);
     }
-
 
     /**
      * Update a code.
      *
      * @param code Code code to delete
-     * @throws Exception thrown adding projects config
      */
     @RequestMapping(value = "/code", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete code - TEST PURPOSES ONLY",
             notes = "Pass the code in with an ID to be deleted")
-    public void deleteCode(@RequestBody final Code code) throws Exception {
+    public void deleteCode(@RequestBody final Code code) {
         codeService.delete(code);
     }
 
@@ -88,43 +78,41 @@ public class CodeController {
      * Get all codes.
      *
      * @return User the updated user
-     * @throws Exception thrown adding projects config
      */
     @RequestMapping(value = "/code", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Codes",
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = CodeDto[].class)
-    public List<CodeDto> getAllCodes() throws Exception {
+    public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
+
+        User user = checkIsAuthenticated(request);
+
         return codeService.getAllCodes();
     }
-
 
     /**
      * Get all categories.
      *
-     * @return List all categories for ccode
-     * @throws Exception thrown adding projects config
+     * @return List all categories for code
      */
     @RequestMapping(value = "/category", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Categories",
             notes = "Get all categories from DiagnosisView",
             response = CategoryDto[].class)
-    public List<CategoryDto> getAllCategories() throws Exception {
+    public List<CategoryDto> getAllCategories() {
         return codeService.getAllCategories();
     }
-
 
     /**
      * Get a single code by querying using the id.
      *
      * @return User the updated user
-     * @throws Exception thrown adding projects config
      */
     @RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
     @ApiOperation(value = "Get A single Codes",
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = Code.class)
-    public Code getAllUsers(@PathVariable("code") final String code) throws Exception {
+    public Code getAllUsers(@PathVariable("code") final String code) {
         return codeService.getCode(code);
     }
 

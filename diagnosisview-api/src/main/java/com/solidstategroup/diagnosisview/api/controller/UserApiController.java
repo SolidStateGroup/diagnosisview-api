@@ -28,7 +28,6 @@ import java.util.List;
 @Log
 public class UserApiController extends BaseController {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
     private EmailService emailService;
 
