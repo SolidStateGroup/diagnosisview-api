@@ -1,6 +1,6 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
+import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,5 +37,7 @@ public class LinkRule {
     private Set<LinkRuleMapping> mappings;
 
     @Enumerated(EnumType.STRING)
-    private Institution institution;
+    private CriteriaType criteriaType;
+
+    private String criteria;
 }

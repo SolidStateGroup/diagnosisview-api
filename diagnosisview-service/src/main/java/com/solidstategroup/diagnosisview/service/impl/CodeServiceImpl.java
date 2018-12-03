@@ -7,6 +7,7 @@ import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
@@ -106,7 +107,8 @@ public class CodeServiceImpl implements CodeService {
 
         return linkRuleMapping
                 .stream()
-                .filter(r -> r.getInstitution() == institution)
+                .filter(r -> r.getCriteriaType() == CriteriaType.INSTITUTION)
+                .filter(r -> Institution.valueOf(r.getCriteria()) == institution)
                 .findFirst()
                 .map(LinkRuleMapping::getReplacementLink);
     }

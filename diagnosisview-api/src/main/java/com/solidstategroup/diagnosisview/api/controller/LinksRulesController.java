@@ -113,7 +113,12 @@ public class LinksRulesController extends BaseController {
         linkRulesService.deleteLinkRule(id);
     }
 
+    /**
+     * Converts between internal {@link LinkRule} to {@link LinkRuleDto}
+     * @param lt {@link LinkRule} for repository
+     * @return Dto to send to FE
+     */
     private LinkRuleDto buildLinkRuleDto(LinkRule lt) {
-        return new LinkRuleDto(lt.getId(), lt.getLink(), lt.getTransform(), lt.getInstitution());
+        return new LinkRuleDto(lt.getId(), lt.getLink(), lt.getTransform(), lt.getCriteriaType(), lt.getCriteria());
     }
 }

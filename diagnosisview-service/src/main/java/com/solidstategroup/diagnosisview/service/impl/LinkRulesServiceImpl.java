@@ -1,8 +1,11 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleRepository;
@@ -35,11 +38,21 @@ public class LinkRulesServiceImpl implements LinkRulesService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LinkRule addRule(LinkRuleDto linkRuleDto) {
 
+        // For now we are only handling institution. This could change in
+        // the future.
+        Institution institution;
+        if (linkRuleDto.getCriteriaType().equals(CriteriaType.INSTITUTION)) {
+            institution = Institution.valueOf(linkRuleDto.getCriteria());
+        } else {
+            throw new BadRequestException("Unknown Criteria Type");
+        }
+
         LinkRule linkRule = linkRuleRepository.save(LinkRule
                 .builder()
                 .transform(linkRuleDto.getTransformation())
                 .link(linkRuleDto.getLink())
-                .institution(linkRuleDto.getInstitution())
+                .criteriaType(CriteriaType.INSTITUTION)
+                .criteria(institution.toString())
                 .build());
 
         Set<LinkRuleMapping> linkRuleMappings =
@@ -51,7 +64,8 @@ public class LinkRulesServiceImpl implements LinkRulesService {
                                         .builder()
                                         .link(link)
                                         .rule(linkRule)
-                                        .institution(linkRuleDto.getInstitution())
+                                        .criteriaType(CriteriaType.INSTITUTION)
+                                        .criteria(institution.toString())
                                         .replacementLink(transformLink(
                                                 link.getLink(), linkRule.getTransform(), linkRule.getLink()))
                                         .build())
@@ -73,7 +87,6 @@ public class LinkRulesServiceImpl implements LinkRulesService {
             throw new Exception();
         }
 
-        current.setInstitution(linkRuleDto.getInstitution());
         current.setTransform(linkRuleDto.getTransformation());
         current.setLink(linkRuleDto.getLink());
 
@@ -96,7 +109,13 @@ public class LinkRulesServiceImpl implements LinkRulesService {
     @Override
     public LinkRule getLinkRule(String uuid) {
 
-        return linkRuleRepository.getOne(uuid);
+        LinkRule linkRule = linkRuleRepository.findOne(uuid);
+
+        if (linkRule == null) {
+            throw new BadRequestException("Link Rule not found");
+        }
+
+        return linkRule;
     }
 
     private String transformLink(String original, String transform, String url) {

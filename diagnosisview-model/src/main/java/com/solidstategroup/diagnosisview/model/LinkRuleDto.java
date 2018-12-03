@@ -1,6 +1,6 @@
 package com.solidstategroup.diagnosisview.model;
 
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
+import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,6 +21,9 @@ public class LinkRuleDto {
     private String transformation;
 
     @NotNull
-    private Institution institution;
+    private CriteriaType criteriaType;
+
+    @NotNull
+    private String criteria;
 }
 
