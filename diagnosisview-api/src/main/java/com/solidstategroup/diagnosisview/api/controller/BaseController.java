@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.http.HttpServletRequest;
 
 public class BaseController {
+
     @Autowired
     private UserService userService;
-
 
     /**
      * Get the user based on the user token.

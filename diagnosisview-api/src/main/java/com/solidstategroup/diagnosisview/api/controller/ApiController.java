@@ -28,7 +28,6 @@ import java.io.InputStream;
 @Log
 public class ApiController extends BaseController {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
 
     /**

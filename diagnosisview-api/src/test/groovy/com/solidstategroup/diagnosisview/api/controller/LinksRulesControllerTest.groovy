@@ -1,10 +1,10 @@
 package com.solidstategroup.diagnosisview.api.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.solidstategroup.diagnosisview.model.LinkMappingDto
+import com.solidstategroup.diagnosisview.model.LinkRuleDto
 import com.solidstategroup.diagnosisview.model.User
-import com.solidstategroup.diagnosisview.model.codes.LinkMapping
-import com.solidstategroup.diagnosisview.service.LinkMappingService
+import com.solidstategroup.diagnosisview.model.codes.LinkRule
+import com.solidstategroup.diagnosisview.service.LinkRulesService
 import com.solidstategroup.diagnosisview.service.UserService
 import org.springframework.test.util.ReflectionTestUtils
 import org.springframework.test.web.servlet.MockMvc
@@ -16,20 +16,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
 
-class LinksMappingControllerTest extends Specification {
+class LinksRulesControllerTest extends Specification {
 
-    static LINKS_TRANSFORMATION = "/api/links/mapping"
+    static LINKS_TRANSFORMATION = "/api/link/rules"
     static AUTH_HEADER = "X-Auth-Token"
     static AUTH_HEADER_VALUE = "1b811191-53bb-4e87-9cac-ea3710ee42b9"
     static ObjectMapper MAPPER = new ObjectMapper()
 
-    def linksService = Mock(LinkMappingService)
+    def linksService = Mock(LinkRulesService)
     def userService = Mock(UserService)
 
     MockMvc server
 
     void setup() {
-        def linksController = new LinksMappingController(linksService)
+        def linksController = new LinksRulesController(linksService)
 
         ReflectionTestUtils.setField(linksController, "userService", userService)
 
@@ -41,7 +41,7 @@ class LinksMappingControllerTest extends Specification {
         given: "a valid link request"
 
         def linkTransformation =
-                new LinkMappingDto(
+                new LinkRuleDto(
                         link: "test",
                         transformation: "transformation",
                         institution: "UNIVERSITY_OF_EDINBURGH")
@@ -56,14 +56,14 @@ class LinksMappingControllerTest extends Specification {
 
         then: "service layer is called with correct object"
 
-        1 * linksService.addLinkTransformation(linkTransformation) >> new LinkMapping()
+        1 * linksService.addRule(linkTransformation) >> new LinkRule()
         1 * userService.getUserByToken(_ as String) >> new User(roleType: ADMIN)
     }
 
     def "should reject invalid link request"() {
         given: "an invalid link"
 
-        def linkTransformation = new LinkMappingDto()
+        def linkTransformation = new LinkRuleDto()
 
         when: "endpoint is called"
 
@@ -74,6 +74,6 @@ class LinksMappingControllerTest extends Specification {
 
         then: "service layer is not called"
 
-        0 * linksService.addLinkTransformation(linkTransformation)
+        0 * linksService.addRule(linkTransformation)
     }
 }

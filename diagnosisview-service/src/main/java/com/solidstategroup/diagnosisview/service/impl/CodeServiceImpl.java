@@ -6,14 +6,15 @@ import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
-import com.solidstategroup.diagnosisview.repository.LinkMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import lombok.extern.java.Log;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import springfox.documentation.annotations.Cacheable;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -33,17 +34,14 @@ public class CodeServiceImpl implements CodeService {
     private final CodeRepository codeRepository;
     private final CategoryRepository categoryRepository;
     private final LinkRepository linkRepository;
-    private final LinkMappingRepository linkMappingRepository;
 
     public CodeServiceImpl(CodeRepository codeRepository,
                            CategoryRepository categoryRepository,
-                           LinkRepository linkRepository,
-                           LinkMappingRepository linkMappingRepository) {
+                           LinkRepository linkRepository) {
 
         this.codeRepository = codeRepository;
         this.categoryRepository = categoryRepository;
         this.linkRepository = linkRepository;
-        this.linkMappingRepository = linkMappingRepository;
     }
 
     @Override
@@ -62,13 +60,15 @@ public class CodeServiceImpl implements CodeService {
 
     @Override
     @Cacheable("getAllCodes")
-    public List<CodeDto> getAllCodes() {
+    public List<CodeDto> getAllCodes(Institution institution) {
 
-        return codeRepository.findAll()
-                .parallelStream().map(code -> CodeDto
+        return codeRepository
+                .findAll()
+                .parallelStream()
+                .map(code -> CodeDto
                         .builder()
                         .code(code.getCode())
-                        .links(buildLinks(code))
+                        .links(buildLinkDtos(code, institution))
                         .categories(buildCategories(code))
                         .deleted(shouldBeDeleted(code))
                         .friendlyName(code.getPatientFriendlyName())
@@ -82,19 +82,39 @@ public class CodeServiceImpl implements CodeService {
         return code.isRemovedExternally() || code.isHideFromPatients();
     }
 
-    private Set<LinkDto> buildLinks(Code code) {
-        return code.getLinks().stream().map(link ->
-                new LinkDto(link.getId(), link.getLinkType(), link.getDifficultyLevel(),
-                        link.getLink(), link.getName(), link.getFreeLink()))
+    private Set<LinkDto> buildLinkDtos(Code code, Institution institution) {
+
+        return code
+                .getLinks()
+                .stream()
+                .map(link -> new LinkDto(link.getId(), link.getLinkType(),
+                        link.getDifficultyLevel(),
+                        buildLink(link.getMappingLinks(), link.getLink(), institution),
+                        link.getName(), link.getFreeLink()))
                 .collect(toSet());
     }
 
+    private String buildLink(
+            Set<LinkRuleMapping> linkRuleMapping, String link, Institution institution) {
+
+        return linkRuleMapping
+                .stream()
+                .filter(r -> r.getInstitution() == institution)
+                .findFirst()
+                .map(LinkRuleMapping::getReplacementLink)
+                .orElse(link);
+    }
+
     private Set<CategoryDto> buildCategories(Code code) {
-        return code.getCodeCategories().stream().map(cc ->
-                new CategoryDto(cc.getCategory().getNumber(),
-                        cc.getCategory().getIcd10Description(),
-                        cc.getCategory().getFriendlyDescription(),
-                        cc.getCategory().isHidden()))
+
+        return code
+                .getCodeCategories()
+                .stream()
+                .map(cc ->
+                        new CategoryDto(cc.getCategory().getNumber(),
+                                cc.getCategory().getIcd10Description(),
+                                cc.getCategory().getFriendlyDescription(),
+                                cc.getCategory().isHidden()))
                 .collect(toSet());
     }
 

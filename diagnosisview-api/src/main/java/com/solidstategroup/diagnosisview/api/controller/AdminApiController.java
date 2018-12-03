@@ -1,6 +1,5 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
@@ -29,7 +28,6 @@ import java.util.List;
 @Log
 public class AdminApiController extends BaseController {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
     private UserService userService;
     private CodeService codeService;
     private ExternalStandardRepository externalStandardRepository;
@@ -41,10 +39,12 @@ public class AdminApiController extends BaseController {
      */
     @Autowired
     public AdminApiController(final UserService userService,
-                              final CodeService codeService) {
+                              final CodeService codeService,
+                              final ExternalStandardRepository externalStandardRepository) {
         super();
         this.userService = userService;
         this.codeService = codeService;
+        this.externalStandardRepository = externalStandardRepository;
     }
 
     /**

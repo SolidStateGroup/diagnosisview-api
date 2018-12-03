@@ -4,6 +4,7 @@ import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
@@ -87,7 +88,11 @@ public class CodeController extends BaseController {
 
         User user = checkIsAuthenticated(request);
 
-        return codeService.getAllCodes();
+        if ("University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+            return codeService.getAllCodes(Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        return codeService.getAllCodes(null);
     }
 
     /**
