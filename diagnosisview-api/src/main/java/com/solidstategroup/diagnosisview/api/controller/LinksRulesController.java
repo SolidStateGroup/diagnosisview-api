@@ -96,7 +96,7 @@ public class LinksRulesController extends BaseController {
 
         isAdminUser(request);
 
-        return buildLinkRuleDto(linkRulesService.updateLinkTransformation(id, linkTransformationDto));
+        return buildLinkRuleDto(linkRulesService.updateLinkRule(id, linkTransformationDto));
     }
 
     @ApiOperation(

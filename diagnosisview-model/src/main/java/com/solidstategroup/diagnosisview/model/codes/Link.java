@@ -47,6 +47,9 @@ public class Link extends AuditModel {
     @Column(name = "free_link", nullable = false)
     private Boolean freeLink;
 
+    @Column(name = "transformations_only", nullable = false)
+    private Boolean transformationsOnly;
+
     @ManyToMany(mappedBy = "link")
     private Set<LinkRuleMapping> mappingLinks;
 
@@ -102,7 +105,6 @@ public class Link extends AuditModel {
         this.difficultyLevel = difficultyLevel;
     }
 
-
     public boolean hasDifficultyLevelSet() {
         return this.difficultyLevel != null;
     }
@@ -120,6 +122,16 @@ public class Link extends AuditModel {
 
     public void setFreeLink(Boolean freeLink) {
         this.freeLink = freeLink;
+    }
+
+    public boolean hasTransformationOnly() { return this.transformationsOnly != null; }
+
+    public boolean useTransformationsOnly() {
+        return transformationsOnly;
+    }
+
+    public void setTransformationsOnly(boolean transformationsOnly) {
+        this.transformationsOnly = transformationsOnly;
     }
 
     public Set<LinkRuleMapping> getMappingLinks() {

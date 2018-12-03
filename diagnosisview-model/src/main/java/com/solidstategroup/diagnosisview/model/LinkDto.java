@@ -14,6 +14,7 @@ public class LinkDto {
     private Lookup linkType;
     private DifficultyLevel difficultyLevel;
     private String link;
+    private Boolean displayLink;
     private String name;
     private Boolean freeLink;
 }

@@ -235,9 +235,15 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             if (existingLink.hasDifficultyLevelSet()) {
                 link.setDifficultyLevel(existingLink.getDifficultyLevel());
             }
+
             if (existingLink.hasFreeLinkSet()) {
                 link.setFreeLink(existingLink.getFreeLink());
             }
+
+            if (existingLink.useTransformationsOnly()) {
+                link.setTransformationsOnly(existingLink.useTransformationsOnly());
+            }
+
         }
 
         if (existingLink == null) {

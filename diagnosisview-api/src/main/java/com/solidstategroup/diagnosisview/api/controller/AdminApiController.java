@@ -128,7 +128,7 @@ public class AdminApiController extends BaseController {
      */
     @RequestMapping(value = "/code/link", method = RequestMethod.PUT)
     @ApiOperation(value = "Update Link",
-            notes = "Updates a link with DV editible fields.",
+            notes = "Updates a link with DV editable fields.",
             response = Link.class)
     public Link updateLink(@RequestBody final Link link,
                            HttpServletRequest request) throws Exception {

@@ -3,10 +3,11 @@ package com.solidstategroup.diagnosisview.service.impl;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleRepository;
-import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.service.LinkRulesService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class LinkRulesServiceImpl implements LinkRulesService {
     }
 
     @Override
+    @CacheEvict(value = "getAllCodes", allEntries = true)
     public LinkRule addRule(LinkRuleDto linkRuleDto) {
 
         LinkRule linkRule = linkRuleRepository.save(LinkRule
@@ -60,8 +62,29 @@ public class LinkRulesServiceImpl implements LinkRulesService {
         return linkRule;
     }
 
-    private String transformLink(String original, String transform, String url) {
-        return original.replace(url, transform);
+    @Override
+    @CacheEvict(value = "getAllCodes", allEntries = true)
+    public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto)
+            throws Exception {
+
+        LinkRule current = linkRuleRepository.findOne(id);
+
+        if (current == null) {
+            throw new Exception();
+        }
+
+        current.setInstitution(linkRuleDto.getInstitution());
+        current.setTransform(linkRuleDto.getTransformation());
+        current.setLink(linkRuleDto.getLink());
+
+        return linkRuleRepository.save(current);
+    }
+
+    @Override
+    @CacheEvict(value = "getAllCodes", allEntries = true)
+    public void deleteLinkRule(String uuid) {
+
+        linkRuleRepository.delete(uuid);
     }
 
     @Override
@@ -76,26 +99,7 @@ public class LinkRulesServiceImpl implements LinkRulesService {
         return linkRuleRepository.getOne(uuid);
     }
 
-    @Override
-    public LinkRule updateLinkTransformation(String uuid, LinkRuleDto linkRuleDto)
-            throws Exception {
-
-        LinkRule current = linkRuleRepository.findOne(uuid);
-
-        if (current == null) {
-            throw new Exception();
-        }
-
-        current.setInstitution(linkRuleDto.getInstitution());
-        current.setTransform(linkRuleDto.getTransformation());
-        current.setLink(linkRuleDto.getLink());
-
-        return linkRuleRepository.save(current);
-    }
-
-    @Override
-    public void deleteLinkRule(String uuid) {
-
-        linkRuleRepository.delete(uuid);
+    private String transformLink(String original, String transform, String url) {
+        return original.replace(url, transform);
     }
 }

@@ -31,7 +31,7 @@ public interface LinkRulesService {
      */
     LinkRule getLinkRule(String id);
 
-    LinkRule updateLinkTransformation(String id, LinkRuleDto linkTransformation) throws Exception;
+    LinkRule updateLinkRule(String id, LinkRuleDto linkTransformation) throws Exception;
 
     /**
      * Removes link rule.
