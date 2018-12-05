@@ -1,7 +1,5 @@
 package com.solidstategroup.diagnosisview.service;
 
-import org.springframework.scheduling.annotation.Scheduled;
-
 /**
  * Interface to interact with dashboard users.
  */

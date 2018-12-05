@@ -4,6 +4,7 @@ import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public interface CodeService {
      * Get All codes
      * @return List code dtos
      */
-    List<CodeDto> getAllCodes();
+    List<CodeDto> getAllCodes(Institution institution);
 
     /**
      * Get a code by a given code

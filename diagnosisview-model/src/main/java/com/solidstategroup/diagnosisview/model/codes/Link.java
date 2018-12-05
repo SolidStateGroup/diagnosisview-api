@@ -3,16 +3,17 @@ package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
-import lombok.Data;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.Set;
 
 /**
  * Created by jamesr@solidstategroup.com
@@ -45,6 +46,12 @@ public class Link extends AuditModel {
 
     @Column(name = "free_link", nullable = false)
     private Boolean freeLink;
+
+    @Column(name = "transformations_only", nullable = false)
+    private Boolean transformationsOnly;
+
+    @ManyToMany(mappedBy = "link")
+    private Set<LinkRuleMapping> mappingLinks;
 
     public Lookup getLinkType() {
         return linkType;
@@ -98,7 +105,6 @@ public class Link extends AuditModel {
         this.difficultyLevel = difficultyLevel;
     }
 
-
     public boolean hasDifficultyLevelSet() {
         return this.difficultyLevel != null;
     }
@@ -116,5 +122,23 @@ public class Link extends AuditModel {
 
     public void setFreeLink(Boolean freeLink) {
         this.freeLink = freeLink;
+    }
+
+    public boolean hasTransformationOnly() { return this.transformationsOnly != null; }
+
+    public boolean useTransformationsOnly() {
+        return transformationsOnly;
+    }
+
+    public void setTransformationsOnly(boolean transformationsOnly) {
+        this.transformationsOnly = transformationsOnly;
+    }
+
+    public Set<LinkRuleMapping> getMappingLinks() {
+        return mappingLinks;
+    }
+
+    public void setMappingLinks(Set<LinkRuleMapping> mappingLinks) {
+        this.mappingLinks = mappingLinks;
     }
 }
