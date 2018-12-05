@@ -7,7 +7,7 @@ import com.solidstategroup.diagnosisview.model.User
 import com.solidstategroup.diagnosisview.model.codes.LinkRule
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution
-import com.solidstategroup.diagnosisview.service.LinkRulesService
+import com.solidstategroup.diagnosisview.service.LinkRuleService
 import com.solidstategroup.diagnosisview.service.UserService
 import org.springframework.test.util.ReflectionTestUtils
 import org.springframework.test.web.servlet.MockMvc
@@ -30,7 +30,7 @@ class LinksRulesControllerTest extends Specification {
     static AUTH_HEADER_VALUE = "1b811191-53bb-4e87-9cac-ea3710ee42b9"
     static ObjectMapper MAPPER = new ObjectMapper()
 
-    def linkRulesService = Mock(LinkRulesService)
+    def linkRulesService = Mock(LinkRuleService)
     def userService = Mock(UserService)
 
     MockMvc server

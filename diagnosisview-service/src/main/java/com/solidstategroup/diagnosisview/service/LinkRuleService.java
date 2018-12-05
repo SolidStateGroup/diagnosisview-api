@@ -9,7 +9,7 @@ import java.util.List;
  * Link Rules service provides rule for urls that can be customized on
  * an institutional basis.
  */
-public interface LinkRulesService {
+public interface LinkRuleService {
 
     /**
      * Adds a link rule for an institution.

@@ -12,5 +12,5 @@ import java.util.Set;
 @Repository
 public interface LinkRepository extends JpaRepository<Link, Long> {
 
-    Set<Link> findLinksByLinkIsLike(String mapping);
+    Set<Link> findLinksByLinkContaining(String message);
 }

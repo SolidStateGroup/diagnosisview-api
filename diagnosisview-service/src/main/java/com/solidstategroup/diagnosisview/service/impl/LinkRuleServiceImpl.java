@@ -9,7 +9,7 @@ import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleRepository;
-import com.solidstategroup.diagnosisview.service.LinkRulesService;
+import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
@@ -19,15 +19,17 @@ import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
 @Service
-public class LinkRulesServiceImpl implements LinkRulesService {
+public class LinkRuleServiceImpl implements LinkRuleService {
 
+    private static final String LINK_NOT_FOUND = "Link Rule not found";
+    private static final String UNKNOWN_CRITERIA_TYPE = "Unknown Criteria Type";
     private final LinkRuleRepository linkRuleRepository;
     private final LinkRuleMappingRepository linkRuleMappingRepository;
     private final LinkRepository linkRepository;
 
-    public LinkRulesServiceImpl(LinkRuleRepository linkRuleRepository,
-                                LinkRuleMappingRepository linkRuleMappingRepository,
-                                LinkRepository linkRepository) {
+    public LinkRuleServiceImpl(LinkRuleRepository linkRuleRepository,
+                               LinkRuleMappingRepository linkRuleMappingRepository,
+                               LinkRepository linkRepository) {
 
         this.linkRuleRepository = linkRuleRepository;
         this.linkRuleMappingRepository = linkRuleMappingRepository;
@@ -38,14 +40,13 @@ public class LinkRulesServiceImpl implements LinkRulesService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LinkRule addRule(LinkRuleDto linkRuleDto) {
 
-        // For now we are only handling institution. This could change in
-        // the future.
-        Institution institution;
-        if (linkRuleDto.getCriteriaType().equals(CriteriaType.INSTITUTION)) {
-            institution = Institution.valueOf(linkRuleDto.getCriteria());
-        } else {
-            throw new BadRequestException("Unknown Criteria Type");
+        // For now we are only handling institution.
+        // This could change in the future.
+        if (!linkRuleDto.getCriteriaType().equals(CriteriaType.INSTITUTION)) {
+            throw new BadRequestException(UNKNOWN_CRITERIA_TYPE);
         }
+
+        Institution institution = Institution.valueOf(linkRuleDto.getCriteria());
 
         LinkRule linkRule = linkRuleRepository.save(LinkRule
                 .builder()
@@ -57,7 +58,7 @@ public class LinkRulesServiceImpl implements LinkRulesService {
 
         Set<LinkRuleMapping> linkRuleMappings =
                 linkRepository
-                        .findLinksByLinkIsLike("%" + linkRule.getLink() + "%")
+                        .findLinksByLinkContaining(linkRule.getLink())
                         .stream()
                         .map(link ->
                                 LinkRuleMapping
@@ -78,17 +79,35 @@ public class LinkRulesServiceImpl implements LinkRulesService {
 
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
-    public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto)
-            throws Exception {
+    public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto) {
 
         LinkRule current = linkRuleRepository.findOne(id);
 
         if (current == null) {
-            throw new Exception();
+            throw new BadRequestException(LINK_NOT_FOUND);
         }
 
-        current.setTransform(linkRuleDto.getTransformation());
-        current.setLink(linkRuleDto.getLink());
+        String transform = linkRuleDto.getTransformation();
+        if (transform != null) {
+            current.setTransform(transform);
+            Set<LinkRuleMapping> mappings = current
+                    .getMappings()
+                    .stream()
+                    .map(lrm -> {
+                            lrm.setReplacementLink(
+                            transformLink(
+                                    lrm.getLink().getLink(),
+                                    transform,
+                                    current.getLink()));
+                            return lrm;}
+                    )
+                    .collect(toSet());
+            linkRuleMappingRepository.save(mappings);
+        }
+
+        if (linkRuleDto.getLink() != null) {
+            current.setLink(linkRuleDto.getLink());
+        }
 
         return linkRuleRepository.save(current);
     }
@@ -112,7 +131,7 @@ public class LinkRulesServiceImpl implements LinkRulesService {
         LinkRule linkRule = linkRuleRepository.findOne(uuid);
 
         if (linkRule == null) {
-            throw new BadRequestException("Link Rule not found");
+            throw new BadRequestException(LINK_NOT_FOUND);
         }
 
         return linkRule;
