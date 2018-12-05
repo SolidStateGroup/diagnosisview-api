@@ -36,34 +36,6 @@ public class CodeController extends BaseController {
     }
 
     /**
-     * Create a code within DV.
-     *
-     * @param code - code to create
-     * @return the created code with ID
-     * @throws Exception
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.POST)
-    @ApiOperation(value = "Create Code",
-            notes = "Creates code within DV (unsure if required)",
-            response = Code.class)
-    public Code createCode(@RequestBody final Code code) {
-        return codeService.save(code);
-    }
-
-    /**
-     * @param code
-     * @return
-     * @throws Exception
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.PUT)
-    @ApiOperation(value = "Update Code",
-            notes = "Update a user, pass the password in which will then be encrypted",
-            response = Code.class)
-    public Code updateCode(@RequestBody final Code code) {
-        return codeService.save(code);
-    }
-
-    /**
      * Update a code.
      *
      * @param code Code code to delete

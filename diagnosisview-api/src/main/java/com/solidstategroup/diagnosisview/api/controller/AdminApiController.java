@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
@@ -118,6 +119,44 @@ public class AdminApiController extends BaseController {
 
         return userService.createOrUpdateUser(user, true);
     }
+
+
+    /**
+     * Create a code within DV.
+     *
+     * @param code - code to create
+     * @return the created code with ID
+     * @throws Exception
+     */
+    @RequestMapping(value = "/code", method = RequestMethod.POST)
+    @ApiOperation(value = "Create Code",
+            notes = "Creates code within DV (unsure if required)",
+            response = Code.class)
+    public Code createCode(@RequestBody final Code code,
+                           HttpServletRequest request) throws Exception {
+        //Check if the user is an admin
+        isAdminUser(request);
+
+        return codeService.createOrUpdateCode(code, false);
+    }
+
+    /**
+     * @param code
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value = "/code", method = RequestMethod.PUT)
+    @ApiOperation(value = "Update Code",
+            notes = "Update a user, pass the password in which will then be encrypted",
+            response = Code.class)
+    public Code updateCode(@RequestBody final Code code,
+                           HttpServletRequest request) throws Exception {
+        //Check if the user is an admin
+        isAdminUser(request);
+
+        return codeService.createOrUpdateCode(code, false);
+    }
+
 
     /**
      * Update a DV link
