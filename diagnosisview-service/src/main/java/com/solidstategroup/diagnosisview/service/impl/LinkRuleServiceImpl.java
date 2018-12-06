@@ -87,29 +87,38 @@ public class LinkRuleServiceImpl implements LinkRuleService {
             throw new BadRequestException(LINK_NOT_FOUND);
         }
 
-        String transform = linkRuleDto.getTransformation();
-        if (transform != null) {
-            current.setTransform(transform);
-            Set<LinkRuleMapping> mappings = current
-                    .getMappings()
-                    .stream()
-                    .map(lrm -> {
-                            lrm.setReplacementLink(
-                            transformLink(
-                                    lrm.getLink().getLink(),
-                                    transform,
-                                    current.getLink()));
-                            return lrm;}
-                    )
-                    .collect(toSet());
-            linkRuleMappingRepository.save(mappings);
-        }
+        Institution institution = Institution.valueOf(linkRuleDto.getCriteria());
 
-        if (linkRuleDto.getLink() != null) {
-            current.setLink(linkRuleDto.getLink());
-        }
+        current.setTransform(linkRuleDto.getTransformation());
+        current.setCriteria(linkRuleDto.getCriteria());
+        current.setCriteriaType(linkRuleDto.getCriteriaType());
+        current.setLink(linkRuleDto.getLink());
 
-        return linkRuleRepository.save(current);
+        linkRuleMappingRepository.delete(current.getMappings());
+
+        Set<LinkRuleMapping> linkRuleMappings =
+                linkRepository
+                        .findLinksByLinkContaining(linkRuleDto.getLink())
+                        .stream()
+                        .map(link ->
+                                LinkRuleMapping
+                                        .builder()
+                                        .link(link)
+                                        .rule(current)
+                                        .criteriaType(CriteriaType.INSTITUTION)
+                                        .criteria(institution.toString())
+                                        .replacementLink(transformLink(
+                                                link.getLink(), linkRuleDto.getTransformation(), linkRuleDto.getLink()))
+                                        .build())
+                        .collect(toSet());
+
+        current.setMappings(linkRuleMappings);
+
+        linkRuleRepository.save(current);
+
+        linkRuleMappingRepository.save(linkRuleMappings);
+
+        return current;
     }
 
     @Override

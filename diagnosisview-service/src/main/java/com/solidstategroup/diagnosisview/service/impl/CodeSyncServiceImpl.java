@@ -248,6 +248,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         if (existingLink == null) {
             link.setFreeLink(false);
+            link.setTransformationsOnly(false);
         }
 
         //If the link is a NICE link, we should categorise it as such
