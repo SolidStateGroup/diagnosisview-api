@@ -7,7 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class LinkLogoDto {
     private String id;
-    private String regex;
+    private String startsWith;
     private String image;
     private String imageFormat;
 }

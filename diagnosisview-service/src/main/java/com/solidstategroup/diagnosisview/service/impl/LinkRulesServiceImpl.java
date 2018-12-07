@@ -78,7 +78,7 @@ public class LinkRulesServiceImpl implements LinkRulesService {
                 .builder()
                 .linkLogo(Base64.decodeBase64(new String(linkLogoDto.getImage()).getBytes("UTF-8")))
                 .logoFileType(linkLogoDto.getImageFormat())
-                .startsWith(linkLogoDto.getRegex())
+                .startsWith(linkLogoDto.getStartsWith())
                 .build());
     }
 
@@ -112,7 +112,7 @@ public class LinkRulesServiceImpl implements LinkRulesService {
                 .builder()
                 .linkLogo(Base64.decodeBase64(new String(linkLogoDto.getImage()).getBytes("UTF-8")))
                 .logoFileType(linkLogoDto.getImageFormat())
-                .startsWith(linkLogoDto.getRegex())
+                .startsWith(linkLogoDto.getStartsWith())
                 .id(id)
                 .build();
         return linkLogoRuleRepository.save(current);
