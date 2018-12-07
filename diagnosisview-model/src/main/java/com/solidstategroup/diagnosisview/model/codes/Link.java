@@ -11,6 +11,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.Set;
@@ -47,11 +48,17 @@ public class Link extends AuditModel {
     @Column(name = "free_link", nullable = false)
     private Boolean freeLink;
 
-    @Column(name = "transformations_only", nullable = false)
+    @Column(name = "transformations_only")
     private Boolean transformationsOnly;
 
     @ManyToMany(mappedBy = "link")
     private Set<LinkRuleMapping> mappingLinks;
+
+    //Allows a custom logo to be added to a logo
+    @OneToOne
+    @JoinColumn(name = "link_logo_id")
+    private LinkLogoRule linkLogoRule;
+
 
     public Lookup getLinkType() {
         return linkType;
@@ -140,5 +147,13 @@ public class Link extends AuditModel {
 
     public void setMappingLinks(Set<LinkRuleMapping> mappingLinks) {
         this.mappingLinks = mappingLinks;
+    }
+
+    public LinkLogoRule getLinkLogoRule() {
+        return linkLogoRule;
+    }
+
+    public void setLinkLogoRule(LinkLogoRule linkLogoRule) {
+        this.linkLogoRule = linkLogoRule;
     }
 }
