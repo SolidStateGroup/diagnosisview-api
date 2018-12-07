@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
+import com.google.api.client.util.Lists;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
@@ -8,6 +9,7 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.LinkLogoRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
@@ -17,6 +19,7 @@ import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
+import com.solidstategroup.diagnosisview.repository.LinkLogoRuleRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
@@ -33,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -68,9 +72,12 @@ public class CodeServiceImpl implements CodeService {
     @Autowired
     private LookupRepository lookupRepository;
 
+    @Autowired
+    private LinkLogoRuleRepository linkLogoRuleRepository;
+
     private Lookup niceLinksLookup;
     private Lookup userLink;
-
+    private List<LinkLogoRule> linkLogoRules;
 
     @Override
     @Cacheable("getAllCategories")
@@ -205,6 +212,25 @@ public class CodeServiceImpl implements CodeService {
                 Link existingLink = linkRepository.findOne(link.getId());
                 link = checkLink(existingLink, link);
 
+
+                //Check if the link matches any urls for logos,
+                //if it does, assign it that logo url
+                LinkLogoRule rule = null;
+                if (link.getLinkLogoRule() == null) {
+                    Link finalLinkTmp = link;
+                    for (LinkLogoRule linkLogoRule : linkLogoRules) {
+                        if (finalLinkTmp.getLink().startsWith(linkLogoRule.getStartsWith())) {
+                            rule = linkLogoRule;
+                            break;
+                        }
+                    }
+
+                    if (rule != null) {
+                        link.setLinkLogoRule(rule);
+                    }
+                }
+
+
                 //If the lookupValue is a DV only value, then dont save as it will overlap
                 //In future this may need to be a check against all DV only lookup values
                 if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
@@ -311,6 +337,10 @@ public class CodeServiceImpl implements CodeService {
 
         if (userLink == null) {
             userLink = lookupRepository.findOneByValue("CUSTOM");
+        }
+
+        if (linkLogoRules == null) {
+            linkLogoRules = Lists.newArrayList(linkLogoRuleRepository.findAll());
         }
     }
 
