@@ -13,6 +13,16 @@ import java.util.List;
  */
 public interface CodeService {
 
+
+    /**
+     * Create or update a code, creating all the pre-requestite categories, external standards etc
+     * where required
+     *
+     * @param code - code to update or create
+     * @param fromSync - If from the sync job, we will allow creation of certain other resources
+     */
+    Code createOrUpdateCode(Code code, boolean fromSync);
+
     /**
      * Get All categories
      * @return List category dtos
