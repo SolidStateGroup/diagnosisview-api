@@ -83,4 +83,9 @@ public interface LinkRulesService {
      * @param id Id of link logo ule to remove.
      */
     void deleteLinkLogoRule(String id);
+
+    /**
+     * Returns all {@link LinkRule} objects currently saved in repository.
+     * */
+    List<LinkLogoRule> getLinkLogoRules();
 }

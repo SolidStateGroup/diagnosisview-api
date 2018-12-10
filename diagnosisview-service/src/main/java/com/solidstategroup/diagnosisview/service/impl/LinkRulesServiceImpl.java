@@ -74,9 +74,10 @@ public class LinkRulesServiceImpl implements LinkRulesService {
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LinkLogoRule addLogoRule(LinkLogoDto linkLogoDto) throws UnsupportedEncodingException {
+
         return linkLogoRuleRepository.save(LinkLogoRule
                 .builder()
-                .linkLogo(Base64.decodeBase64(new String(linkLogoDto.getImage()).getBytes("UTF-8")))
+                .linkLogo(Base64.decodeBase64(linkLogoDto.getImage().getBytes("UTF-8")))
                 .logoFileType(linkLogoDto.getImageFormat())
                 .startsWith(linkLogoDto.getStartsWith())
                 .build());
@@ -108,13 +109,15 @@ public class LinkRulesServiceImpl implements LinkRulesService {
         if (current == null) {
             throw new Exception();
         }
+
         LinkLogoRule
                 .builder()
-                .linkLogo(Base64.decodeBase64(new String(linkLogoDto.getImage()).getBytes("UTF-8")))
+                .linkLogo(Base64.decodeBase64(linkLogoDto.getImage().getBytes("UTF-8")))
                 .logoFileType(linkLogoDto.getImageFormat())
                 .startsWith(linkLogoDto.getStartsWith())
                 .id(id)
                 .build();
+
         return linkLogoRuleRepository.save(current);
     }
 
@@ -148,5 +151,10 @@ public class LinkRulesServiceImpl implements LinkRulesService {
 
     private String transformLink(String original, String transform, String url) {
         return original.replace(url, transform);
+    }
+
+    @Override
+    public List<LinkLogoRule> getLinkLogoRules() {
+        return linkLogoRuleRepository.findAll();
     }
 }
