@@ -13,6 +13,8 @@ import lombok.Getter;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.TypeDefs;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -23,6 +25,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -35,7 +39,7 @@ import java.util.List;
 @Table(name = "dv_user")
 @TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class),
         @TypeDef(name = "SavedUserCodeFieldArrayType", typeClass = SavedUserCodeArrayType.class)})
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue
     private Long id;
@@ -72,7 +76,6 @@ public class User {
     @Column
     private boolean deleted;
 
-    @Getter(AccessLevel.PRIVATE)
     @Column
     private String password;
 
@@ -84,6 +87,7 @@ public class User {
     @Column
     private String resetCode;
 
+    @JsonIgnore
     @Getter(AccessLevel.PRIVATE)
     @Column
     private Date resetExpiryDate;
@@ -153,6 +157,12 @@ public class User {
         return this.resetCode;
     }
 
+    @Override
+    @JsonIgnore
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList((GrantedAuthority) () -> "ROLE_" + roleType.toString());
+    }
+
     /**
      * Get the username
      *
@@ -160,6 +170,30 @@ public class User {
      */
     public String getUsername() {
         return this.username.toLowerCase().trim();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 
     /**

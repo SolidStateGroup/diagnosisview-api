@@ -12,6 +12,7 @@ import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,13 +72,12 @@ public class AdminApiController extends BaseController {
      * @return User the updated user
      * @throws Exception thrown adding projects config
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping(value = "/users", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Users",
             notes = "Admin User endpoint to get all users within the DiagnosisView",
             response = User.class)
-    public List<User> getAllUsers(HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
-        isAdminUser(request);
+    public List<User> getAllUsers() throws Exception {
 
         return userService.getAllUsers();
     }
