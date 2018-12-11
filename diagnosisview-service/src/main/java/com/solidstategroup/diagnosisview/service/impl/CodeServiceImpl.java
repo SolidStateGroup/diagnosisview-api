@@ -9,7 +9,7 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.model.codes.LinkLogoRule;
+import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
@@ -76,7 +76,7 @@ public class CodeServiceImpl implements CodeService {
 
     private Lookup niceLinksLookup;
     private Lookup userLink;
-    private List<LinkLogoRule> linkLogoRules;
+    private List<LogoRule> logoRules;
 
     @Override
     @Cacheable("getAllCategories")
@@ -214,18 +214,18 @@ public class CodeServiceImpl implements CodeService {
 
                 //Check if the link matches any urls for logos,
                 //if it does, assign it that logo url
-                LinkLogoRule rule = null;
-                if (link.getLinkLogoRule() == null) {
+                LogoRule rule = null;
+                if (link.getLogoRule() == null) {
                     Link finalLinkTmp = link;
-                    for (LinkLogoRule linkLogoRule : linkLogoRules) {
-                        if (finalLinkTmp.getLink().startsWith(linkLogoRule.getStartsWith())) {
-                            rule = linkLogoRule;
+                    for (LogoRule logoRule : logoRules) {
+                        if (finalLinkTmp.getLink().startsWith(logoRule.getStartsWith())) {
+                            rule = logoRule;
                             break;
                         }
                     }
 
                     if (rule != null) {
-                        link.setLinkLogoRule(rule);
+                        link.setLogoRule(rule);
                     }
                 }
 
@@ -338,8 +338,8 @@ public class CodeServiceImpl implements CodeService {
             userLink = lookupRepository.findOneByValue("CUSTOM");
         }
 
-        if (linkLogoRules == null) {
-            linkLogoRules = Lists.newArrayList(linkLogoRuleRepository.findAll());
+        if (logoRules == null) {
+            logoRules = Lists.newArrayList(linkLogoRuleRepository.findAll());
         }
     }
 

@@ -1,13 +1,11 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.solidstategroup.diagnosisview.model.LinkLogoDto;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
-import com.solidstategroup.diagnosisview.model.codes.LinkLogoRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.service.LinkRulesService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,10 +24,10 @@ import static java.util.stream.Collectors.toList;
 /**
  * Controller to manage link rules based on a particular criteria.
  */
-@Api(value = "/api/link/rules", description = "Manage Link Rules")
+@Slf4j
 @RestController
 @RequestMapping("/api/link/rules")
-@Log
+@Api(value = "/api/link/rules", description = "Manage Link Rules")
 public class LinksRulesController extends BaseController {
 
     private final LinkRulesService linkRulesService;
@@ -50,7 +48,7 @@ public class LinksRulesController extends BaseController {
         isAdminUser(request);
 
         return buildLinkRuleDto(
-                linkRulesService.addRule(linkRule));
+                linkRulesService.add(linkRule));
     }
 
     @ApiOperation(
