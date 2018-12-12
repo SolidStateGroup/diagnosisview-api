@@ -5,6 +5,7 @@ import com.solidstategroup.diagnosisview.model.codes.Code
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard
+import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.Lookup
 import com.solidstategroup.diagnosisview.model.codes.LookupType
 import com.solidstategroup.diagnosisview.model.codes.LookupTypes
@@ -118,6 +119,7 @@ class CodeServiceImplTest extends Specification {
         def externalStanard = new ExternalStandard(name: "externalStandard")
 
         def syncCode = new Code(
+                links: [new Link(id: 1), new Link(id: 2)],
                 standardType: standardLookup,
                 codeType: codeLookup)
 
@@ -152,7 +154,28 @@ class CodeServiceImplTest extends Specification {
 
         1 * codeExternalStandardRepository.save(codeExternalStandard)
 
+        2 * linkService.upsertLink(_ as Link) >> { it[0] }
+
         2 * codeRepository.save(_ as Code) >> { it[0] }
+    }
+
+    def "should return null when upsert not required"() {
+
+        given: "codes are the same"
+
+        def id  = 1
+        def code = new Code(id: id, lastUpdate: new Date(150,1,1))
+        def currentCode = new Code(id: id, lastUpdate:  new Date(150,1,1))
+
+        1 * codeRepository.findOne(id) >> currentCode
+
+        when: "upsert is called"
+
+        def result = codeService.upsertCode(code, true)
+
+        then: "result is null"
+
+        result == null
     }
 
     def buildHeartCategory() {

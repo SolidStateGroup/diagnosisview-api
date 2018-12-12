@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+        "http://checkstyle.sourceforge.net/dtds/suppressions_1_1.dtd">
+
+<suppressions>
+    <!-- suppress checkstyle for incorrectly capitalised KeyedIn variable names -->
+    <suppress files="DateTime.java" checks="MemberNameCheck"/>
+    <suppress files="ProjectsResult.java" checks="MemberNameCheck"/>
+    <suppress files="ResourcesResult.java" checks="MemberNameCheck"/>
+    <suppress files="SearchResult.java" checks="MemberNameCheck"/>
+    <!-- suppress checkstyle for javadoc on static variables for project dto (custom field keys) -->
+    <suppress files="ProjectDto.java" checks="JavadocVariableCheck"/>
+    <!-- suppress checkstyle for method comments on inherited custom hibernate types -->
+    <suppress files="CustomFieldArrayType.java" checks="JavadocVariableCheck"/>
+    <suppress files="LastEditType.java" checks="JavadocVariableCheck"/>
+    <suppress files="ProjectRoleArrayType.java" checks="JavadocVariableCheck"/>
+    <!-- suppress checkstyle for method comments on web security config -->
+    <suppress files="WebSecurityConfig.java" checks="JavadocMethodCheck"/>
+    <!-- suppress checkstyle for utility class constructor application entry point -->
+    <suppress files="Application.java" checks="HideUtilityClassConstructorCheck"/>
+</suppressions>

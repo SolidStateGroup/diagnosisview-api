@@ -1,6 +1,5 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
-import com.google.api.client.util.Lists;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
@@ -9,17 +8,12 @@ import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
-import com.solidstategroup.diagnosisview.model.codes.LogoRule;
-import com.solidstategroup.diagnosisview.model.codes.Lookup;
-import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.LinkRepository;
-import com.solidstategroup.diagnosisview.repository.LogoRuleRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -36,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
@@ -148,16 +143,13 @@ public class CodeServiceImpl implements CodeService {
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
             if (!code.getCode().substring(0, 3).equals("dv_")) {
-                code.setCode(String.format("dv_%s", code.getCode()));
+                code.setCode(format("dv_%s", code.getCode()));
             }
 
             // Set the last update date to now
             code.setLastUpdate(new Date());
         }
-
-        Code existingCode = codeRepository.findOne(code.getId());
-
-        if (!codeRequiresUpdate(existingCode, code)) {
+        if (upsertNotRequired(code)) {
             return null;
         }
 
@@ -179,39 +171,37 @@ public class CodeServiceImpl implements CodeService {
 
         codeRepository.save(code);
 
-        codeCategories
-                .forEach(cc -> {
-                    cc.setCode(code);
-                    codeCategoryRepository.save(cc);
-                });
+        code.setCodeCategories(codeCategories
+                .stream()
+                .peek(cc -> cc.setCode(code))
+                .map(codeCategoryRepository::save)
+                .collect(toSet()));
 
-        code.setCodeCategories(codeCategories);
+        code.setExternalStandards(externalStandards
+                .stream()
+                .peek(es -> es.setCode(code))
+                .map(codeExternalStandardRepository::save)
+                .collect(toSet()));
 
-        externalStandards
-                .forEach(es -> {
-                    es.setCode(code);
-                    codeExternalStandardRepository.save(es);
-                });
-
-        code.setExternalStandards(externalStandards);
-
-        links.forEach(link -> {
-            link.setCode(code);
-            linkService.upsertLink(link);
-        });
-
-        code.setLinks(links);
+        code.setLinks(links
+                .stream()
+                .peek(l -> l.setCode(code))
+                .map(linkService::upsertLink)
+                .collect(toSet()));
 
         return codeRepository.save(code);
     }
 
-    private boolean codeRequiresUpdate(Code currentCode, Code code) {
+    private boolean upsertNotRequired(Code code) {
+
+        Code currentCode = codeRepository.findOne(code.getId());
 
         //If there is a code, or it has been updated, update
-        return currentCode == null || currentCode.getLinks().size() != code.getLinks().size() ||
+        return !(currentCode == null ||
+                currentCode.getLinks().size() != code.getLinks().size() ||
                 currentCode.getExternalStandards().size() != code.getExternalStandards().size() ||
                 currentCode.getCodeCategories().size() != code.getCodeCategories().size() ||
-                currentCode.getLastUpdate().before(code.getLastUpdate());
+                currentCode.getLastUpdate().before(code.getLastUpdate()));
     }
 
     private void saveAdditionalSyncObjects(Code code) {
