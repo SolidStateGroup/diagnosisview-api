@@ -1,12 +1,8 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
-import com.google.api.client.util.Base64;
-import com.solidstategroup.diagnosisview.model.LinkLogoDto;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
-import com.solidstategroup.diagnosisview.model.codes.LinkLogoRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
-import com.solidstategroup.diagnosisview.repository.LinkLogoRuleRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleRepository;
@@ -14,34 +10,38 @@ import com.solidstategroup.diagnosisview.service.LinkRulesService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
+/**
+ * Implementation of {@link LinkRulesService}. Allows new rules to be
+ * added and to current rules to be fetched, updated and deleted. Also
+ * evicts the code cache.
+ */
 @Service
 public class LinkRulesServiceImpl implements LinkRulesService {
 
     private final LinkRuleRepository linkRuleRepository;
     private final LinkRuleMappingRepository linkRuleMappingRepository;
     private final LinkRepository linkRepository;
-    private final LinkLogoRuleRepository linkLogoRuleRepository;
 
     public LinkRulesServiceImpl(LinkRuleRepository linkRuleRepository,
                                 LinkRuleMappingRepository linkRuleMappingRepository,
-                                LinkRepository linkRepository,
-                                LinkLogoRuleRepository linkLogoRuleRepository) {
+                                LinkRepository linkRepository) {
 
         this.linkRuleRepository = linkRuleRepository;
         this.linkRuleMappingRepository = linkRuleMappingRepository;
         this.linkRepository = linkRepository;
-        this.linkLogoRuleRepository = linkLogoRuleRepository;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
-    public LinkRule addRule(LinkRuleDto linkRuleDto) {
+    public LinkRule add(LinkRuleDto linkRuleDto) {
 
         LinkRule linkRule = linkRuleRepository.save(LinkRule
                 .builder()
@@ -70,18 +70,27 @@ public class LinkRulesServiceImpl implements LinkRulesService {
         return linkRule;
     }
 
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    @CacheEvict(value = "getAllCodes", allEntries = true)
-    public LinkLogoRule addLogoRule(LinkLogoDto linkLogoDto) throws UnsupportedEncodingException {
-        return linkLogoRuleRepository.save(LinkLogoRule
-                .builder()
-                .linkLogo(Base64.decodeBase64(new String(linkLogoDto.getImage()).getBytes("UTF-8")))
-                .logoFileType(linkLogoDto.getImageFormat())
-                .startsWith(linkLogoDto.getStartsWith())
-                .build());
+    public LinkRule getLinkRule(String uuid) {
+
+        return linkRuleRepository.getOne(uuid);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<LinkRule> getLinkRules() {
+
+        return linkRuleRepository.findAll();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto)
@@ -100,52 +109,18 @@ public class LinkRulesServiceImpl implements LinkRulesService {
         return linkRuleRepository.save(current);
     }
 
-    @Override
-    public LinkLogoRule updateLogoRule(String id, LinkLogoDto linkLogoDto) throws Exception {
-
-        LinkLogoRule current = linkLogoRuleRepository.findOne(id);
-
-        if (current == null) {
-            throw new Exception();
-        }
-        LinkLogoRule
-                .builder()
-                .linkLogo(Base64.decodeBase64(new String(linkLogoDto.getImage()).getBytes("UTF-8")))
-                .logoFileType(linkLogoDto.getImageFormat())
-                .startsWith(linkLogoDto.getStartsWith())
-                .id(id)
-                .build();
-        return linkLogoRuleRepository.save(current);
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public void deleteLinkRule(String uuid) {
         linkRuleRepository.delete(uuid);
     }
 
-    @Override
-    public void deleteLinkLogoRule(String id) {
-        linkLogoRuleRepository.delete(id);
-    }
-
-    @Override
-    public List<LinkRule> getLinkRules() {
-
-        return linkRuleRepository.findAll();
-    }
-
-    @Override
-    public LinkRule getLinkRule(String uuid) {
-
-        return linkRuleRepository.getOne(uuid);
-    }
-
-    @Override
-    public LinkLogoRule getLinkLogoRule(String id) {
-        return linkLogoRuleRepository.findOne(id);
-    }
-
+    /**
+     * Applies rule to link.
+     */
     private String transformLink(String original, String transform, String url) {
         return original.replace(url, transform);
     }

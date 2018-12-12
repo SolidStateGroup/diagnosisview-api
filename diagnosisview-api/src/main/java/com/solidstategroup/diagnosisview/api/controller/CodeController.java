@@ -6,6 +6,7 @@ import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.service.CodeService;
+import com.solidstategroup.diagnosisview.service.LinkService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.java.Log;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
@@ -25,14 +26,17 @@ import java.util.List;
 @Log
 public class CodeController extends BaseController {
 
-    private CodeService codeService;
+    private final CodeService codeService;
+    private final LinkService linkService;
 
     /**
      * Instantiate API controller, includes required services.
      */
-    public CodeController(final CodeService codeService) {
+    public CodeController(final CodeService codeService,
+                          LinkService linkService) {
         super();
         this.codeService = codeService;
+        this.linkService = linkService;
     }
 
     /**
@@ -46,11 +50,9 @@ public class CodeController extends BaseController {
     @ApiOperation(value = "Create Code",
             notes = "Creates code within DV (unsure if required)",
             response = Code.class)
-    public Code createCode(@RequestBody final Code code) throws Exception {
+    public Code createCode(@RequestBody final Code code) {
         codeService.save(code);
-        code.getLinks().stream().forEach(link -> {
-            codeService.saveLink(link);
-        });
+        code.getLinks().forEach(linkService::saveLink);
 
         return code;
     }
@@ -64,11 +66,10 @@ public class CodeController extends BaseController {
     @ApiOperation(value = "Update Code",
             notes = "Update a user, pass the password in which will then be encrypted",
             response = Code.class)
-    public Code updateCode(@RequestBody final Code code) throws Exception {
+    public Code updateCode(@RequestBody final Code code) {
+
         codeService.save(code);
-        code.getLinks().stream().forEach(link -> {
-            codeService.saveLink(link);
-        });
+        code.getLinks().forEach(linkService::saveLink);
 
         return code;
     }

@@ -16,6 +16,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
+/**
+ * Entity class for holding rules and logos.
+ */
 @Getter
 @Setter
 @Builder
@@ -23,7 +26,7 @@ import javax.persistence.Transient;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "dv_link_logo_rule")
-public class LinkLogoRule {
+public class LogoRule {
 
     @Id
     @GeneratedValue(generator = "uuid2")
@@ -44,5 +47,4 @@ public class LinkLogoRule {
 
     @Column(name = "link_logo_filetype")
     private String logoFileType;
-
 }

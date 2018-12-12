@@ -1,11 +1,16 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.exceptions.ImageIOException;
+import com.solidstategroup.diagnosisview.exceptions.ImageNotFoundException;
 import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -75,4 +80,19 @@ public class BaseController {
         return token;
     }
 
+    /**
+     * Handles exceptions thrown when finding images. Ensures
+     * no JSON is serialized in the response.
+     */
+    @ExceptionHandler(ImageNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void imageNotFoundException() {}
+
+    /**
+     * Handle exception thrown when retrieving images. Ensures
+     * no JSON is serialized in the response.
+     */
+    @ExceptionHandler(ImageIOException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public void imageIoException() {}
 }
