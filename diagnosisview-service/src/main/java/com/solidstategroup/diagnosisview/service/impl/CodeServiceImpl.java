@@ -1,6 +1,5 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
-
 import com.google.api.client.util.Lists;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
@@ -9,8 +8,8 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
@@ -19,13 +18,13 @@ import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.LinkLogoRuleRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
+import com.solidstategroup.diagnosisview.repository.LogoRuleRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.solidstategroup.diagnosisview.service.LinkService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -43,40 +42,42 @@ import static java.util.stream.Collectors.toSet;
 /**
  * {@inheritDoc}.
  */
-@Log
+@Slf4j
 @Service
 public class CodeServiceImpl implements CodeService {
 
-    @Autowired
-    private CodeRepository codeRepository;
+    private final CodeRepository codeRepository;
+    private final CategoryRepository categoryRepository;
+    private final CodeCategoryRepository codeCategoryRepository;
+    private final CodeExternalStandardRepository codeExternalStandardRepository;
+    private final ExternalStandardRepository externalStandardRepository;
+    private final LookupTypeRepository lookupTypeRepository;
+    private final LookupRepository lookupRepository;
+    private final LinkService linkService;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    public CodeServiceImpl(CodeRepository codeRepository,
+                           CategoryRepository categoryRepository,
+                           CodeCategoryRepository codeCategoryRepository,
+                           CodeExternalStandardRepository codeExternalStandardRepository,
+                           ExternalStandardRepository externalStandardRepository,
+                           LinkService linkService,
+                           LookupTypeRepository lookupTypeRepository,
+                           LookupRepository lookupRepository) {
 
-    @Autowired
-    private CodeCategoryRepository codeCategoryRepository;
+        this.codeRepository = codeRepository;
+        this.categoryRepository = categoryRepository;
+        this.codeCategoryRepository = codeCategoryRepository;
+        this.codeExternalStandardRepository = codeExternalStandardRepository;
+        this.externalStandardRepository = externalStandardRepository;
+        this.linkService = linkService;
+        this.lookupTypeRepository = lookupTypeRepository;
+        this.lookupRepository = lookupRepository;
+    }
 
-    @Autowired
-    private CodeExternalStandardRepository codeExternalStandardRepository;
+    private static boolean shouldDisplayLink(Optional<String> linkMapping, Link link) {
 
-    @Autowired
-    private ExternalStandardRepository externalStandardRepository;
-
-    @Autowired
-    private LinkRepository linkRepository;
-
-    @Autowired
-    private LookupTypeRepository lookupTypeRepository;
-
-    @Autowired
-    private LookupRepository lookupRepository;
-
-    @Autowired
-    private LinkLogoRuleRepository linkLogoRuleRepository;
-
-    private Lookup niceLinksLookup;
-    private Lookup userLink;
-    private List<LogoRule> logoRules;
+        return linkMapping.isPresent() | !link.useTransformationsOnly();
+    }
 
     @Override
     @Cacheable("getAllCategories")
@@ -112,237 +113,121 @@ public class CodeServiceImpl implements CodeService {
                 .collect(toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Code getCode(String code) {
         return codeRepository.findOneByCode(code);
     }
 
-    @Override
-    public Link getLink(Long id) {
-        return linkRepository.findOne(id);
-    }
-
-    @Override
-    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public Link saveLink(Link link) {
-        Link existingLink = linkRepository.findOne(link.getId());
-        //Currently you can only update certain fields
-        if (link.hasDifficultyLevelSet()) {
-            existingLink.setDifficultyLevel(link.getDifficultyLevel());
-        }
-
-        if (link.hasFreeLinkSet()) {
-            existingLink.setFreeLink(link.getFreeLink());
-        }
-
-        if (link.hasTransformationOnly()) {
-            existingLink.setTransformationsOnly(link.useTransformationsOnly());
-
-        }
-
-        existingLink.setLastUpdate(new Date());
-
-        return linkRepository.save(existingLink);
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public void delete(Code code) {
         codeRepository.delete(code);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code save(Code code) {
         return codeRepository.save(code);
     }
 
-
     /**
-     * Create or update a code creating all the requestite data
-     *
-     * @param code
+     * {@inheritDoc}
      */
     @Override
-    public Code createOrUpdateCode(Code code, boolean fromSync) {
-        //Get the NICE lookup if it exists
-        populatDVLookups();
+    public Code upsertCode(Code code, boolean fromSync) {
 
-        Code existingCode = codeRepository.findOne(code.getId());
-
-        //If the code is from dv web, then we append dv_ to the code so its unique.
+        // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
             if (!code.getCode().substring(0, 3).equals("dv_")) {
                 code.setCode(String.format("dv_%s", code.getCode()));
             }
 
-            //Set the last update date to now
+            // Set the last update date to now
             code.setLastUpdate(new Date());
         }
 
+        Code existingCode = codeRepository.findOne(code.getId());
 
-        //If there is a code, or it has been updated, update
-        if (existingCode == null || existingCode.getLinks().size() != code.getLinks().size() ||
-                existingCode.getExternalStandards().size() != code.getExternalStandards().size() ||
-                existingCode.getCodeCategories().size() != code.getCodeCategories().size() ||
-                existingCode.getLastUpdate().before(code.getLastUpdate())) {
-
-
-            //The following are all items that wont be sent with the web creation
-            if (fromSync) {
-                lookupTypeRepository.save(code.getStandardType().getLookupType());
-                lookupRepository.save(code.getStandardType());
-
-                lookupTypeRepository.save(code.getCodeType().getLookupType());
-                lookupRepository.save(code.getCodeType());
-
-                for (CodeCategory codeCategory : code.getCodeCategories()) {
-                    categoryRepository.save(codeCategory.getCategory());
-                }
-
-                //Check if code category exists
-                for (CodeExternalStandard externalStandard : code.getExternalStandards()) {
-                    externalStandardRepository.save(externalStandard.getExternalStandard());
-                }
-            }
-
-            //Check if code category exists
-            for (Link link : code.getLinks()) {
-                Link existingLink = linkRepository.findOne(link.getId());
-                link = checkLink(existingLink, link);
-
-
-                //Check if the link matches any urls for logos,
-                //if it does, assign it that logo url
-                LogoRule rule = null;
-                if (link.getLogoRule() == null) {
-                    Link finalLinkTmp = link;
-                    for (LogoRule logoRule : logoRules) {
-                        if (finalLinkTmp.getLink().startsWith(logoRule.getStartsWith())) {
-                            rule = logoRule;
-                            break;
-                        }
-                    }
-
-                    if (rule != null) {
-                        link.setLogoRule(rule);
-                    }
-                }
-
-
-                //If the lookupValue is a DV only value, then dont save as it will overlap
-                //In future this may need to be a check against all DV only lookup values
-                if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
-                    link.setLinkType(userLink);
-                } else {
-                    lookupTypeRepository.save(link.getLinkType().getLookupType());
-                    lookupRepository.save(link.getLinkType());
-                }
-            }
-
-            Set<Link> links = code.getLinks();
-            Set<CodeCategory> codeCategories = code.getCodeCategories();
-            Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
-
-            //Remove code related fields, this stops exceptions being thrown
-            code.setLinks(new HashSet<>());
-            code.setCodeCategories(new HashSet<>());
-            code.setExternalStandards(new HashSet<>());
-
-            codeRepository.save(code);
-
-            //Add in the code categories
-            for (CodeCategory codeCategory : codeCategories) {
-                codeCategory.setCode(code);
-                codeCategoryRepository.save(codeCategory);
-            }
-
-            //Add in code related external standards
-            for (CodeExternalStandard externalStandard : externalStandards) {
-                externalStandard.setCode(code);
-                codeExternalStandardRepository.save(externalStandard);
-            }
-
-            //Add in code specific links
-            for (Link link : links) {
-                Link existingLink = linkRepository.findOne(link.getId());
-
-                link = checkLink(existingLink, link);
-                link.setCode(code);
-                linkRepository.save(link);
-            }
-
-            code.setLinks(links);
-            code.setCodeCategories(codeCategories);
-            code.setExternalStandards(externalStandards);
-
-            codeRepository.save(code);
-
-            return code;
-        } else {
+        if (!codeRequiresUpdate(existingCode, code)) {
             return null;
         }
+
+        // The following are all items that wont be sent with the web creation
+        if (fromSync) {
+            saveAdditionalSyncObjects(code);
+        }
+
+        Set<Link> links = code.getLinks();
+        Set<CodeCategory> codeCategories = code.getCodeCategories();
+        Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+
+        // Remove code related fields, as PV already provides ids if the
+        // objects have not already been saved to the repository jpa will thrown
+        // an exception because it can't the the non-existent ids in the db.
+        code.setLinks(new HashSet<>());
+        code.setCodeCategories(new HashSet<>());
+        code.setExternalStandards(new HashSet<>());
+
+        codeRepository.save(code);
+
+        codeCategories
+                .forEach(cc -> {
+                    cc.setCode(code);
+                    codeCategoryRepository.save(cc);
+                });
+
+        code.setCodeCategories(codeCategories);
+
+        externalStandards
+                .forEach(es -> {
+                    es.setCode(code);
+                    codeExternalStandardRepository.save(es);
+                });
+
+        code.setExternalStandards(externalStandards);
+
+        links.forEach(link -> {
+            link.setCode(code);
+            linkService.upsertLink(link);
+        });
+
+        code.setLinks(links);
+
+        return codeRepository.save(code);
     }
 
+    private boolean codeRequiresUpdate(Code currentCode, Code code) {
 
-    /**
-     * Check an existing link and see if it has the difficulty set etc
-     *
-     * @param existingLink
-     * @param link
-     * @return
-     */
-    private Link checkLink(Link existingLink, Link link) {
-        //Ensure that difficulty is not overwritten
-        if (existingLink != null) {
-            if (existingLink.hasDifficultyLevelSet()) {
-                link.setDifficultyLevel(existingLink.getDifficultyLevel());
-            }
-
-            if (existingLink.hasFreeLinkSet()) {
-                link.setFreeLink(existingLink.getFreeLink());
-            }
-
-            if (existingLink.useTransformationsOnly()) {
-                link.setTransformationsOnly(existingLink.useTransformationsOnly());
-            }
-
-        }
-
-        if (existingLink == null) {
-            link.setFreeLink(false);
-        }
-
-        //If the link is a NICE link, we should categorise it as such
-        //In the future this maybe extended into its own function
-        if (link.getLink() != null && link.getLink().contains("nice.org.uk")) {
-            link.setLinkType(niceLinksLookup);
-            if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
-                link.setDifficultyLevel(DifficultyLevel.AMBER);
-            }
-        }
-
-        return link;
+        //If there is a code, or it has been updated, update
+        return currentCode == null || currentCode.getLinks().size() != code.getLinks().size() ||
+                currentCode.getExternalStandards().size() != code.getExternalStandards().size() ||
+                currentCode.getCodeCategories().size() != code.getCodeCategories().size() ||
+                currentCode.getLastUpdate().before(code.getLastUpdate());
     }
 
+    private void saveAdditionalSyncObjects(Code code) {
 
-    /**
-     * Populates the DiagnosisView specific lookup values
-     */
-    private void populatDVLookups() {
-        if (niceLinksLookup == null) {
-            niceLinksLookup = lookupRepository.findOneByValue("NICE_CKS");
-        }
+        lookupTypeRepository.save(code.getStandardType().getLookupType());
+        lookupRepository.save(code.getStandardType());
 
-        if (userLink == null) {
-            userLink = lookupRepository.findOneByValue("CUSTOM");
-        }
+        lookupTypeRepository.save(code.getCodeType().getLookupType());
+        lookupRepository.save(code.getCodeType());
 
-        if (logoRules == null) {
-            logoRules = Lists.newArrayList(linkLogoRuleRepository.findAll());
-        }
+        code.getCodeCategories()
+                .forEach(cc -> categoryRepository.save(cc.getCategory()));
+
+        code.getExternalStandards()
+                .forEach(es -> externalStandardRepository.save(es.getExternalStandard()));
     }
-
 
     private boolean shouldBeDeleted(Code code) {
         return code.isRemovedExternally() || code.isHideFromPatients();
@@ -375,14 +260,6 @@ public class CodeServiceImpl implements CodeService {
                 .map(LinkRuleMapping::getReplacementLink);
     }
 
-    private static boolean shouldDisplayLink(Optional<String> linkMapping, Link link) {
-        if (linkMapping.isPresent() | !link.useTransformationsOnly()) {
-            return true;
-        }
-
-        return false;
-    }
-
     private Set<CategoryDto> buildCategories(Code code) {
 
         return code
@@ -395,5 +272,4 @@ public class CodeServiceImpl implements CodeService {
                                 cc.getCategory().isHidden()))
                 .collect(toSet());
     }
-
 }

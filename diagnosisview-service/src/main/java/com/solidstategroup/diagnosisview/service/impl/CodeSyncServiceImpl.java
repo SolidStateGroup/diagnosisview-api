@@ -9,21 +9,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.repository.CategoryRepository;
-import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
-import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.CodeRepository;
-import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.LinkRepository;
-import com.solidstategroup.diagnosisview.repository.LookupRepository;
-import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
 import com.tyler.gson.immutable.ImmutableListDeserializer;
 import com.tyler.gson.immutable.ImmutableMapDeserializer;
 import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -44,11 +36,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * {@inheritDoc}.
  */
-@Log
+@Slf4j
 @Service
 public class CodeSyncServiceImpl implements CodeSyncService {
 
@@ -112,10 +103,8 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
     @org.springframework.transaction.annotation.Transactional
     protected void updateCode(Code code) {
-        codeService.createOrUpdateCode(code, true);
+        codeService.upsertCode(code, true);
     }
-
-
 
     /**
      * Get the token returned by the api.

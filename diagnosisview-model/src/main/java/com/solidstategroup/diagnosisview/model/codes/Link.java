@@ -58,7 +58,6 @@ public class Link extends AuditModel {
     @JoinColumn(name = "link_logo_id")
     private LogoRule logoRule;
 
-
     public Lookup getLinkType() {
         return linkType;
     }

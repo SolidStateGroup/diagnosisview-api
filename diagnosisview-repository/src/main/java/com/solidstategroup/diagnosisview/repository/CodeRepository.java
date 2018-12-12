@@ -14,8 +14,8 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
     /**
      * Find a code by the given code.
      *
-     * @param username String the code to lookup
+     * @param code String the code to lookup
      * @return the found code
      */
-    Code findOneByCode(final String username);
+    Code findOneByCode(final String code);
 }

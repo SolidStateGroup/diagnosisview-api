@@ -71,5 +71,4 @@ public class Code extends AuditModel {
     @OneToOne
     @JoinColumn(name = "standard_type_id")
     private Lookup standardType;
-
 }

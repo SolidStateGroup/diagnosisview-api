@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
  * JPA repository for LogoRule objects.
  */
 @Repository
-public interface LinkLogoRuleRepository extends JpaRepository<LogoRule, String> {
+public interface LogoRuleRepository extends JpaRepository<LogoRule, String> {
 }

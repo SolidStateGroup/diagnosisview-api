@@ -3,7 +3,7 @@ package com.solidstategroup.diagnosisview.service.impl;
 import com.google.api.client.util.Base64;
 import com.solidstategroup.diagnosisview.model.LogoRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.LogoRule;
-import com.solidstategroup.diagnosisview.repository.LinkLogoRuleRepository;
+import com.solidstategroup.diagnosisview.repository.LogoRuleRepository;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -14,11 +14,11 @@ import java.util.List;
 @Service
 public class LogoRulesServiceImpl implements LogoRulesService {
 
-    private final LinkLogoRuleRepository linkLogoRuleRepository;
+    private final LogoRuleRepository logoRuleRepository;
 
-    public LogoRulesServiceImpl(LinkLogoRuleRepository linkLogoRuleRepository) {
+    public LogoRulesServiceImpl(LogoRuleRepository logoRuleRepository) {
 
-        this.linkLogoRuleRepository = linkLogoRuleRepository;
+        this.logoRuleRepository = logoRuleRepository;
     }
 
     /**
@@ -28,7 +28,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LogoRule add(LogoRuleDto logoRuleDto) throws UnsupportedEncodingException {
 
-        return linkLogoRuleRepository.save(LogoRule
+        return logoRuleRepository.save(LogoRule
                 .builder()
                 .linkLogo(Base64.decodeBase64(logoRuleDto.getImage().getBytes("UTF-8")))
                 .logoFileType(logoRuleDto.getImageFormat())
@@ -42,7 +42,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @Override
     public LogoRule getLogoRule(String id) {
 
-        return linkLogoRuleRepository.findOne(id);
+        return logoRuleRepository.findOne(id);
     }
 
     /**
@@ -51,13 +51,13 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @Override
     public List<LogoRule> getLogoRules() {
 
-        return linkLogoRuleRepository.findAll();
+        return logoRuleRepository.findAll();
     }
 
     @Override
     public void deleteLogoRule(String id) {
 
-        linkLogoRuleRepository.delete(id);
+        logoRuleRepository.delete(id);
     }
 
     /**
@@ -66,7 +66,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @Override
     public LogoRule updateLogoRule(String id, LogoRuleDto logoRuleDto) throws Exception {
 
-        LogoRule current = linkLogoRuleRepository.findOne(id);
+        LogoRule current = logoRuleRepository.findOne(id);
 
         if (current == null) {
             throw new Exception();
@@ -80,6 +80,6 @@ public class LogoRulesServiceImpl implements LogoRulesService {
                 .id(id)
                 .build();
 
-        return linkLogoRuleRepository.save(current);
+        return logoRuleRepository.save(current);
     }
 }
