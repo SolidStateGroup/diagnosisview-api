@@ -72,7 +72,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
             throw new Exception();
         }
 
-        LogoRule
+        LogoRule newLogoRule = LogoRule
                 .builder()
                 .linkLogo(Base64.decodeBase64(logoRuleDto.getImage().getBytes("UTF-8")))
                 .logoFileType(logoRuleDto.getImageFormat())
@@ -80,6 +80,6 @@ public class LogoRulesServiceImpl implements LogoRulesService {
                 .id(id)
                 .build();
 
-        return logoRuleRepository.save(current);
+        return logoRuleRepository.save(newLogoRule);
     }
 }
