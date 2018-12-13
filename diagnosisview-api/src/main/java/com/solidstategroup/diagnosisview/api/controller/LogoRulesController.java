@@ -131,11 +131,7 @@ public class LogoRulesController extends BaseController {
     @GetMapping("/{id}/image")
     public void getLogoImage(
             @PathVariable("id") final String id,
-            HttpServletRequest request,
-            HttpServletResponse response)
-            throws Exception {
-
-        checkIsAuthenticated(request);
+            HttpServletResponse response) {
 
         LogoRule logoRule = logoRulesService.getLogoRule(id);
 

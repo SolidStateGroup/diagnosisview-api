@@ -125,7 +125,6 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         def logo = "TEST".bytes
 
-        1 * logoRulesService.getLogoRule(ID) >> new LogoRule(linkLogo: logo)
 
         when:
 
@@ -135,23 +134,19 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         then:
 
-        1 * userService.getUserByToken(_ as String) >> new User(roleType: ADMIN)
+        1 * logoRulesService.getLogoRule(ID) >> new LogoRule(linkLogo: logo)
     }
 
     def "should send 404 when logo image not found"() {
-
-        given: "logo rule is not found"
-
-        1 * logoRulesService.getLogoRule(ID) >> null
 
         when: "endpoint is called, 404 is returned"
 
         getAt(sprintf(FETCH_IMAGE, ID))
                 .andExpect(status().isNotFound())
 
-        then:
+        then: "logo rule is not found"
 
-        1 * userService.getUserByToken(_ as String) >> new User(roleType: ADMIN)
+        1 * logoRulesService.getLogoRule(ID) >> null
     }
 
     def standardLogoRule() {
