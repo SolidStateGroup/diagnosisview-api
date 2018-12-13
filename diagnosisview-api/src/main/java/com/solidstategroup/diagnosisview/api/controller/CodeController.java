@@ -23,7 +23,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api")
-@Log
 public class CodeController extends BaseController {
 
     private final CodeService codeService;
@@ -44,14 +43,15 @@ public class CodeController extends BaseController {
      *
      * @param code - code to create
      * @return the created code with ID
-     * @throws Exception
      */
     @RequestMapping(value = "/code", method = RequestMethod.POST)
     @ApiOperation(value = "Create Code",
             notes = "Creates code within DV (unsure if required)",
             response = Code.class)
     public Code createCode(@RequestBody final Code code) {
+
         codeService.save(code);
+
         code.getLinks().forEach(linkService::saveLink);
 
         return code;
@@ -60,7 +60,6 @@ public class CodeController extends BaseController {
     /**
      * @param code
      * @return
-     * @throws Exception
      */
     @RequestMapping(value = "/code", method = RequestMethod.PUT)
     @ApiOperation(value = "Update Code",

@@ -163,9 +163,9 @@ class CodeServiceImplTest extends Specification {
 
         given: "codes are the same"
 
-        def id  = 1
-        def code = new Code(id: id, lastUpdate: new Date(150,1,1))
-        def currentCode = new Code(id: id, lastUpdate:  new Date(150,1,1))
+        def id = 1
+        def code = new Code(id: id, lastUpdate: new Date(150, 1, 1))
+        def currentCode = new Code(id: id, lastUpdate: new Date(150, 1, 1))
 
         1 * codeRepository.findOne(id) >> currentCode
 
@@ -176,6 +176,26 @@ class CodeServiceImplTest extends Specification {
         then: "result is null"
 
         result == null
+    }
+
+    def "should create new code not from sync"() {
+
+        given:
+
+        def codeStr = "liver_disease_(alcoholic)"
+        def newCode  = new Code(code: codeStr)
+
+        when:
+
+        def result = codeService.upsertCode(newCode,false)
+
+        then:
+
+        2 * codeRepository.save(_ as Code) >> { it[0] }
+
+        with(result) {
+            code == "dv_" + codeStr
+        }
     }
 
     def buildHeartCategory() {

@@ -8,6 +8,7 @@ import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
@@ -40,6 +41,9 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 @Service
 public class CodeServiceImpl implements CodeService {
+
+    private static final String DV_CODE = "dv_";
+    private static final String DV_CODE_TEMPLATE = "dv_%s";
 
     private final CodeRepository codeRepository;
     private final CategoryRepository categoryRepository;
@@ -142,13 +146,21 @@ public class CodeServiceImpl implements CodeService {
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
-            if (!code.getCode().substring(0, 3).equals("dv_")) {
-                code.setCode(format("dv_%s", code.getCode()));
+
+            if (!code.getCode().substring(0, 3).equals(DV_CODE)) {
+
+                code.setCode(format(DV_CODE_TEMPLATE, code.getCode()));
+            }
+
+            if (code.getSourceType() == null) {
+
+                code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
             }
 
             // Set the last update date to now
             code.setLastUpdate(new Date());
         }
+
         if (upsertNotRequired(code)) {
             return null;
         }
@@ -156,6 +168,10 @@ public class CodeServiceImpl implements CodeService {
         // The following are all items that wont be sent with the web creation
         if (fromSync) {
             saveAdditionalSyncObjects(code);
+
+            if (code.getSourceType() == null) {
+                code.setSourceType(CodeSourceTypes.PATIENTVIEW);
+            }
         }
 
         Set<Link> links = code.getLinks();

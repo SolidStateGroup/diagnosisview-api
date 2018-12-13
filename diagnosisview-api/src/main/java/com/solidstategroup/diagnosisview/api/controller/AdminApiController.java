@@ -62,6 +62,7 @@ public class AdminApiController extends BaseController {
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public User login(@RequestBody final User user) throws Exception {
+
         User loggedInUser = userService.login(user.getUsername(), user.getStoredPassword());
 
         if (loggedInUser == null || loggedInUser.getRoleType().equals(RoleType.USER)) {
@@ -82,7 +83,7 @@ public class AdminApiController extends BaseController {
             notes = "Admin User endpoint to get all users within the DiagnosisView",
             response = User.class)
     public List<User> getAllUsers(HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         return userService.getAllUsers();
@@ -99,7 +100,7 @@ public class AdminApiController extends BaseController {
             notes = "Pass the user in with an ID to be deleted")
     public User deleteUser(@RequestBody final User user,
                            HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         //Soft delete, making user as deleted
@@ -119,19 +120,17 @@ public class AdminApiController extends BaseController {
             response = User.class)
     public User createUser(@RequestBody final User user,
                            HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         return userService.createOrUpdateUser(user, true);
     }
-
 
     /**
      * Create a code within DV.
      *
      * @param code - code to create
      * @return the created code with ID
-     * @throws Exception
      */
     @RequestMapping(value = "/code", method = RequestMethod.POST)
     @ApiOperation(value = "Create Code",
@@ -139,7 +138,7 @@ public class AdminApiController extends BaseController {
             response = Code.class)
     public Code createCode(@RequestBody final Code code,
                            HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         return codeService.upsertCode(code, false);
@@ -148,7 +147,6 @@ public class AdminApiController extends BaseController {
     /**
      * @param code
      * @return
-     * @throws Exception
      */
     @RequestMapping(value = "/code", method = RequestMethod.PUT)
     @ApiOperation(value = "Update Code",
@@ -156,7 +154,7 @@ public class AdminApiController extends BaseController {
             response = Code.class)
     public Code updateCode(@RequestBody final Code code,
                            HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         return codeService.upsertCode(code, false);
@@ -176,7 +174,7 @@ public class AdminApiController extends BaseController {
             response = Link.class)
     public Link updateLink(@RequestBody final Link link,
                            HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         Link existingLink = linkService.getLink(link.getId());
@@ -199,7 +197,7 @@ public class AdminApiController extends BaseController {
             notes = "Get all external standards within DV",
             response = User.class)
     public List<ExternalStandard> getExternalStandards(HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         return externalStandardRepository.findAll();
@@ -219,10 +217,11 @@ public class AdminApiController extends BaseController {
     public User updateUser(@PathVariable("userId") final Long userId,
                            @RequestBody final User user,
                            HttpServletRequest request) throws Exception {
-        //Check if the user is an admin
+
         isAdminUser(request);
 
         user.setId(userId);
+
         return userService.createOrUpdateUser(user, true);
     }
 

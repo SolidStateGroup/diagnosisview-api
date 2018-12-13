@@ -66,7 +66,7 @@ public class Code extends AuditModel {
 
     @Column(name = "source_type", nullable = false)
     @Enumerated(EnumType.STRING)
-    private CodeSourceTypes sourceType = CodeSourceTypes.PATIENTVIEW;
+    private CodeSourceTypes sourceType;
 
     @OneToOne
     @JoinColumn(name = "standard_type_id")
