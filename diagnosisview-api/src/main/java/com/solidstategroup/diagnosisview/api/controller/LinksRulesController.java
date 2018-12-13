@@ -2,7 +2,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
-import com.solidstategroup.diagnosisview.service.LinkRulesService;
+import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +30,10 @@ import static java.util.stream.Collectors.toList;
 @Api(value = "/api/link/rules", description = "Manage Link Rules")
 public class LinksRulesController extends BaseController {
 
-    private final LinkRulesService linkRulesService;
+    private final LinkRuleService linkRuleService;
 
-    public LinksRulesController(LinkRulesService linkRulesService) {
-        this.linkRulesService = linkRulesService;
+    public LinksRulesController(LinkRuleService linkRuleService) {
+        this.linkRuleService = linkRuleService;
     }
 
     @ApiOperation(
@@ -48,7 +48,7 @@ public class LinksRulesController extends BaseController {
         isAdminUser(request);
 
         return buildLinkRuleDto(
-                linkRulesService.add(linkRule));
+                linkRuleService.add(linkRule));
     }
 
     @ApiOperation(
@@ -62,7 +62,7 @@ public class LinksRulesController extends BaseController {
 
         isAdminUser(request);
 
-        return linkRulesService
+        return linkRuleService
                 .getLinkRules()
                 .stream()
                 .map(this::buildLinkRuleDto)
@@ -82,7 +82,7 @@ public class LinksRulesController extends BaseController {
         isAdminUser(request);
 
         return buildLinkRuleDto(
-                linkRulesService.getLinkRule(id));
+                linkRuleService.getLinkRule(id));
     }
 
     @ApiOperation(
@@ -98,7 +98,8 @@ public class LinksRulesController extends BaseController {
 
         isAdminUser(request);
 
-        return buildLinkRuleDto(linkRulesService.updateLinkRule(id, linkTransformationDto));
+        return buildLinkRuleDto(
+                linkRuleService.updateLinkRule(id, linkTransformationDto));
     }
 
     @ApiOperation(
@@ -112,10 +113,15 @@ public class LinksRulesController extends BaseController {
 
         isAdminUser(request);
 
-        linkRulesService.deleteLinkRule(id);
+        linkRuleService.deleteLinkRule(id);
     }
 
+    /**
+     * Converts between internal {@link LinkRule} to {@link LinkRuleDto}
+     * @param lt {@link LinkRule} for repository
+     * @return Dto to send to FE
+     */
     private LinkRuleDto buildLinkRuleDto(LinkRule lt) {
-        return new LinkRuleDto(lt.getId(), lt.getLink(), lt.getTransform(), lt.getInstitution());
+        return new LinkRuleDto(lt.getId(), lt.getLink(), lt.getTransform(), lt.getCriteriaType(), lt.getCriteria());
     }
 }

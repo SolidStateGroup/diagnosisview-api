@@ -18,11 +18,15 @@ class PublicControllerTest extends Specification {
 
     def "get status"() throws Exception {
         when: "the status endpoint is called"
-            def response = mockMvc
+
+        def response = mockMvc
                 .perform(MockMvcRequestBuilders.get("/public/status"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-            def content = response.andReturn().response.getContentAsString();
+
+        def content = response.andReturn().response.getContentAsString()
+
         then: "ok is returned"
-            content.contains("ok");
+
+        content.contains("ok")
     }
 }

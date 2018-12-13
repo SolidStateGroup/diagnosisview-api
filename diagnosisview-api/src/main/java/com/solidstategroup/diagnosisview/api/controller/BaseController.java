@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.exceptions.ImageIOException;
 import com.solidstategroup.diagnosisview.exceptions.ImageNotFoundException;
 import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
@@ -79,6 +80,10 @@ public class BaseController {
 
         return token;
     }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void notFound() {}
 
     /**
      * Handles exceptions thrown when finding images. Ensures
