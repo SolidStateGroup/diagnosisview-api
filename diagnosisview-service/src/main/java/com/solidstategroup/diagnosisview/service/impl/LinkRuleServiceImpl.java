@@ -38,7 +38,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
 
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
-    public LinkRule addRule(LinkRuleDto linkRuleDto) {
+    public LinkRule add(LinkRuleDto linkRuleDto) {
 
         // For now we are only handling institution.
         // This could change in the future.

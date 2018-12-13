@@ -47,11 +47,16 @@ public class Link extends AuditModel {
     @Column(name = "free_link", nullable = false)
     private Boolean freeLink;
 
-    @Column(name = "transformations_only", nullable = false)
+    @Column(name = "transformations_only")
     private Boolean transformationsOnly;
 
     @ManyToMany(mappedBy = "link")
     private Set<LinkRuleMapping> mappingLinks;
+
+    //Allows a custom logo to be added to a logo
+    @OneToOne
+    @JoinColumn(name = "link_logo_id")
+    private LogoRule logoRule;
 
     public Lookup getLinkType() {
         return linkType;
@@ -140,5 +145,13 @@ public class Link extends AuditModel {
 
     public void setMappingLinks(Set<LinkRuleMapping> mappingLinks) {
         this.mappingLinks = mappingLinks;
+    }
+
+    public LogoRule getLogoRule() {
+        return logoRule;
+    }
+
+    public void setLogoRule(LogoRule logoRule) {
+        this.logoRule = logoRule;
     }
 }

@@ -17,20 +17,30 @@ public interface LinkRuleService {
      * @param linkRuleDto Request to add a link rule
      * @return Saved link rule
      */
-    LinkRule addRule(LinkRuleDto linkRuleDto);
+    LinkRule add(LinkRuleDto linkRuleDto);
+
 
     /**
      * Returns all {@link LinkRule} objects currently saved in repository.
-     *
      **/
     List<LinkRule> getLinkRules();
 
     /**
+     * Fetches a {@link LinkRule} by an id.
+     *
      * @param id Id of link rule
      * @return {@link LinkRule} with matching id
      */
     LinkRule getLinkRule(String id);
 
+    /**
+     * Update a given link transformation
+     *
+     * @param id
+     * @param linkTransformation
+     * @return
+     * @throws Exception
+     */
     LinkRule updateLinkRule(String id, LinkRuleDto linkTransformation) throws Exception;
 
     /**

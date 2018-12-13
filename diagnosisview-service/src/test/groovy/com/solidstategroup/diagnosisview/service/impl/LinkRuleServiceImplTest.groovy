@@ -108,7 +108,7 @@ class LinkRuleServiceImplTest extends Specification {
 
         when: "add link rule is called"
 
-        linkRuleService.addRule(linkRuleDto)
+        linkRuleService.add(linkRuleDto)
 
         then:
 
@@ -135,7 +135,7 @@ class LinkRuleServiceImplTest extends Specification {
 
         when:
 
-        linkRuleService.addRule(linkRuleDto)
+        linkRuleService.add(linkRuleDto)
 
         then:
 
@@ -159,16 +159,4 @@ class LinkRuleServiceImplTest extends Specification {
             return [linkRuleOne, linkRuleTwo]
         }
     }
-
-//    def "should update rule"() {
-//        given:
-//
-//
-//        when:
-//
-//        linkRuleService.updateLinkRule()
-//
-//
-//        then:
-//    }
 }

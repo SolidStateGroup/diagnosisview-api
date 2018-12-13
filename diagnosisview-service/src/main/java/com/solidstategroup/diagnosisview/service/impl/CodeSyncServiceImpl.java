@@ -9,25 +9,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
-import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
-import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.model.codes.Lookup;
-import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
-import com.solidstategroup.diagnosisview.repository.CategoryRepository;
-import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
-import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.CodeRepository;
-import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.LinkRepository;
-import com.solidstategroup.diagnosisview.repository.LookupRepository;
-import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
+import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
 import com.tyler.gson.immutable.ImmutableListDeserializer;
 import com.tyler.gson.immutable.ImmutableMapDeserializer;
 import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -45,16 +33,13 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 
 /**
  * {@inheritDoc}.
  */
-@Log
+@Slf4j
 @Service
 public class CodeSyncServiceImpl implements CodeSyncService {
 
@@ -80,34 +65,10 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             .create();
 
     @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private CodeExternalStandardRepository codeExternalStandardRepository;
-
-    @Autowired
-    private CodeRepository codeRepository;
-
-    @Autowired
-    private CodeCategoryRepository codeCategoryRepository;
-
-    @Autowired
-    private ExternalStandardRepository externalStandardRepository;
-
-    @Autowired
-    private LinkRepository linkRepository;
-
-    @Autowired
-    private LookupRepository lookupRepository;
-
-    @Autowired
-    private LookupTypeRepository lookupTypeRepository;
-
-    private Lookup niceLinksLookup;
-    private Lookup userLink;
+    private CodeService codeService;
 
     @Override
-    @Scheduled(cron = "0 0 */2 * * *")
+//    @Scheduled(cron = "0 0 */2 * * *")
     public void syncCodes() {
         try {
             log.info("Starting Code Sync from PatientView");
@@ -132,8 +93,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             List<Code> codes = gson.fromJson(contentString, fooType);
 
-            //Get the NICE lookup if it exists
-            populatDVLookups();
 
             codes.stream().forEach(code -> updateCode(code));
             log.info("Finished Code Sync from PatientView");
@@ -144,131 +103,8 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
     @org.springframework.transaction.annotation.Transactional
     protected void updateCode(Code code) {
-        Code existingCode = codeRepository.findOne(code.getId());
 
-        //If there is a code, or it has been updated, update
-        if (existingCode == null || existingCode.getLinks().size() != code.getLinks().size() ||
-                existingCode.getExternalStandards().size() != code.getExternalStandards().size() ||
-                existingCode.getCodeCategories().size() != code.getCodeCategories().size() ||
-                existingCode.getLastUpdate().before(code.getLastUpdate())) {
-
-            lookupTypeRepository.save(code.getStandardType().getLookupType());
-            lookupRepository.save(code.getStandardType());
-
-            lookupTypeRepository.save(code.getCodeType().getLookupType());
-            lookupRepository.save(code.getCodeType());
-
-            for (CodeCategory codeCategory : code.getCodeCategories()) {
-                categoryRepository.save(codeCategory.getCategory());
-            }
-
-            //Check if code category exists
-            for (CodeExternalStandard externalStandard : code.getExternalStandards()) {
-                externalStandardRepository.save(externalStandard.getExternalStandard());
-            }
-
-            //Check if code category exists
-            for (Link link : code.getLinks()) {
-                Link existingLink = linkRepository.findOne(link.getId());
-                link = checkLink(existingLink, link);
-
-                //If the lookupValue is a DV only value, then dont save as it will overlap
-                //In future this may need to be a check against all DV only lookup values
-                if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
-                    link.setLinkType(userLink);
-                } else {
-                    lookupTypeRepository.save(link.getLinkType().getLookupType());
-                    lookupRepository.save(link.getLinkType());
-                }
-            }
-
-            Set<Link> links = code.getLinks();
-            Set<CodeCategory> codeCategories = code.getCodeCategories();
-            Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
-
-            //Remove code related fields, this stops exceptions being thrown
-            code.setLinks(new HashSet<>());
-            code.setCodeCategories(new HashSet<>());
-            code.setExternalStandards(new HashSet<>());
-
-            codeRepository.save(code);
-
-            //Add in the code categories
-            for (CodeCategory codeCategory : codeCategories) {
-                codeCategory.setCode(code);
-                codeCategoryRepository.save(codeCategory);
-            }
-
-            //Add in code related external standards
-            for (CodeExternalStandard externalStandard : externalStandards) {
-                externalStandard.setCode(code);
-                codeExternalStandardRepository.save(externalStandard);
-            }
-
-            //Add in code specific links
-            for (Link link : links) {
-                Link existingLink = linkRepository.findOne(link.getId());
-
-                link = checkLink(existingLink, link);
-                link.setCode(code);
-                linkRepository.save(link);
-            }
-
-            code.setLinks(links);
-            code.setCodeCategories(codeCategories);
-            code.setExternalStandards(externalStandards);
-
-            codeRepository.save(code);
-        }
-    }
-
-    /**
-     * Check an existing link and see if it has the difficulty set etc
-     *
-     * @param existingLink
-     * @param link
-     * @return
-     */
-    private Link checkLink(Link existingLink, Link link) {
-        //Ensure that difficulty is not overwritten
-        if (existingLink != null) {
-            if (existingLink.hasDifficultyLevelSet()) {
-                link.setDifficultyLevel(existingLink.getDifficultyLevel());
-            }
-
-            if (existingLink.hasFreeLinkSet()) {
-                link.setFreeLink(existingLink.getFreeLink());
-            }
-
-            if (existingLink.useTransformationsOnly()) {
-                link.setTransformationsOnly(existingLink.useTransformationsOnly());
-            }
-
-        }
-
-        if (existingLink == null) {
-            link.setFreeLink(false);
-            link.setTransformationsOnly(false);
-        }
-
-        //If the link is a NICE link, we should categorise it as such
-        //In the future this maybe extended into its own function
-        if (link.getLink() != null && link.getLink().contains("nice.org.uk")) {
-            link.setLinkType(niceLinksLookup);
-            if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
-                link.setDifficultyLevel(DifficultyLevel.AMBER);
-            }
-        }
-
-        return link;
-    }
-
-    /**
-     * Populates the DiagnosisView specific lookup values
-     */
-    private void populatDVLookups() {
-        niceLinksLookup = lookupRepository.findOneByValue("NICE_CKS");
-        userLink = lookupRepository.findOneByValue("CUSTOM");
+        codeService.upsertCode(code, true);
     }
 
     /**
