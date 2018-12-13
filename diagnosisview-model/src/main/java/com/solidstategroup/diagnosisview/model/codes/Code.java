@@ -39,7 +39,7 @@ public class Code extends AuditModel {
     private Integer displayOrder;
 
     // called Name in ui
-    @Column(name = "description")
+    @Column(name = "description", length = 500)
     private String description;
 
     @OneToMany(mappedBy = "code", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH},
@@ -47,7 +47,7 @@ public class Code extends AuditModel {
     private Set<CodeExternalStandard> externalStandards = new HashSet<>();
 
     // from NHS choices initially
-    @Column(name = "full_description")
+    @Column(name = "full_description", length = 500)
     private String fullDescription;
 
     @Column(name = "hide_from_patients")
