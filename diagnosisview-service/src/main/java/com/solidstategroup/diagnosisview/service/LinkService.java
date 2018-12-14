@@ -1,9 +1,6 @@
 package com.solidstategroup.diagnosisview.service;
 
-import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-
-import java.util.List;
 
 public interface LinkService {
 
@@ -13,15 +10,22 @@ public interface LinkService {
      * @param id Id of the link being sent
      * @return the full found link
      */
-    Link getLink(Long id);
+    Link get(Long id);
 
     /**
-     * Save a link with update fields.
+     * Updates link fields.
      *
-     * @param link the link to save
+     * @param link the link to update
      * @return the updated link
      */
-    Link saveLink(Link link);
+    Link update(Link link);
 
-    Link upsertLink(Link link);
+    /**
+     * Creates a new link if link does not already
+     * exist or updates a link.
+     *
+     * @param link new link or updated link
+     * @return created/updated link
+     */
+    Link upsert(Link link);
 }

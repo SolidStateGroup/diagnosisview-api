@@ -45,7 +45,7 @@ public interface CodeService {
     /**
      * Save a code, either creating or deleting
      *
-     * @param code the code to save
+     * @param code the code to update
      * @return Save the saved code
      */
     Code save(Code code);

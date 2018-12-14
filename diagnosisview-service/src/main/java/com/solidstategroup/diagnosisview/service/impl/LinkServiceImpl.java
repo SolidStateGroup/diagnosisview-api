@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 import com.google.api.client.util.Lists;
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
@@ -14,6 +15,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -43,7 +45,7 @@ public class LinkServiceImpl implements LinkService {
      * {@inheritDoc}
      */
     @Override
-    public Link getLink(Long id) {
+    public Link get(Long id) {
         return linkRepository.findOne(id);
     }
 
@@ -52,31 +54,48 @@ public class LinkServiceImpl implements LinkService {
      */
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public Link saveLink(Link link) {
+    public Link update(Link link) {
 
         Link existingLink = linkRepository.findOne(link.getId());
 
+        if (existingLink == null) {
+
+            throw new BadRequestException("The link does not exist within DiagnosisView.");
+        }
+
         //Currently you can only update certain fields
         if (link.hasDifficultyLevelSet()) {
+
             existingLink.setDifficultyLevel(link.getDifficultyLevel());
         }
 
         if (link.hasFreeLinkSet()) {
+
             existingLink.setFreeLink(link.getFreeLink());
         }
 
         if (link.hasTransformationOnly()) {
-            existingLink.setTransformationsOnly(link.useTransformationsOnly());
 
+            existingLink.setTransformationsOnly(link.useTransformationsOnly());
+        }
+
+        if (link.getDisplayOrder() != null) {
+
+            existingLink.setDisplayOrder(link.getDisplayOrder());
         }
 
         existingLink.setLastUpdate(new Date());
 
+        existingLink.setMappingLinks(new HashSet<>());
+
         return linkRepository.save(existingLink);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Link upsertLink(Link link) {
+    public Link upsert(Link link) {
 
         //Get the NICE lookup if it exists
         populatDVLookups();
@@ -103,7 +122,7 @@ public class LinkServiceImpl implements LinkService {
             }
         }
 
-        //If the lookupValue is a DV only value, then don't save as it will overlap
+        //If the lookupValue is a DV only value, then don't update as it will overlap
         //In future this may need to be a check against all DV only lookup values
         if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
             link.setLinkType(userLink);

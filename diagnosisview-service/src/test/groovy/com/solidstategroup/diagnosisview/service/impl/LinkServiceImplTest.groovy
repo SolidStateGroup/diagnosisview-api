@@ -33,7 +33,7 @@ class LinkServiceImplTest extends Specification {
 
         when: "link is fetched by id"
 
-        def result = linkService.getLink(id)
+        def result = linkService.get(id)
 
         then: "correct link object is returned"
 
@@ -48,16 +48,24 @@ class LinkServiceImplTest extends Specification {
 
         def updatedLink =
                 new Link(
-                        id: id, difficultyLevel: DifficultyLevel.RED, freeLink: false, transformationsOnly: false)
+                        id: id,
+                        difficultyLevel: DifficultyLevel.RED,
+                        displayOrder: 1,
+                        freeLink: false,
+                        transformationsOnly: false)
 
         def currentLink =
-                new Link(difficultyLevel: DifficultyLevel.GREEN, freeLink: true, transformationsOnly: true)
+                new Link(
+                        displayOrder: 2,
+                        difficultyLevel: DifficultyLevel.GREEN,
+                        freeLink: true,
+                        transformationsOnly: true)
 
         1 * linkRepository.findOne(id) >> currentLink
 
-        when: "attempt to save link is made"
+        when: "attempt to update link is made"
 
-        def result = linkService.saveLink(updatedLink)
+        def result = linkService.update(updatedLink)
 
         then: "link is saved"
 
@@ -67,6 +75,7 @@ class LinkServiceImplTest extends Specification {
 
         with(result) {
             difficultyLevel == updatedLink.difficultyLevel
+            displayOrder == updatedLink.displayOrder
             freeLink == updatedLink.freeLink
             transformationsOnly == updatedLink.transformationsOnly
             lastUpdate != null

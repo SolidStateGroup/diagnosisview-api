@@ -148,6 +148,7 @@ public class CodeServiceImpl implements CodeService {
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code save(Code code) {
+
         return codeRepository.save(code);
     }
 
@@ -215,7 +216,7 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(links
                 .stream()
                 .peek(l -> l.setCode(code))
-                .map(linkService::upsertLink)
+                .map(linkService::upsert)
                 .collect(toSet()));
 
         return codeRepository.save(code);
@@ -264,6 +265,7 @@ public class CodeServiceImpl implements CodeService {
                             link.getLinkType(),
                             link.getDifficultyLevel(),
                             linkMapping.orElse(link.getLink()),
+                            link.getDisplayOrder(),
                             shouldDisplayLink(linkMapping, link),
                             link.getName(), link.getFreeLink(),
                             link.useTransformationsOnly());

@@ -154,7 +154,7 @@ class CodeServiceImplTest extends Specification {
 
         1 * codeExternalStandardRepository.save(codeExternalStandard)
 
-        2 * linkService.upsertLink(_ as Link) >> { it[0] }
+        2 * linkService.upsert(_ as Link) >> { it[0] }
 
         2 * codeRepository.save(_ as Code) >> { it[0] }
     }

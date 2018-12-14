@@ -1,6 +1,5 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
@@ -177,13 +176,7 @@ public class AdminApiController extends BaseController {
 
         isAdminUser(request);
 
-        Link existingLink = linkService.getLink(link.getId());
-
-        if (existingLink == null) {
-            throw new BadRequestException("The link does not exist within DiagnosisView.");
-
-        }
-        return linkService.saveLink(link);
+        return linkService.update(link);
     }
 
     /**

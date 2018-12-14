@@ -49,9 +49,10 @@ public class CodeController extends BaseController {
             response = Code.class)
     public Code createCode(@RequestBody final Code code) {
 
-        codeService.save(code);
-
-        code.getLinks().forEach(linkService::saveLink);
+        codeService
+                .save(code)
+                .getLinks()
+                .forEach(linkService::update);
 
         return code;
     }
@@ -66,8 +67,10 @@ public class CodeController extends BaseController {
             response = Code.class)
     public Code updateCode(@RequestBody final Code code) {
 
-        codeService.save(code);
-        code.getLinks().forEach(linkService::saveLink);
+        codeService
+                .save(code)
+                .getLinks()
+                .forEach(linkService::update);
 
         return code;
     }
