@@ -54,7 +54,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         given: "logos have been stored in repository"
 
-        1 * logoRulesService.getLogoRules() >> [
+        1 * logoRulesService.getRules() >> [
                 new LogoRule(),
                 new LogoRule()
         ]
@@ -83,7 +83,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         then: "logo is updated"
 
-        1 * logoRulesService.updateLogoRule(ID, logoRuleDto) >> standardLogoRule()
+        1 * logoRulesService.update(ID, logoRuleDto) >> standardLogoRule()
 
         1 * userService.getUserByToken(_ as String) >> new User(roleType: ADMIN)
     }
@@ -97,7 +97,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         then: "logo is deleted"
 
-        1 * logoRulesService.deleteLogoRule(ID)
+        1 * logoRulesService.delete(ID)
 
         1 * userService.getUserByToken(_ as String) >> new User(roleType: ADMIN)
     }
@@ -106,7 +106,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         given: "a stored logo"
 
-        1 * logoRulesService.getLogoRule(ID) >> standardLogoRule()
+        1 * logoRulesService.get(ID) >> standardLogoRule()
 
         when: "endpoint is called logo is retrieved"
 
@@ -134,7 +134,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         then:
 
-        1 * logoRulesService.getLogoRule(ID) >> new LogoRule(linkLogo: logo)
+        1 * logoRulesService.get(ID) >> new LogoRule(linkLogo: logo)
     }
 
     def "should send 404 when logo image not found"() {
@@ -146,7 +146,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         then: "logo rule is not found"
 
-        1 * logoRulesService.getLogoRule(ID) >> null
+        1 * logoRulesService.get(ID) >> null
     }
 
     def standardLogoRule() {

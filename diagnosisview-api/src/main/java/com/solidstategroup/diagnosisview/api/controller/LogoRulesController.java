@@ -51,7 +51,7 @@ public class LogoRulesController extends BaseController {
             value = "Creates a logo rule",
             response = LogoRuleDto.class)
     @PostMapping
-    public LogoRuleDto addLogoRule(
+    public LogoRuleDto add(
             HttpServletRequest request,
             @RequestBody @Validated LogoRuleDto logoRuleDto)
             throws Exception {
@@ -68,13 +68,13 @@ public class LogoRulesController extends BaseController {
             responseContainer = "List"
     )
     @GetMapping
-    public List<LogoRuleDto> getAllLogoRules(HttpServletRequest request)
+    public List<LogoRuleDto> getAll(HttpServletRequest request)
             throws Exception {
 
         isAdminUser(request);
 
         return logoRulesService
-                .getLogoRules()
+                .getRules()
                 .stream()
                 .map(this::buildLogoRule)
                 .collect(toList());
@@ -85,7 +85,7 @@ public class LogoRulesController extends BaseController {
             response = LogoRuleDto.class
     )
     @PutMapping("/{id}")
-    public LogoRuleDto updateLogoTransformation(
+    public LogoRuleDto update(
             HttpServletRequest request,
             @PathVariable("id") String id,
             @RequestBody LogoRuleDto linkLogoRuleDto)
@@ -93,21 +93,21 @@ public class LogoRulesController extends BaseController {
 
         isAdminUser(request);
 
-        return buildLogoRule(logoRulesService.updateLogoRule(id, linkLogoRuleDto));
+        return buildLogoRule(logoRulesService.update(id, linkLogoRuleDto));
     }
 
     @ApiOperation(
             value = "Deletes a logo rule for a given id"
     )
     @DeleteMapping("/{id}")
-    public void deleteLinkLogo(
+    public void delete(
             HttpServletRequest request,
             @PathVariable("id") String id)
             throws Exception {
 
         isAdminUser(request);
 
-        logoRulesService.deleteLogoRule(id);
+        logoRulesService.delete(id);
     }
 
     @ApiOperation(
@@ -115,12 +115,12 @@ public class LogoRulesController extends BaseController {
             response = LogoRuleDto.class
     )
     @GetMapping("/{id}")
-    public LogoRuleDto getLogoRule(@PathVariable("id") final String id, HttpServletRequest request)
+    public LogoRuleDto get(@PathVariable("id") final String id, HttpServletRequest request)
             throws Exception {
 
         isAdminUser(request);
 
-        return buildLogoRule(logoRulesService.getLogoRule(id));
+        return buildLogoRule(logoRulesService.get(id));
     }
 
     @ApiOperation(
@@ -129,11 +129,11 @@ public class LogoRulesController extends BaseController {
                     "and a 500 if there is an IO exception thrown when retrieving the image."
     )
     @GetMapping("/{id}/image")
-    public void getLogoImage(
+    public void getImage(
             @PathVariable("id") final String id,
             HttpServletResponse response) {
 
-        LogoRule logoRule = logoRulesService.getLogoRule(id);
+        LogoRule logoRule = logoRulesService.get(id);
 
         if (logoRule == null) {
 
@@ -155,8 +155,11 @@ public class LogoRulesController extends BaseController {
 
     private LogoRuleDto buildLogoRule(LogoRule lt) {
         return new LogoRuleDto(
-                lt.getId(), lt.getStartsWith(),
-                lt.getLogoData(), lt.getLogoFileType(),
-                String.format(IMAGE_URL_TEMPLATE, lt.getId()));
+                lt.getId(),
+                lt.getStartsWith(),
+                lt.getLogoData(),
+                lt.getLogoFileType(),
+                String.format(IMAGE_URL_TEMPLATE, lt.getId()),
+                lt.getOverrideDifficultyLevel());
     }
 }

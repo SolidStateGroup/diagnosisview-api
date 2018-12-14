@@ -1,22 +1,19 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
-import com.google.api.client.util.Lists;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
-import com.solidstategroup.diagnosisview.repository.LogoRuleRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.LinkService;
+import com.solidstategroup.diagnosisview.service.LogoRulesService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 
 @Service
 public class LinkServiceImpl implements LinkService {
@@ -24,21 +21,20 @@ public class LinkServiceImpl implements LinkService {
     private final LinkRepository linkRepository;
     private final LookupRepository lookupRepository;
     private final LookupTypeRepository lookupTypeRepository;
-    private final LogoRuleRepository logoRuleRepository;
+    private final LogoRulesService logoRulesService;
     private Lookup niceLinksLookup;
     private Lookup userLink;
-    private List<LogoRule> logoRules;
 
     public LinkServiceImpl(
             LinkRepository linkRepository,
             LookupRepository lookupRepository,
             LookupTypeRepository lookupTypeRepository,
-            LogoRuleRepository logoRuleRepository) {
+            LogoRulesService logoRulesService) {
 
         this.linkRepository = linkRepository;
         this.lookupRepository = lookupRepository;
         this.lookupTypeRepository = lookupTypeRepository;
-        this.logoRuleRepository = logoRuleRepository;
+        this.logoRulesService = logoRulesService;
     }
 
     /**
@@ -103,30 +99,19 @@ public class LinkServiceImpl implements LinkService {
         Link existingLink = linkRepository.findOne(link.getId());
         link = checkLink(existingLink, link);
 
-        //Check if the link matches any urls for logos,
-        //if it does, assign it that logo url
-        LogoRule rule = null;
-        if (link.getLogoRule() == null) {
+        // Check if the link matches any urls for logos,
+        // if it does, assign it that logo url
+        logoRulesService
+                .matchLinkToRule(link)
+                .ifPresent(link::setLogoRule);
 
-            for (LogoRule logoRule : logoRules) {
-
-                if (link.getLink().startsWith(logoRule.getStartsWith())) {
-
-                    rule = logoRule;
-                    break;
-                }
-            }
-
-            if (rule != null) {
-                link.setLogoRule(rule);
-            }
-        }
-
-        //If the lookupValue is a DV only value, then don't update as it will overlap
-        //In future this may need to be a check against all DV only lookup values
+        // If the lookupValue is a DV only value, then don't update as it will overlap
+        // In future this may need to be a check against all DV only lookup values
         if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
+
             link.setLinkType(userLink);
         } else {
+
             lookupTypeRepository.save(link.getLinkType().getLookupType());
             lookupRepository.save(link.getLinkType());
         }
@@ -191,16 +176,6 @@ public class LinkServiceImpl implements LinkService {
         if (userLink == null) {
 
             userLink = lookupRepository.findOneByValue("CUSTOM");
-        }
-
-        if (this.logoRules == null) {
-
-            List<LogoRule> logoRulesFromRepository = logoRuleRepository.findAll();
-
-            if (logoRulesFromRepository != null) {
-
-                this.logoRules = Lists.newArrayList(logoRulesFromRepository);
-            }
         }
     }
 }

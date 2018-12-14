@@ -8,8 +8,10 @@ import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
+import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
@@ -260,10 +262,11 @@ public class CodeServiceImpl implements CodeService {
                 .stream()
                 .map(link -> {
                     Optional<String> linkMapping = buildLink(link.getMappingLinks(), institution);
+
                     return new LinkDto(
                             link.getId(),
                             link.getLinkType(),
-                            link.getDifficultyLevel(),
+                            buildDifficultyLevel(link),
                             linkMapping.orElse(link.getLink()),
                             link.getDisplayOrder(),
                             shouldDisplayLink(linkMapping, link),
@@ -271,6 +274,23 @@ public class CodeServiceImpl implements CodeService {
                             link.useTransformationsOnly());
                 })
                 .collect(toSet());
+    }
+
+    private DifficultyLevel buildDifficultyLevel(Link link) {
+
+        LogoRule rule = link.getLogoRule();
+
+        if (rule == null) {
+            return link.getDifficultyLevel();
+        }
+
+        DifficultyLevel override = rule.getOverrideDifficultyLevel();
+
+        if (override == null) {
+            return link.getDifficultyLevel();
+        }
+
+        return override;
     }
 
     private Optional<String> buildLink(

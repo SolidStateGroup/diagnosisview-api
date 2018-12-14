@@ -1,10 +1,12 @@
 package com.solidstategroup.diagnosisview.service;
 
 import com.solidstategroup.diagnosisview.model.LogoRuleDto;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Logo Rules service allows logo images to be stored along with url rule
@@ -26,19 +28,19 @@ public interface LogoRulesService {
      * @param id Id of logo rule
      * @return {@link LogoRule} with matching id
      */
-    LogoRule getLogoRule(String id);
+    LogoRule get(String id);
 
     /**
      * Returns all {@link LogoRule} objects currently saved in repository.
      **/
-    List<LogoRule> getLogoRules();
+    List<LogoRule> getRules();
 
     /**
      * Removes logo rule.
      *
      * @param id Id of logo rule to remove.
      */
-    void deleteLogoRule(String id);
+    void delete(String id);
 
     /**
      * Update a given logo rule.
@@ -48,6 +50,12 @@ public interface LogoRulesService {
      * @return Updated logo rule
      * @throws Exception thrown if logo rule cannot be found
      */
-    LogoRule updateLogoRule(String id, LogoRuleDto logoRuleDto) throws Exception;
+    LogoRule update(String id, LogoRuleDto logoRuleDto) throws Exception;
 
+    /**
+     *
+     * @param link
+     * @return Optional {@link LogoRule} that matches link.
+     */
+    Optional<LogoRule> matchLinkToRule(Link link);
 }

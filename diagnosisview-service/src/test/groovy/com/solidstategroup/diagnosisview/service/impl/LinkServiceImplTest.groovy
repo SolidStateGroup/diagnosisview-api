@@ -3,10 +3,10 @@ package com.solidstategroup.diagnosisview.service.impl
 import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel
 import com.solidstategroup.diagnosisview.repository.LinkRepository
-import com.solidstategroup.diagnosisview.repository.LogoRuleRepository
 import com.solidstategroup.diagnosisview.repository.LookupRepository
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository
 import com.solidstategroup.diagnosisview.service.LinkService
+import com.solidstategroup.diagnosisview.service.LogoRulesService
 import spock.lang.Specification
 
 class LinkServiceImplTest extends Specification {
@@ -14,13 +14,13 @@ class LinkServiceImplTest extends Specification {
     def linkRepository = Mock(LinkRepository)
     def lookupRepository = Mock(LookupRepository)
     def lookupTypeRepository = Mock(LookupTypeRepository)
-    def logoRuleRepository = Mock(LogoRuleRepository)
+    def logoRuleService = Mock(LogoRulesService)
 
     LinkService linkService = new LinkServiceImpl(
             linkRepository,
             lookupRepository,
             lookupTypeRepository,
-            logoRuleRepository
+            logoRuleService
     )
 
     def "should find one link"() {
