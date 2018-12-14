@@ -69,7 +69,7 @@ class CodeServiceImplTest extends Specification {
 
         when: "code is fetched by codeName"
 
-        def result = codeService.getCode(code)
+        def result = codeService.get(code)
 
         then: "correct code object is returned"
 
@@ -132,7 +132,7 @@ class CodeServiceImplTest extends Specification {
 
         when: "upsert is called"
 
-        def code = codeService.upsertCode(syncCode, true)
+        def code = codeService.upsert(syncCode, true)
 
         then: "created code is returned"
 
@@ -171,7 +171,7 @@ class CodeServiceImplTest extends Specification {
 
         when: "upsert is called"
 
-        def result = codeService.upsertCode(code, true)
+        def result = codeService.upsert(code, true)
 
         then: "result is null"
 
@@ -187,7 +187,7 @@ class CodeServiceImplTest extends Specification {
 
         when:
 
-        def result = codeService.upsertCode(newCode,false)
+        def result = codeService.upsert(newCode,false)
 
         then:
 

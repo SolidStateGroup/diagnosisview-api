@@ -8,7 +8,6 @@ import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.java.Log;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -99,10 +98,10 @@ public class CodeController extends BaseController {
         User user = checkIsAuthenticated(request);
 
         if ("University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
-            return codeService.getAllCodes(Institution.UNIVERSITY_OF_EDINBURGH);
+            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
         }
 
-        return codeService.getAllCodes(null);
+        return codeService.getAll(null);
     }
 
     /**
@@ -128,7 +127,7 @@ public class CodeController extends BaseController {
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
             response = Code.class)
     public Code getAllUsers(@PathVariable("code") final String code) {
-        return codeService.getCode(code);
+        return codeService.get(code);
     }
 
 }

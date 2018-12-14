@@ -8,8 +8,8 @@ import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
-import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
+import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
@@ -79,6 +79,13 @@ public class CodeServiceImpl implements CodeService {
         return linkMapping.isPresent() | !link.useTransformationsOnly();
     }
 
+    private static boolean shouldBeDeleted(Code code) {
+        return code.isRemovedExternally() || code.isHideFromPatients();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Cacheable("getAllCategories")
     public List<CategoryDto> getAllCategories() {
@@ -86,16 +93,21 @@ public class CodeServiceImpl implements CodeService {
         return categoryRepository
                 .findAll()
                 .stream()
-                .map(category -> new CategoryDto(category.getNumber(),
+                .map(category -> new CategoryDto(
+                        category.getId(),
+                        category.getNumber(),
                         category.getIcd10Description(),
                         category.getFriendlyDescription(),
                         category.isHidden()))
                 .collect(toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Cacheable("getAllCodes")
-    public List<CodeDto> getAllCodes(Institution institution) {
+    public List<CodeDto> getAll(Institution institution) {
 
         return codeRepository
                 .findAll()
@@ -117,7 +129,7 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
-    public Code getCode(String code) {
+    public Code get(String code) {
         return codeRepository.findOneByCode(code);
     }
 
@@ -143,7 +155,7 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
-    public Code upsertCode(Code code, boolean fromSync) {
+    public Code upsert(Code code, boolean fromSync) {
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
@@ -211,6 +223,10 @@ public class CodeServiceImpl implements CodeService {
 
     private boolean upsertNotRequired(Code code) {
 
+        if (code.getId() == null) {
+            return false;
+        }
+
         Code currentCode = codeRepository.findOne(code.getId());
 
         //If there is a code, or it has been updated, update
@@ -234,10 +250,6 @@ public class CodeServiceImpl implements CodeService {
 
         code.getExternalStandards()
                 .forEach(es -> externalStandardRepository.save(es.getExternalStandard()));
-    }
-
-    private boolean shouldBeDeleted(Code code) {
-        return code.isRemovedExternally() || code.isHideFromPatients();
     }
 
     private Set<LinkDto> buildLinkDtos(Code code, Institution institution) {
@@ -274,7 +286,9 @@ public class CodeServiceImpl implements CodeService {
                 .getCodeCategories()
                 .stream()
                 .map(cc ->
-                        new CategoryDto(cc.getCategory().getNumber(),
+                        new CategoryDto(
+                                cc.getCategory().getId(),
+                                cc.getCategory().getNumber(),
                                 cc.getCategory().getIcd10Description(),
                                 cc.getCategory().getFriendlyDescription(),
                                 cc.getCategory().isHidden()))

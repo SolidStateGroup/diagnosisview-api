@@ -25,7 +25,7 @@ public interface CodeService {
      *
      * @return List code dtos
      */
-    List<CodeDto> getAllCodes(Institution institution);
+    List<CodeDto> getAll(Institution institution);
 
     /**
      * Get a code by a given code
@@ -33,7 +33,7 @@ public interface CodeService {
      * @param code the code to lookup
      * @return the full found code
      */
-    Code getCode(String code);
+    Code get(String code);
 
     /**
      * Delete a code from the db
@@ -57,5 +57,5 @@ public interface CodeService {
      * @param code - code to update or create
      * @param fromSync - If from the sync job, we will allow creation of certain other resources
      */
-    Code upsertCode(Code code, boolean fromSync);
+    Code upsert(Code code, boolean fromSync);
 }

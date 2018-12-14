@@ -141,7 +141,7 @@ public class AdminApiController extends BaseController {
 
         isAdminUser(request);
 
-        return codeService.upsertCode(code, false);
+        return codeService.upsert(code, false);
     }
 
     /**
@@ -157,7 +157,7 @@ public class AdminApiController extends BaseController {
 
         isAdminUser(request);
 
-        return codeService.upsertCode(code, false);
+        return codeService.upsert(code, false);
     }
 
 

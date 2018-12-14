@@ -8,9 +8,10 @@ import lombok.Data;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CategoryDto {
+
+    private Long id;
     private Integer number;
     private String icd10Description;
     private String friendlyDescription;
-    private boolean hidden = false;
-
+    private boolean hidden;
 }
