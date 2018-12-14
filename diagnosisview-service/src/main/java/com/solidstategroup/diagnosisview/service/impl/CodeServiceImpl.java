@@ -259,11 +259,14 @@ public class CodeServiceImpl implements CodeService {
                 .stream()
                 .map(link -> {
                     Optional<String> linkMapping = buildLink(link.getMappingLinks(), institution);
-                    return new LinkDto(link.getId(), link.getLinkType(),
+                    return new LinkDto(
+                            link.getId(),
+                            link.getLinkType(),
                             link.getDifficultyLevel(),
                             linkMapping.orElse(link.getLink()),
                             shouldDisplayLink(linkMapping, link),
-                            link.getName(), link.getFreeLink());
+                            link.getName(), link.getFreeLink(),
+                            link.useTransformationsOnly());
                 })
                 .collect(toSet());
     }

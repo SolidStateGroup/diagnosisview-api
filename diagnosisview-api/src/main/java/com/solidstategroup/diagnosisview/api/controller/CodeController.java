@@ -45,7 +45,7 @@ public class CodeController extends BaseController {
      */
     @RequestMapping(value = "/code", method = RequestMethod.POST)
     @ApiOperation(value = "Create Code",
-            notes = "Creates code within DV (unsure if required)",
+            notes = "Creates code within DV",
             response = Code.class)
     public Code createCode(@RequestBody final Code code) {
 

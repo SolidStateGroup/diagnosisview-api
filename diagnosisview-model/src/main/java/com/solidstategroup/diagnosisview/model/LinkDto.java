@@ -17,4 +17,5 @@ public class LinkDto {
     private Boolean displayLink;
     private String name;
     private Boolean freeLink;
+    private Boolean transformationsOnly;
 }
