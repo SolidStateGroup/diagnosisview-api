@@ -28,7 +28,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -172,9 +171,6 @@ public class CodeServiceImpl implements CodeService {
 
                 code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
             }
-
-            // Set the last update date to now
-            code.setLastUpdate(new Date());
         }
 
         if (upsertNotRequired(code)) {

@@ -7,13 +7,14 @@ import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LogoRuleRepository;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class LogoRulesServiceImpl implements LogoRulesService {
@@ -39,16 +40,22 @@ public class LogoRulesServiceImpl implements LogoRulesService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LogoRule add(LogoRuleDto logoRuleDto) throws UnsupportedEncodingException {
 
-        return logoRuleRepository.save(LogoRule
-                .builder()
-                .linkLogo(decodeBase64Image(logoRuleDto.getImage()))
-                .logoFileType(logoRuleDto.getImageFormat())
-                .startsWith(logoRuleDto.getStartsWith())
-                .overrideDifficultyLevel(logoRuleDto.getOverrideDifficultyLevel())
-                .build());
+        final LogoRule logoRule = logoRuleRepository.saveAndFlush(
+                LogoRule
+                        .builder()
+                        .linkLogo(decodeBase64Image(logoRuleDto.getImage()))
+                        .logoFileType(logoRuleDto.getImageFormat())
+                        .startsWith(logoRuleDto.getStartsWith())
+                        .overrideDifficultyLevel(logoRuleDto.getOverrideDifficultyLevel())
+                        .build());
+
+        linkRepository.addLogoRule(logoRule);
+
+        return logoRule;
     }
 
     /**
@@ -73,11 +80,12 @@ public class LogoRulesServiceImpl implements LogoRulesService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
+    @CacheEvict(value = "getAllCodes", allEntries = true)
     public void delete(String id) {
 
-        logoRuleRepository.getOne(id)
-                .getLinks()
-                .forEach(link -> link.setLogoRule(null));
+        linkRepository.clearLogoRule(
+                logoRuleRepository.findOne(id));
 
         logoRuleRepository.delete(id);
     }
@@ -86,6 +94,8 @@ public class LogoRulesServiceImpl implements LogoRulesService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
+    @CacheEvict(value = "getAllCodes", allEntries = true)
     public LogoRule update(String id, LogoRuleDto logoRuleDto) throws Exception {
 
         LogoRule current = logoRuleRepository.findOne(id);
@@ -93,23 +103,25 @@ public class LogoRulesServiceImpl implements LogoRulesService {
         if (current == null) {
             throw new Exception();
         }
+        String currentStartsWith = current.getStartsWith();
 
-        LogoRule newLogoRule = LogoRule
-                .builder()
-                .linkLogo(decodeBase64Image(logoRuleDto.getImage()))
-                .logoFileType(logoRuleDto.getImageFormat())
-                .startsWith(logoRuleDto.getStartsWith())
-                .id(id)
-                .build();
+        LogoRule newLogoRule = logoRuleRepository.saveAndFlush(
+                LogoRule
+                        .builder()
+                        .linkLogo(decodeBase64Image(logoRuleDto.getImage()))
+                        .logoFileType(logoRuleDto.getImageFormat())
+                        .startsWith(logoRuleDto.getStartsWith())
+                        .id(id)
+                        .build());
 
-        Set<Link> links = matchRuleToLinks(newLogoRule);
+        // If startsWith string has changed update links
+        if (!StringUtils.equals(currentStartsWith, logoRuleDto.getStartsWith())) {
 
-        links.forEach(link -> link.setLogoRule(newLogoRule));
+            linkRepository.clearLogoRule(newLogoRule);
+            linkRepository.addLogoRule(newLogoRule);
+        }
 
-        LogoRule savedRule = logoRuleRepository.save(newLogoRule);
-        linkRepository.save(links);
-
-        return savedRule;
+        return newLogoRule;
     }
 
     /**
@@ -131,10 +143,5 @@ public class LogoRulesServiceImpl implements LogoRulesService {
                 .stream()
                 .filter(lr -> linkText.startsWith(lr.getStartsWith()))
                 .findFirst();
-    }
-
-    private Set<Link> matchRuleToLinks(LogoRule logoRule) {
-
-        return linkRepository.findLinksByLinkContaining(logoRule.getStartsWith());
     }
 }

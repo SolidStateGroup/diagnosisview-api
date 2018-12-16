@@ -53,13 +53,13 @@ public class LogoRulesController extends BaseController {
     @PostMapping
     public LogoRuleDto add(
             HttpServletRequest request,
-            @RequestBody @Validated LogoRuleDto logoRuleDto)
+            @RequestBody @Validated LogoRuleDto logoRule)
             throws Exception {
 
         isAdminUser(request);
 
         return buildLogoRule(
-                logoRulesService.add(logoRuleDto));
+                logoRulesService.add(logoRule));
     }
 
     @ApiOperation(
@@ -88,12 +88,12 @@ public class LogoRulesController extends BaseController {
     public LogoRuleDto update(
             HttpServletRequest request,
             @PathVariable("id") String id,
-            @RequestBody LogoRuleDto linkLogoRuleDto)
+            @RequestBody LogoRuleDto logoRule)
             throws Exception {
 
         isAdminUser(request);
 
-        return buildLogoRule(logoRulesService.update(id, linkLogoRuleDto));
+        return buildLogoRule(logoRulesService.update(id, logoRule));
     }
 
     @ApiOperation(
