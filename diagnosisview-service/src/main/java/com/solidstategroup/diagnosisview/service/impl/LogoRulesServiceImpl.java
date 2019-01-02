@@ -150,10 +150,16 @@ public class LogoRulesServiceImpl implements LogoRulesService {
         // Check if the link matches any urls for logos,
         // if it does, assign it that logo url
         if (link.getLogoRule() != null) {
+
             return Optional.empty();
         }
 
         String linkText = link.getLink();
+
+        if (link.getLink() == null) {
+
+            return Optional.empty();
+        }
 
         return logoRuleRepository
                 .findAll()

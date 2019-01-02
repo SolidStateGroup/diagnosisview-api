@@ -8,7 +8,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -34,8 +33,8 @@ import java.util.Set;
 public class Code {
 
     @Id
-    @SequenceGenerator(name = "code_seq", sequenceName = "code_seq", initialValue = 2000000, allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "code_seq")
+//    @SequenceGenerator(name = "code_seq", sequenceName = "code_seq", initialValue = 2000000, allocationSize = 1)
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "code_seq")
     private Long id;
 
     @Column(name = "code")
