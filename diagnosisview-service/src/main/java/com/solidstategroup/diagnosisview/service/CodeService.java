@@ -33,7 +33,7 @@ public interface CodeService {
      * @param code the code to lookup
      * @return the full found code
      */
-    CodeDto get(String code);
+    Code get(String code);
 
     /**
      * Delete a code from the db

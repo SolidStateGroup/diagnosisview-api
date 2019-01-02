@@ -138,7 +138,7 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
-    public CodeDto get(String code) {
+    public Code get(String code) {
         Code result =  codeRepository.findOneByCode(code);
 
         if (result == null) {
@@ -146,14 +146,14 @@ public class CodeServiceImpl implements CodeService {
             return null;
         }
 
-        return CodeDto
-                .builder()
-                .code(result.getCode())
-                .links(buildLinkDtos(result, null))
-                .categories(buildCategories(result))
-                .deleted(shouldBeDeleted(result))
-                .friendlyName(result.getPatientFriendlyName())
-                .build();
+        result
+                .getLinks()
+                .forEach(l -> {
+                    l.setLogoRule(null);
+                    l.setMappingLinks(null);
+                    });
+
+        return result;
     }
 
     /**

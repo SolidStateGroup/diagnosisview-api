@@ -129,7 +129,8 @@ public class CodeController extends BaseController {
     @ApiOperation(value = "Get A single Codes",
             notes = "Admin endpoint to get a code by it's name",
             response = CodeDto.class)
-    public CodeDto getCodebyName(@PathVariable("code") final String code) {
+    public Code getCodebyName(@PathVariable("code") final String code) {
+
         return codeService.get(code);
     }
 
