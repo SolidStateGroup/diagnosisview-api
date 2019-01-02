@@ -1,77 +1,47 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.solidstategroup.diagnosisview.service.UserService;
+import com.solidstategroup.diagnosisview.model.LoginRequest;
 import com.solidstategroup.diagnosisview.model.User;
-import lombok.extern.java.Log;
-import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
+import com.solidstategroup.diagnosisview.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
-/**
- * Secured API controller, handles main methods.
- */
 @RestController
 @RequestMapping("/api")
-@Log
+@Api(value = "provides user management endpoints")
 public class ApiController extends BaseController {
 
-    /**
-     * Instantiate API controller, includes required services.
-     *
-     * @param userService UserService manages the dashboard users
-     */
-    @Autowired
     public ApiController(final UserService userService) {
 
         super(userService);
     }
 
-    /**
-     * User login to system.
-     *
-     * @param user user to login
-     * @return User the logged in user
-     * @throws Exception thrown when user cannot be logged in
-     */
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public User login(@RequestBody final User user) throws Exception {
-        return userService.login(user.getUsername(), user.getStoredPassword());
+    @ApiOperation(value = "User login to system")
+    @PostMapping("/login")
+    public User login(@RequestBody @Validated LoginRequest loginRequest) throws Exception {
+
+        return userService.login(loginRequest.getUsername(), loginRequest.getPassword());
     }
 
-    /**
-     * Get the current user that is logged into the api.
-     *
-     * @return User the logged in user
-     * @throws Exception thrown when user cannot be logged in
-     */
-    @RequestMapping(value = "/account", method = RequestMethod.GET)
+    @ApiOperation(value = "Get the current user that is logged into the api")
+    @GetMapping("/account")
     public User getAccount(final HttpServletRequest request) throws Exception {
-        return this.checkIsAuthenticated(request);
+
+        return checkIsAuthenticated(request);
     }
 
-
-    /**
-     * User wants to register
-     *
-     * @param user user to login
-     * @return User user to reset
-     * @throws Exception thrown when user cannot be logged in
-     */
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    @ApiOperation(value = "User wants to register")
+    @PostMapping("/register")
     public User register(@RequestBody final User user) throws Exception {
+
         return userService.createOrUpdateUser(user, false);
     }
 }
