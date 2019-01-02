@@ -1,6 +1,8 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
+import com.solidstategroup.diagnosisview.exceptions.ImageIOException;
+import com.solidstategroup.diagnosisview.exceptions.ImageNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,22 @@ public class ApiControllerAdvice {
 
         return new ErrorMessage(bce.getMessage());
     }
+
+    /**
+     * Handles exceptions thrown when finding images. Ensures
+     * no JSON is serialized in the response.
+     */
+    @ExceptionHandler(ImageNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void imageNotFoundException() {}
+
+    /**
+     * Handle exception thrown when retrieving images. Ensures
+     * no JSON is serialized in the response.
+     */
+    @ExceptionHandler(ImageIOException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public void imageIoException() {}
 
     @Data
     @AllArgsConstructor
