@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -316,14 +317,15 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User login(final String username, final String password) throws Exception {
+
         User user = userRepository.findOneByUsername(username.toLowerCase());
 
         if (user == null) {
-            throw new IllegalStateException("Please check your username and password.");
+            throw new BadCredentialsException("Please check your username and password.");
         }
         if (Utils.checkPassword(password, user.getStoredSalt(), user.getStoredPassword())) {
             if (user.isDeleted()) {
-                throw new IllegalStateException("This account has been deleted. " +
+                throw new BadCredentialsException("This account has been deleted. " +
                         "Please contact support@diagnosisview.org.");
             }
 
@@ -340,8 +342,10 @@ public class UserServiceImpl implements UserService {
             }
 
             return user;
+
         } else {
-            throw new IllegalStateException("Please check your username and password");
+
+            throw new BadCredentialsException("Please check your username and password");
         }
     }
 

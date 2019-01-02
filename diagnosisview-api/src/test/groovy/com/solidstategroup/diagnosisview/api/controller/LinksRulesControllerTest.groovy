@@ -20,7 +20,7 @@ class LinksRulesControllerTest extends AbstractMvcSpec {
     def linkRulesService = Mock(LinkRuleService)
 
     void setup() {
-        controller = new LinksRulesController(linkRulesService)
+        controller = new LinksRulesController(userService, linkRulesService)
         buildMvc()
     }
 

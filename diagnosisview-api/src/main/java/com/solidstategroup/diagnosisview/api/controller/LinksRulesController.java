@@ -3,6 +3,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.service.LinkRuleService;
+import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,10 @@ public class LinksRulesController extends BaseController {
 
     private final LinkRuleService linkRuleService;
 
-    public LinksRulesController(LinkRuleService linkRuleService) {
+    public LinksRulesController(UserService userService,
+                                LinkRuleService linkRuleService) {
+
+        super(userService);
         this.linkRuleService = linkRuleService;
     }
 
@@ -118,6 +122,7 @@ public class LinksRulesController extends BaseController {
 
     /**
      * Converts between internal {@link LinkRule} to {@link LinkRuleDto}
+     *
      * @param lt {@link LinkRule} for repository
      * @return Dto to send to FE
      */

@@ -5,6 +5,7 @@ import com.solidstategroup.diagnosisview.exceptions.ImageNotFoundException;
 import com.solidstategroup.diagnosisview.model.LogoRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
+import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,10 @@ public class LogoRulesController extends BaseController {
 
     private final LogoRulesService logoRulesService;
 
-    public LogoRulesController(LogoRulesService logoRulesService) {
+    public LogoRulesController(UserService userService,
+                               LogoRulesService logoRulesService) {
 
+        super(userService);
         this.logoRulesService = logoRulesService;
     }
 

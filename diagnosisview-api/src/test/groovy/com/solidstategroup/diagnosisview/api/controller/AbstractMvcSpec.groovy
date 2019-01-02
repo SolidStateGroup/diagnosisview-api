@@ -33,14 +33,18 @@ class AbstractMvcSpec extends Specification {
      */
     protected controller
 
+    protected controllerAdvice
+
     /**
      * Uses reflection to add the userService to the {@link BaseController} and
      * builds a Mock MVC based on the controller variable.
      */
     void buildMvc() {
-        ReflectionTestUtils.setField(controller, "userService", userService)
+
+        controllerAdvice = new ApiControllerAdvice()
 
         server = standaloneSetup(controller)
+                .setControllerAdvice(controllerAdvice)
                 .build()
     }
 
@@ -78,5 +82,15 @@ class AbstractMvcSpec extends Specification {
     ResultActions deleteAt(String url) {
         server.perform(delete(url)
                 .header(AUTH_HEADER, DEFAULT_AUTH_HEADER_VALUE))
+    }
+
+    /**
+     * Wraps a delete request
+     */
+    ResultActions deleteAt(String url, Object object) {
+        server.perform(delete(url)
+                .header(AUTH_HEADER, DEFAULT_AUTH_HEADER_VALUE)
+                .contentType(APPLICATION_JSON)
+                .content(MAPPER.writeValueAsString(object)))
     }
 }

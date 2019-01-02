@@ -26,7 +26,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
     def logoRulesService = Mock(LogoRulesService)
 
     void setup() {
-        controller = new LogoRulesController(logoRulesService)
+        controller = new LogoRulesController(userService, logoRulesService)
         buildMvc()
     }
 

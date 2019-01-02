@@ -4,22 +4,29 @@ import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * Provides controller advice (Exception handling etc...)
  */
-@ControllerAdvice
+@RestControllerAdvice
 public class ApiControllerAdvice {
 
-    @ResponseBody
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(BadRequestException.class)
     public ErrorMessage badRequestException(BadRequestException bre) {
         return new ErrorMessage(bre.getMessage());
+    }
+
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(Exception.class)
+    public ErrorMessage AuthExcepionHandler(BadCredentialsException bce) {
+
+        return new ErrorMessage(bce.getMessage());
     }
 
     @Data
