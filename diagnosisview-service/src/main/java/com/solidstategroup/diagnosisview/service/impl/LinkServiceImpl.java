@@ -84,7 +84,12 @@ public class LinkServiceImpl implements LinkService {
 
         existingLink.setMappingLinks(new HashSet<>());
 
-        return linkRepository.save(existingLink);
+        linkRepository.save(existingLink);
+
+        existingLink.setMappingLinks(null);
+        existingLink.setLogoRule(null);
+
+        return existingLink;
     }
 
     /**

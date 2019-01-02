@@ -48,7 +48,7 @@ public class Link extends AuditModel {
     private Boolean freeLink;
 
     @Column(name = "transformations_only")
-    private Boolean transformationsOnly;
+    private Boolean transformationsOnly = false;
 
     @OneToMany(mappedBy = "link")
     private Set<LinkRuleMapping> mappingLinks;

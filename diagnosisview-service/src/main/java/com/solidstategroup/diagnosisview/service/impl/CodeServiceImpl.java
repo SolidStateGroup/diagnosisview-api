@@ -184,6 +184,7 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code upsert(Code code, boolean fromSync) {
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
@@ -218,6 +219,7 @@ public class CodeServiceImpl implements CodeService {
 
         // The following are all items that wont be sent with the web creation
         if (fromSync) {
+
             saveAdditionalSyncObjects(code);
 
             if (code.getSourceType() == null) {
