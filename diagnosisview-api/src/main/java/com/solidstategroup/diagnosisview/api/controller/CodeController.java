@@ -127,9 +127,9 @@ public class CodeController extends BaseController {
      */
     @RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
     @ApiOperation(value = "Get A single Codes",
-            notes = "Admin User endpoint to get all codes within the DiagnosisView",
-            response = Code.class)
-    public Code getAllUsers(@PathVariable("code") final String code) {
+            notes = "Admin endpoint to get a code by it's name",
+            response = CodeDto.class)
+    public CodeDto getCodebyName(@PathVariable("code") final String code) {
         return codeService.get(code);
     }
 

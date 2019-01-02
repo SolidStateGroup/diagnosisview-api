@@ -50,7 +50,7 @@ public class Link extends AuditModel {
     @Column(name = "transformations_only")
     private Boolean transformationsOnly;
 
-    @ManyToMany(mappedBy = "link")
+    @OneToMany(mappedBy = "link")
     private Set<LinkRuleMapping> mappingLinks;
 
     @ManyToOne

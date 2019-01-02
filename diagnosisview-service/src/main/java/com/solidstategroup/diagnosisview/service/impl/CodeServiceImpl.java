@@ -138,8 +138,22 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
-    public Code get(String code) {
-        return codeRepository.findOneByCode(code);
+    public CodeDto get(String code) {
+        Code result =  codeRepository.findOneByCode(code);
+
+        if (result == null) {
+
+            return null;
+        }
+
+        return CodeDto
+                .builder()
+                .code(result.getCode())
+                .links(buildLinkDtos(result, null))
+                .categories(buildCategories(result))
+                .deleted(shouldBeDeleted(result))
+                .friendlyName(result.getPatientFriendlyName())
+                .build();
     }
 
     /**
