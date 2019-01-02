@@ -103,18 +103,35 @@ public class LogoRulesServiceImpl implements LogoRulesService {
         if (current == null) {
             throw new Exception();
         }
-        String currentStartsWith = current.getStartsWith();
 
-        LogoRule newLogoRule = logoRuleRepository.saveAndFlush(
-                LogoRule
-                        .builder()
-                        .linkLogo(decodeBase64Image(logoRuleDto.getImage()))
-                        .logoFileType(logoRuleDto.getImageFormat())
-                        .startsWith(logoRuleDto.getStartsWith())
-                        .id(id)
-                        .build());
+        LogoRule.LogoRuleBuilder builder = LogoRule.builder().id(id);
+
+        builder.linkLogo(
+                logoRuleDto.getImage() != null ?
+                        decodeBase64Image(logoRuleDto.getImage()) :
+                        current.getLinkLogo());
+
+        builder.logoFileType(
+                logoRuleDto.getImageFormat() != null ?
+                        logoRuleDto.getImageFormat() :
+                        current.getLogoFileType());
+
+        builder.startsWith(
+                logoRuleDto.getStartsWith() != null ?
+                        logoRuleDto.getStartsWith() :
+                        current.getStartsWith());
+
+        builder.overrideDifficultyLevel(
+                logoRuleDto.getOverrideDifficultyLevel() != null ?
+                        logoRuleDto.getOverrideDifficultyLevel() :
+                        current.getOverrideDifficultyLevel());
+
+        LogoRule newLogoRule =
+                logoRuleRepository.saveAndFlush(builder.build());
 
         // If startsWith string has changed update links
+        String currentStartsWith = current.getStartsWith();
+
         if (!StringUtils.equals(currentStartsWith, logoRuleDto.getStartsWith())) {
 
             linkRepository.clearLogoRule(newLogoRule);

@@ -71,7 +71,7 @@ public class LogoRulesController extends BaseController {
     public List<LogoRuleDto> getAll(HttpServletRequest request)
             throws Exception {
 
-        isAdminUser(request);
+        checkIsAuthenticated(request);
 
         return logoRulesService
                 .getRules()
