@@ -2,7 +2,6 @@ package com.solidstategroup.diagnosisview.service.impl
 
 import com.google.api.client.util.Base64
 import com.solidstategroup.diagnosisview.model.LogoRuleDto
-import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.LogoRule
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel
 import com.solidstategroup.diagnosisview.repository.LinkRepository
@@ -37,15 +36,15 @@ class LogoRulesServiceImplTest extends Specification {
 
         then: "rule is saved"
 
-        2 * logoRuleRepository.save(_ as LogoRule) >> { it[0] }
-        1 * linkRepository.findLinksByLinkContaining(starts) >> [new Link(), new Link()]
+        1 * logoRuleRepository.saveAndFlush(_ as LogoRule) >> { it[0] }
+        1 * linkRepository.addLogoRule(_ as LogoRule)
 
         and: "correct fields are saved"
 
         with(result) {
             linkLogo == Base64.decodeBase64(base64.bytes)
             logoFileType == imageFormat
-            startsWith == startsWith
+            startsWith == starts
             overrideDifficultyLevel == DifficultyLevel.RED
         }
     }
