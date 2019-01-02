@@ -15,13 +15,10 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Date;
 import java.util.HashSet;
@@ -33,8 +30,6 @@ import java.util.Set;
 public class Code {
 
     @Id
-//    @SequenceGenerator(name = "code_seq", sequenceName = "code_seq", initialValue = 2000000, allocationSize = 1)
-//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "code_seq")
     private Long id;
 
     @Column(name = "code")

@@ -27,11 +27,15 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -46,7 +50,6 @@ public class CodeServiceImpl implements CodeService {
 
     private static final String DV_CODE = "dv_";
     private static final String DV_CODE_TEMPLATE = "dv_%s";
-
     private final CodeRepository codeRepository;
     private final CategoryRepository categoryRepository;
     private final CodeCategoryRepository codeCategoryRepository;
@@ -56,6 +59,9 @@ public class CodeServiceImpl implements CodeService {
     private final LookupRepository lookupRepository;
     private final LinkService linkService;
 
+    // Temporary hack to get ids for codes and links.
+    private EntityManager entityManager;
+
     public CodeServiceImpl(CodeRepository codeRepository,
                            CategoryRepository categoryRepository,
                            CodeCategoryRepository codeCategoryRepository,
@@ -63,7 +69,8 @@ public class CodeServiceImpl implements CodeService {
                            ExternalStandardRepository externalStandardRepository,
                            LinkService linkService,
                            LookupTypeRepository lookupTypeRepository,
-                           LookupRepository lookupRepository) {
+                           LookupRepository lookupRepository,
+                           EntityManager entityManager) {
 
         this.codeRepository = codeRepository;
         this.categoryRepository = categoryRepository;
@@ -73,6 +80,7 @@ public class CodeServiceImpl implements CodeService {
         this.linkService = linkService;
         this.lookupTypeRepository = lookupTypeRepository;
         this.lookupRepository = lookupRepository;
+        this.entityManager = entityManager;
     }
 
     private static boolean shouldDisplayLink(Optional<String> linkMapping, Link link) {
@@ -153,6 +161,11 @@ public class CodeServiceImpl implements CodeService {
         return codeRepository.save(code);
     }
 
+    private long selectIdFrom(String sequence) {
+        String sql = "SELECT nextval('" + sequence + "')";
+        return ((BigInteger) entityManager.createNativeQuery(sql).getSingleResult()).longValue();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -171,6 +184,18 @@ public class CodeServiceImpl implements CodeService {
 
                 code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
             }
+
+            if (code.getId() == null) {
+                code.setId(selectIdFrom("code_seq"));
+            }
+
+            code.setLinks(
+                    code
+                            .getLinks()
+                            .stream()
+                            .filter(l -> !Objects.nonNull(l.getId()))
+                            .peek(l -> l.setId(selectIdFrom("link_seq")))
+                            .collect(Collectors.toSet()));
         }
 
         if (upsertNotRequired(code)) {

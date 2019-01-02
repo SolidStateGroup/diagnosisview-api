@@ -20,6 +20,9 @@ import com.solidstategroup.diagnosisview.service.CodeService
 import com.solidstategroup.diagnosisview.service.LinkService
 import spock.lang.Specification
 
+import javax.persistence.EntityManager
+import javax.persistence.Query
+
 class CodeServiceImplTest extends Specification {
 
     def codeRepository = Mock(CodeRepository)
@@ -30,6 +33,7 @@ class CodeServiceImplTest extends Specification {
     def linkService = Mock(LinkService)
     def lookupTypeRepository = Mock(LookupTypeRepository)
     def lookupRepository = Mock(LookupRepository)
+    def entityManager = Mock(EntityManager)
 
     CodeService codeService = new CodeServiceImpl(
             codeRepository,
@@ -39,7 +43,8 @@ class CodeServiceImplTest extends Specification {
             externalStandardRepository,
             linkService,
             lookupTypeRepository,
-            lookupRepository)
+            lookupRepository,
+            entityManager)
 
     def "should fetch all categories"() {
 
@@ -184,6 +189,11 @@ class CodeServiceImplTest extends Specification {
 
         def codeStr = "liver_disease_(alcoholic)"
         def newCode  = new Code(code: codeStr)
+        def query = Mock(Query) {
+
+            setParameter(_, _) >> it
+            getSingleResult() >> BigInteger.valueOf(100L)
+        }
 
         when:
 
@@ -192,6 +202,8 @@ class CodeServiceImplTest extends Specification {
         then:
 
         2 * codeRepository.save(_ as Code) >> { it[0] }
+
+        entityManager.createNativeQuery(_ as String) >> query
 
         with(result) {
             code == "dv_" + codeStr

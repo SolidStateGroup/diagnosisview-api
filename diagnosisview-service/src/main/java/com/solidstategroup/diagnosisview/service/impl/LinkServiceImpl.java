@@ -105,6 +105,11 @@ public class LinkServiceImpl implements LinkService {
                 .matchLinkToRule(link)
                 .ifPresent(link::setLogoRule);
 
+        if (link.getLinkType() == null) {
+
+            link.setLinkType(userLink);
+        }
+
         // If the lookupValue is a DV only value, then don't update as it will overlap
         // In future this may need to be a check against all DV only lookup values
         if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
