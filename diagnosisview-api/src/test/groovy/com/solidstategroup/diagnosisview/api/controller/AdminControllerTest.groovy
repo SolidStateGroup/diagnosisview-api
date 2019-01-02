@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.is
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-class AdminApiControllerTest extends AbstractMvcSpec {
+class AdminControllerTest extends AbstractMvcSpec {
 
     static ADMIN_LOGIN = '/api/admin/login'
     static ADMIN_USERS = '/api/admin/users'
@@ -36,7 +36,7 @@ class AdminApiControllerTest extends AbstractMvcSpec {
 
     void setup() {
         controller =
-                new AdminApiController(userService, codeService, linkService, externalStandardRepository)
+                new AdminController(userService, codeService, linkService, externalStandardRepository)
         buildMvc()
     }
 

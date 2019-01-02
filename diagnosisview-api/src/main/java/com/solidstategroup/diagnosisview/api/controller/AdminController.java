@@ -34,16 +34,16 @@ import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 @RestController
 @RequestMapping("/api/admin")
 @Api(value = "Secured API controller")
-public class AdminApiController extends BaseController {
+public class AdminController extends BaseController {
 
     private final CodeService codeService;
     private final LinkService linkService;
     private final ExternalStandardRepository externalStandardRepository;
 
-    public AdminApiController(final UserService userService,
-                              final CodeService codeService,
-                              final LinkService linkService,
-                              final ExternalStandardRepository externalStandardRepository) {
+    public AdminController(final UserService userService,
+                           final CodeService codeService,
+                           final LinkService linkService,
+                           final ExternalStandardRepository externalStandardRepository) {
 
         super(userService);
         this.codeService = codeService;

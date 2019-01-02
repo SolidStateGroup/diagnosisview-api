@@ -71,10 +71,7 @@ public class LogoRulesController extends BaseController {
             responseContainer = "List"
     )
     @GetMapping
-    public List<LogoRuleDto> getAll(HttpServletRequest request)
-            throws Exception {
-
-        checkIsAuthenticated(request);
+    public List<LogoRuleDto> getAll() {
 
         return logoRulesService
                 .getRules()

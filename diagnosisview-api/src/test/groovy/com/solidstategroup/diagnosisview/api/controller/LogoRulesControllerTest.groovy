@@ -26,6 +26,7 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
     def logoRulesService = Mock(LogoRulesService)
 
     void setup() {
+
         controller = new LogoRulesController(userService, logoRulesService)
         buildMvc()
     }
@@ -52,13 +53,6 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
     def "should fetch all logos"() {
 
-        given: "logos have been stored in repository"
-
-        1 * logoRulesService.getRules() >> [
-                new LogoRule(),
-                new LogoRule()
-        ]
-
         when: "endpoint is called"
 
         getAt(LOGO_RULES)
@@ -67,7 +61,10 @@ class LogoRulesControllerTest extends AbstractMvcSpec {
 
         then: "all logos are returned"
 
-        1 * userService.getUserByToken(_ as String) >> new User(roleType: ADMIN)
+        1 * logoRulesService.getRules() >> [
+                new LogoRule(),
+                new LogoRule()
+        ]
     }
 
     def "should update a logo"() {
