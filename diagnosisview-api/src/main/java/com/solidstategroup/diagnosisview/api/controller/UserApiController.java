@@ -1,6 +1,5 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solidstategroup.diagnosisview.model.FeedbackDto;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
@@ -28,8 +27,7 @@ import java.util.List;
 @Log
 public class UserApiController extends BaseController {
 
-    private UserService userService;
-    private EmailService emailService;
+    private final EmailService emailService;
 
     /**
      * Instantiate API controller, includes required services.
@@ -39,8 +37,8 @@ public class UserApiController extends BaseController {
     @Autowired
     public UserApiController(final UserService userService,
                              final EmailService emailService) {
-        super();
-        this.userService = userService;
+        super(userService);
+
         this.emailService = emailService;
     }
 

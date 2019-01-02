@@ -28,8 +28,6 @@ import java.io.InputStream;
 @Log
 public class ApiController extends BaseController {
 
-    private UserService userService;
-
     /**
      * Instantiate API controller, includes required services.
      *
@@ -37,8 +35,8 @@ public class ApiController extends BaseController {
      */
     @Autowired
     public ApiController(final UserService userService) {
-        super();
-        this.userService = userService;
+
+        super(userService);
     }
 
     /**

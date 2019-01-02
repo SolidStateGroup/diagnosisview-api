@@ -15,10 +15,16 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.servlet.http.HttpServletRequest;
 
-public class BaseController {
+public abstract class BaseController {
 
-    @Autowired
-    private UserService userService;
+    UserService userService;
+
+    protected BaseController(final UserService userService) {
+
+        this.userService = userService;
+    }
+
+    protected  BaseController() {}
 
     /**
      * Get the user based on the user token.

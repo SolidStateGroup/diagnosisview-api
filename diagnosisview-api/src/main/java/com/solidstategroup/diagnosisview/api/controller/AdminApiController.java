@@ -9,57 +9,44 @@ import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.UserService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-/**
- * Secured API controller, handles main methods.
- */
+@Slf4j
 @RestController
 @RequestMapping("/api/admin")
-@Log
+@Api(value = "Secured API controller")
 public class AdminApiController extends BaseController {
 
-    private final UserService userService;
     private final CodeService codeService;
     private final LinkService linkService;
     private final ExternalStandardRepository externalStandardRepository;
 
-    /**
-     * Instantiate API controller, includes required services.
-     *
-     * @param userService UserService manages the dashboard users
-     * @param linkService
-     */
-    @Autowired
     public AdminApiController(final UserService userService,
                               final CodeService codeService,
                               final LinkService linkService,
                               final ExternalStandardRepository externalStandardRepository) {
-        super();
-        this.userService = userService;
+
+        super(userService);
         this.codeService = codeService;
         this.linkService = linkService;
         this.externalStandardRepository = externalStandardRepository;
     }
 
-    /**
-     * User login to system.
-     *
-     * @param user user to login
-     * @return User the logged in user
-     * @throws Exception thrown when user cannot be logged in
-     */
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    @ApiOperation(value = "Logs user into the system")
+    @PostMapping(value = "/login")
     public User login(@RequestBody final User user) throws Exception {
 
         User loggedInUser = userService.login(user.getUsername(), user.getStoredPassword());
@@ -71,16 +58,11 @@ public class AdminApiController extends BaseController {
         return loggedInUser;
     }
 
-    /**
-     * Get all users.
-     *
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/users", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Users",
             notes = "Admin User endpoint to get all users within the DiagnosisView",
-            response = User.class)
+            response = User.class,
+            responseContainer = "List")
+    @GetMapping(value = "/users")
     public List<User> getAllUsers(HttpServletRequest request) throws Exception {
 
         isAdminUser(request);
@@ -88,15 +70,9 @@ public class AdminApiController extends BaseController {
         return userService.getAllUsers();
     }
 
-    /**
-     * Update a user.
-     *
-     * @param user User user to update
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/user", method = RequestMethod.DELETE)
     @ApiOperation(value = "Delete User - TEST PURPOSES ONLY",
             notes = "Pass the user in with an ID to be deleted")
+    @DeleteMapping(value = "/user")
     public User deleteUser(@RequestBody final User user,
                            HttpServletRequest request) throws Exception {
 
@@ -106,17 +82,10 @@ public class AdminApiController extends BaseController {
         return userService.deleteUser(user);
     }
 
-    /**
-     * Create a user.
-     *
-     * @param user User user to create
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/user", method = RequestMethod.POST)
     @ApiOperation(value = "Create User",
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
+    @PostMapping(value = "/user")
     public User createUser(@RequestBody final User user,
                            HttpServletRequest request) throws Exception {
 
@@ -125,16 +94,10 @@ public class AdminApiController extends BaseController {
         return userService.createOrUpdateUser(user, true);
     }
 
-    /**
-     * Create a code within DV.
-     *
-     * @param code - code to create
-     * @return the created code with ID
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.POST)
     @ApiOperation(value = "Create Code",
-            notes = "Creates code within DV (unsure if required)",
+            notes = "Creates code within DV",
             response = Code.class)
+    @PostMapping(value = "/code")
     public Code createCode(@RequestBody final Code code,
                            HttpServletRequest request) throws Exception {
 
@@ -143,14 +106,11 @@ public class AdminApiController extends BaseController {
         return codeService.upsert(code, false);
     }
 
-    /**
-     * @param code
-     * @return
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.PUT)
-    @ApiOperation(value = "Update Code",
-            notes = "Update a user, pass the password in which will then be encrypted",
+
+    @ApiOperation(value = "Updates Code",
+            notes = "Updates a code within DV",
             response = Code.class)
+    @PutMapping(value = "/code")
     public Code updateCode(@RequestBody final Code code,
                            HttpServletRequest request) throws Exception {
 
@@ -159,18 +119,10 @@ public class AdminApiController extends BaseController {
         return codeService.upsert(code, false);
     }
 
-
-    /**
-     * Update a DV link
-     *
-     * @param link Link the link the update
-     * @return Link the updated Link
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/code/link", method = RequestMethod.PUT)
     @ApiOperation(value = "Update Link",
             notes = "Updates a link with DV editable fields.",
             response = Link.class)
+    @PutMapping(value = "/code/link")
     public Link updateLink(@RequestBody final Link link,
                            HttpServletRequest request) throws Exception {
 
@@ -179,16 +131,11 @@ public class AdminApiController extends BaseController {
         return linkService.update(link);
     }
 
-    /**
-     * Return all external standards within PV
-     *
-     * @return List the external standards within diagnosisview
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/code/external-standards", method = RequestMethod.GET)
     @ApiOperation(value = "Get External Standards",
             notes = "Get all external standards within DV",
-            response = User.class)
+            response = ExternalStandard.class,
+            responseContainer = "List")
+    @GetMapping(value = "/code/external-standards")
     public List<ExternalStandard> getExternalStandards(HttpServletRequest request) throws Exception {
 
         isAdminUser(request);
@@ -196,17 +143,10 @@ public class AdminApiController extends BaseController {
         return externalStandardRepository.findAll();
     }
 
-    /**
-     * Update a user.
-     *
-     * @param user User user to create
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/user/{userId}", method = RequestMethod.PUT)
     @ApiOperation(value = "Create User",
             notes = "Create a user, pass the password in which will then be encrypted",
             response = User.class)
+    @PutMapping(value = "/user/{userId}")
     public User updateUser(@PathVariable("userId") final Long userId,
                            @RequestBody final User user,
                            HttpServletRequest request) throws Exception {
@@ -217,5 +157,4 @@ public class AdminApiController extends BaseController {
 
         return userService.createOrUpdateUser(user, true);
     }
-
 }

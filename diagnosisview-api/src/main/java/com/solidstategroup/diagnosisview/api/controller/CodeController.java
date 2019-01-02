@@ -31,8 +31,8 @@ public class CodeController extends BaseController {
      * Instantiate API controller, includes required services.
      */
     public CodeController(final CodeService codeService,
-                          LinkService linkService) {
-        super();
+                          final LinkService linkService) {
+
         this.codeService = codeService;
         this.linkService = linkService;
     }

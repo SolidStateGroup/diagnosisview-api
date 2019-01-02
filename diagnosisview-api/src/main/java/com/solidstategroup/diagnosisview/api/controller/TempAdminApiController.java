@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Log
 public class TempAdminApiController {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
     private CodeSyncService codeSyncService;
     private SubscriptionService subscriptionService;
 
@@ -43,8 +42,8 @@ public class TempAdminApiController {
      */
     @RequestMapping(value = "/sync-codes", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void syncContent()
-            throws Exception {
+    public void syncContent() {
+
         codeSyncService.syncCodes();
     }
 
@@ -57,6 +56,7 @@ public class TempAdminApiController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public void checkAndroid()
             throws Exception {
+
         subscriptionService.checkSubscriptions();
     }
 }
