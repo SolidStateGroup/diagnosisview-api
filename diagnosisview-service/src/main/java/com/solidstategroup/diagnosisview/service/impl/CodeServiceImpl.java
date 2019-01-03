@@ -270,7 +270,9 @@ public class CodeServiceImpl implements CodeService {
         code.setCodeCategories(new HashSet<>());
         code.setExternalStandards(new HashSet<>());
 
-        codeRepository.save(code);
+        final Code persistedCode = codeRepository.save(code);
+        code.setCreated(persistedCode.getCreated());
+        code.setLastUpdate(persistedCode.getLastUpdate());
 
         code.setCodeCategories(codeCategories
                 .stream()

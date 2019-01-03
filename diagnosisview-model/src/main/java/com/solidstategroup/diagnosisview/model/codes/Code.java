@@ -80,7 +80,7 @@ public class Code {
     private Lookup standardType;
 
     @CreationTimestamp
-    @Column(name = "creation_date")
+    @Column(name = "creation_date", updatable = false)
     private Date created;
 
     @JsonIgnore

@@ -68,6 +68,7 @@ public class CodeController extends BaseController {
 
         User user = getUserFromRequest(request);
 
+
         if (user != null &&
                 "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
             return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
