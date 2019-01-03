@@ -155,4 +155,15 @@ public class AdminController extends BaseController {
 
         return externalStandardRepository.findAll();
     }
-}
+
+    @ApiOperation(value = "Get A single Code",
+            notes = "Admin endpoint to get a code by it's name",
+            response = Code.class)
+    @GetMapping("/code/{code}")
+    public Code getCodeByName(@PathVariable("code") final String code, HttpServletRequest request)
+            throws Exception {
+
+        isAdminUser(request);
+
+        return codeService.get(code);
+    }}

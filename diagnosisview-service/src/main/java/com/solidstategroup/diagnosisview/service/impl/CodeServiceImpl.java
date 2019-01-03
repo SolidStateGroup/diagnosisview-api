@@ -159,6 +159,27 @@ public class CodeServiceImpl implements CodeService {
         return result;
     }
 
+    public Code getByInstitution(String code, Institution institution) {
+
+        Code result = codeRepository.findOneByCode(code);
+
+        if (result == null) {
+
+            return null;
+        }
+
+        result
+                .getLinks()
+                .forEach(l -> {
+                    l.setLink(buildLink(l.getMappingLinks(), institution).orElse(l.getLink()));
+                    l.setDifficultyLevel(buildDifficultyLevel(l));
+                    l.setLogoRule(null);
+                    l.setMappingLinks(null);
+                });
+
+        return result;
+    }
+
     /**
      * {@inheritDoc}
      */

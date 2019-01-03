@@ -68,9 +68,9 @@ public class CodeController extends BaseController {
 
         User user = getUserFromRequest(request);
 
-
         if (user != null &&
                 "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+
             return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
         }
 
@@ -89,7 +89,16 @@ public class CodeController extends BaseController {
             notes = "Admin endpoint to get a code by it's name",
             response = CodeDto.class)
     @GetMapping("/code/{code}")
-    public Code getCodeByName(@PathVariable("code") final String code) {
+    public Code getCodeByName(@PathVariable("code") final String code, HttpServletRequest request)
+            throws Exception {
+
+        User user = getUserFromRequest(request);
+
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getByInstitution(code, Institution.UNIVERSITY_OF_EDINBURGH);
+        }
 
         return codeService.get(code);
     }

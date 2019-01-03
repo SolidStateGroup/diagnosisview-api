@@ -58,4 +58,6 @@ public interface CodeService {
      * @param fromSync - If from the sync job, we will allow creation of certain other resources
      */
     Code upsert(Code code, boolean fromSync);
+
+    Code getByInstitution(String code, Institution institution);
 }
