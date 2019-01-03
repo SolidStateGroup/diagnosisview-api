@@ -130,7 +130,7 @@ public class Link extends AuditModel {
 
     public boolean hasTransformationOnly() { return this.transformationsOnly != null; }
 
-    public boolean useTransformationsOnly() {
+    public boolean getTransformationsOnly() {
         return transformationsOnly;
     }
 

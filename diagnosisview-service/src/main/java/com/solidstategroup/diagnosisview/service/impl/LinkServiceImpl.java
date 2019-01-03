@@ -72,7 +72,7 @@ public class LinkServiceImpl implements LinkService {
 
         if (link.hasTransformationOnly()) {
 
-            existingLink.setTransformationsOnly(link.useTransformationsOnly());
+            existingLink.setTransformationsOnly(link.getTransformationsOnly());
         }
 
         if (link.getDisplayOrder() != null) {
@@ -149,13 +149,9 @@ public class LinkServiceImpl implements LinkService {
                 link.setFreeLink(existingLink.getFreeLink());
             }
 
-            if (existingLink.useTransformationsOnly()) {
-                link.setTransformationsOnly(existingLink.useTransformationsOnly());
+            if (existingLink.getTransformationsOnly()) {
+                link.setTransformationsOnly(existingLink.getTransformationsOnly());
             }
-        } else {
-
-            link.setTransformationsOnly(false);
-            link.setFreeLink(false);
         }
 
         //If the link is a NICE link, we should categorise it as such

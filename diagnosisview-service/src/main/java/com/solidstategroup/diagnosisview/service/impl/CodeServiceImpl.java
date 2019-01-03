@@ -88,7 +88,7 @@ public class CodeServiceImpl implements CodeService {
 
     private static boolean shouldDisplayLink(Optional<String> linkMapping, Link link) {
 
-        return linkMapping.isPresent() | !link.useTransformationsOnly();
+        return linkMapping.isPresent() | !link.getTransformationsOnly();
     }
 
     private static boolean shouldBeDeleted(Code code) {
@@ -340,7 +340,7 @@ public class CodeServiceImpl implements CodeService {
                             link.getDisplayOrder(),
                             shouldDisplayLink(linkMapping, link),
                             link.getName(), link.getFreeLink(),
-                            link.useTransformationsOnly());
+                            link.getTransformationsOnly());
                 })
                 .collect(toSet());
     }
