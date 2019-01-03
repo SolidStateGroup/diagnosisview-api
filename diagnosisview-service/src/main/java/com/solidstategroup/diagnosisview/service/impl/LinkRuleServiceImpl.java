@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.service.impl;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
@@ -144,6 +145,27 @@ public class LinkRuleServiceImpl implements LinkRuleService {
         }
 
         return linkRule;
+    }
+
+    public Set<LinkRuleMapping> matchLinkToRule(Link link) {
+
+        Set<LinkRuleMapping> collect = linkRuleRepository
+                .findAll()
+                .stream()
+                .filter(lr -> link.getLink().startsWith(lr.getLink()))
+                .map(lr ->
+                        LinkRuleMapping
+                                .builder()
+                                .link(link)
+                                .rule(lr)
+                                .criteriaType(CriteriaType.INSTITUTION)
+                                .criteria(lr.getCriteria())
+                                .replacementLink(transformLink(
+                                        link.getLink(), lr.getTransform(), lr.getLink()))
+                                .build())
+                .collect(toSet());
+
+        return collect;
     }
 
     private String transformLink(String original, String transform, String url) {

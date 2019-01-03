@@ -14,7 +14,7 @@ class LogoRulesServiceImplTest extends Specification {
     def logoRuleRepository = Mock(LogoRuleRepository)
 
     def logoRulesService =
-            new LogoRulesServiceImpl(linkRepository, logoRuleRepository)
+            new LogoRulesServiceImpl(logoRuleRepository)
 
     def "should add a logo"() {
 
@@ -37,7 +37,7 @@ class LogoRulesServiceImplTest extends Specification {
         then: "rule is saved"
 
         1 * logoRuleRepository.saveAndFlush(_ as LogoRule) >> { it[0] }
-        1 * linkRepository.addLogoRule(_ as LogoRule)
+        1 * logoRuleRepository.addLogoRule(_ as LogoRule)
 
         and: "correct fields are saved"
 

@@ -27,6 +27,7 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -124,7 +125,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         }
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     protected void updateCode(Code code) {
 
         codeService.upsert(code, true);

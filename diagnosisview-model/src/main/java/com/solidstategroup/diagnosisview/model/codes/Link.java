@@ -8,7 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -138,6 +137,7 @@ public class Link extends AuditModel {
         this.transformationsOnly = transformationsOnly;
     }
 
+    @JsonIgnore
     public Set<LinkRuleMapping> getMappingLinks() {
         return mappingLinks;
     }
@@ -146,6 +146,7 @@ public class Link extends AuditModel {
         this.mappingLinks = mappingLinks;
     }
 
+    @JsonIgnore
     public LogoRule getLogoRule() {
         return logoRule;
     }

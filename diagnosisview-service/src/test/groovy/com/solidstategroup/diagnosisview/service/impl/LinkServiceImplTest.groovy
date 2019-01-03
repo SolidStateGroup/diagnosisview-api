@@ -3,20 +3,26 @@ package com.solidstategroup.diagnosisview.service.impl
 import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel
 import com.solidstategroup.diagnosisview.repository.LinkRepository
+import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository
 import com.solidstategroup.diagnosisview.repository.LookupRepository
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository
+import com.solidstategroup.diagnosisview.service.LinkRuleService
 import com.solidstategroup.diagnosisview.service.LinkService
 import com.solidstategroup.diagnosisview.service.LogoRulesService
 import spock.lang.Specification
 
 class LinkServiceImplTest extends Specification {
 
+    def linkRuleService = Mock(LinkRuleService)
+    def linkRuleMappingRepository = Mock(LinkRuleMappingRepository)
     def linkRepository = Mock(LinkRepository)
     def lookupRepository = Mock(LookupRepository)
     def lookupTypeRepository = Mock(LookupTypeRepository)
     def logoRuleService = Mock(LogoRulesService)
 
     LinkService linkService = new LinkServiceImpl(
+            linkRuleService,
+            linkRuleMappingRepository,
             linkRepository,
             lookupRepository,
             lookupTypeRepository,

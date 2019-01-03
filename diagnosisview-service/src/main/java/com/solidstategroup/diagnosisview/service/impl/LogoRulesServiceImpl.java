@@ -4,9 +4,9 @@ import com.google.api.client.util.Base64;
 import com.solidstategroup.diagnosisview.model.LogoRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LogoRule;
-import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LogoRuleRepository;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -16,17 +16,14 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class LogoRulesServiceImpl implements LogoRulesService {
 
-    private final LinkRepository linkRepository;
     private final LogoRuleRepository logoRuleRepository;
 
-    public LogoRulesServiceImpl(
-            LinkRepository linkRepository,
-            LogoRuleRepository logoRuleRepository) {
+    public LogoRulesServiceImpl(LogoRuleRepository logoRuleRepository) {
 
-        this.linkRepository = linkRepository;
         this.logoRuleRepository = logoRuleRepository;
     }
 
@@ -53,7 +50,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
                         .overrideDifficultyLevel(logoRuleDto.getOverrideDifficultyLevel())
                         .build());
 
-        linkRepository.addLogoRule(logoRule);
+        logoRuleRepository.addLogoRule(logoRule);
 
         return logoRule;
     }
@@ -84,7 +81,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public void delete(String id) {
 
-        linkRepository.clearLogoRule(
+        logoRuleRepository.clearLogoRule(
                 logoRuleRepository.findOne(id));
 
         logoRuleRepository.delete(id);
@@ -134,8 +131,8 @@ public class LogoRulesServiceImpl implements LogoRulesService {
 
         if (!StringUtils.equals(currentStartsWith, logoRuleDto.getStartsWith())) {
 
-            linkRepository.clearLogoRule(newLogoRule);
-            linkRepository.addLogoRule(newLogoRule);
+            logoRuleRepository.clearLogoRule(newLogoRule);
+            logoRuleRepository.addLogoRule(newLogoRule);
         }
 
         return newLogoRule;
@@ -161,7 +158,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
             return Optional.empty();
         }
 
-        return logoRuleRepository
+        return this.logoRuleRepository
                 .findAll()
                 .stream()
                 .filter(lr -> linkText.startsWith(lr.getStartsWith()))

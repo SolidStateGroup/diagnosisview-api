@@ -2,22 +2,31 @@ package com.solidstategroup.diagnosisview.service.impl;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
+import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
+import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
+
+import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
 
 @Service
 public class LinkServiceImpl implements LinkService {
 
+    private final LinkRuleService linkRuleService;
+    private final LinkRuleMappingRepository linkRuleMappingRepository;
     private final LinkRepository linkRepository;
     private final LookupRepository lookupRepository;
     private final LookupTypeRepository lookupTypeRepository;
@@ -25,12 +34,17 @@ public class LinkServiceImpl implements LinkService {
     private Lookup niceLinksLookup;
     private Lookup userLink;
 
-    public LinkServiceImpl(
+    public
+    LinkServiceImpl(
+            LinkRuleService linkRuleService,
+            LinkRuleMappingRepository linkRuleMappingRepository,
             LinkRepository linkRepository,
             LookupRepository lookupRepository,
             LookupTypeRepository lookupTypeRepository,
             LogoRulesService logoRulesService) {
 
+        this.linkRuleService = linkRuleService;
+        this.linkRuleMappingRepository = linkRuleMappingRepository;
         this.linkRepository = linkRepository;
         this.lookupRepository = lookupRepository;
         this.lookupTypeRepository = lookupTypeRepository;
@@ -86,23 +100,20 @@ public class LinkServiceImpl implements LinkService {
 
         linkRepository.save(existingLink);
 
-        existingLink.setMappingLinks(null);
-        existingLink.setLogoRule(null);
-
         return existingLink;
     }
 
     /**
      * {@inheritDoc}
      */
+    @Transactional
     @Override
     public Link upsert(Link link) {
 
         //Get the NICE lookup if it exists
         populatDVLookups();
 
-        Link existingLink = linkRepository.findOne(link.getId());
-        link = checkLink(existingLink, link);
+        link = checkLink(link);
 
         // Check if the link matches any urls for logos,
         // if it does, assign it that logo url
@@ -117,7 +128,7 @@ public class LinkServiceImpl implements LinkService {
 
         // If the lookupValue is a DV only value, then don't update as it will overlap
         // In future this may need to be a check against all DV only lookup values
-        if (niceLinksLookup != null ||
+        if (niceLinksLookup != null &&
                 link.getLinkType().getId().equals(niceLinksLookup.getId())) {
 
             link.setLinkType(userLink);
@@ -134,11 +145,12 @@ public class LinkServiceImpl implements LinkService {
     /**
      * Check an existing link and see if it has the difficulty set etc
      *
-     * @param existingLink
      * @param link
      * @return
      */
-    private Link checkLink(Link existingLink, Link link) {
+    private Link checkLink(Link link) {
+
+        Link existingLink = linkRepository.findOne(link.getId());
 
         //Ensure that difficulty is not overwritten
         if (existingLink != null) {
@@ -154,11 +166,26 @@ public class LinkServiceImpl implements LinkService {
             if (existingLink.getTransformationsOnly()) {
                 link.setTransformationsOnly(existingLink.getTransformationsOnly());
             }
+
+            if (compareIgnoreCase(existingLink.getLink(), link.getLink()) != 0
+                    && existingLink.getMappingLinks() != null) {
+
+                Set<LinkRuleMapping> mappings = linkRuleService
+                        .matchLinkToRule(link);
+
+                if (mappings.size() > 0) {
+
+                    linkRuleMappingRepository.delete(existingLink.getMappingLinks());
+                    link.setMappingLinks(mappings);
+                    linkRuleMappingRepository.save(mappings);
+                }
+            }
         }
 
         //If the link is a NICE link, we should categorise it as such
         //In the future this maybe extended into its own function
-        if (link.getLink() != null && link.getLink().contains("nice.org.uk")) {
+        if (link.getLink() != null &&
+                link.getLink().contains("nice.org.uk")) {
 
             link.setLinkType(niceLinksLookup);
 

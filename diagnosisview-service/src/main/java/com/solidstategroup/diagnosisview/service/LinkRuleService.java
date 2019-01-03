@@ -1,9 +1,12 @@
 package com.solidstategroup.diagnosisview.service;
 
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
+import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Link Rules service provides rule for urls that can be customized on
@@ -49,4 +52,6 @@ public interface LinkRuleService {
      * @param id Id of link rule to remove.
      */
     void deleteLinkRule(String id);
+
+    Set<LinkRuleMapping> matchLinkToRule(Link link);
 }

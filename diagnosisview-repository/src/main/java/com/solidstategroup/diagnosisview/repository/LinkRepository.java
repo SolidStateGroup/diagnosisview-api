@@ -17,13 +17,4 @@ import java.util.Set;
 public interface LinkRepository extends JpaRepository<Link, Long> {
 
     Set<Link> findLinksByLinkContaining(String message);
-
-    @Modifying
-    @Query(value = "UPDATE Link l set l.logoRule = NULL WHERE l.logoRule = ?1")
-    void clearLogoRule(LogoRule logoRule);
-
-    @Modifying
-    @Query(value = "UPDATE Link l SET l.logoRule = :logoRule WHERE EXISTS " +
-            "(SELECT ol FROM Link ol WHERE ol.link LIKE CONCAT('%', :#{#logoRule.startsWith}, '%'))")
-    void addLogoRule(@Param("logoRule") LogoRule logoRule);
 }
