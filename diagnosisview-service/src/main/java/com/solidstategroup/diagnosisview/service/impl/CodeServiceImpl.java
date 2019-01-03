@@ -50,6 +50,8 @@ public class CodeServiceImpl implements CodeService {
 
     private static final String DV_CODE = "dv_";
     private static final String DV_CODE_TEMPLATE = "dv_%s";
+    private static final String CODE_SEQ = "code_seq";
+    private static final String LINK_SEQ = "link_seq";
     private final CodeRepository codeRepository;
     private final CategoryRepository categoryRepository;
     private final CodeCategoryRepository codeCategoryRepository;
@@ -201,15 +203,20 @@ public class CodeServiceImpl implements CodeService {
             }
 
             if (code.getId() == null) {
-                code.setId(selectIdFrom("code_seq"));
+                code.setId(selectIdFrom(CODE_SEQ));
 
-                code.setLinks(
-                        code
-                                .getLinks()
-                                .stream()
-                                .peek(l -> l.setId(selectIdFrom("link_seq")))
-                                .collect(toSet()));
             }
+
+            code.setLinks(
+                    code
+                            .getLinks()
+                            .stream()
+                            .peek(l -> {
+                                if (l.getId() == null) {
+                                    l.setId(selectIdFrom(LINK_SEQ));
+                                }
+                            })
+                            .collect(toSet()));
         }
 
         if (upsertNotRequired(code)) {
