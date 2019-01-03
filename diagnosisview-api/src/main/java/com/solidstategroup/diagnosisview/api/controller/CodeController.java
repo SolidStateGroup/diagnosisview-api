@@ -66,9 +66,10 @@ public class CodeController extends BaseController {
     @GetMapping("/code")
     public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
 
-        User user = checkIsAuthenticated(request);
+        User user = getUserFromRequest(request);
 
-        if ("University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
             return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
         }
 
