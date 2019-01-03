@@ -43,8 +43,6 @@ public abstract class BaseController {
 
         if (requestUser == null) {
             throw new NotAuthorisedException(
-
-
                     "You are not authenticated, please try logging in again.");
         }
         return requestUser;

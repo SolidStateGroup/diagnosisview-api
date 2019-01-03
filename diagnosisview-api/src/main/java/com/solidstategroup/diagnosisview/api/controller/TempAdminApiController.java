@@ -10,12 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Secured API controller, handles main methods.
- */
 @RestController
 @RequestMapping("/api/admin")
-@Log
 public class TempAdminApiController {
 
     private CodeSyncService codeSyncService;
@@ -33,7 +29,6 @@ public class TempAdminApiController {
         this.codeSyncService = codeSyncService;
         this.subscriptionService = subscriptionService;
     }
-
 
     /**
      * Sync the content from PV
