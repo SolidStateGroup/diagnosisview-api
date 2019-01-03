@@ -45,7 +45,7 @@ public class Link extends AuditModel {
     private Integer displayOrder;
 
     @Column(name = "free_link", nullable = false)
-    private Boolean freeLink;
+    private Boolean freeLink = false;
 
     @Column(name = "transformations_only")
     private Boolean transformationsOnly = false;

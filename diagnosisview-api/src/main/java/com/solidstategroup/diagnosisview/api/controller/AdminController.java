@@ -166,4 +166,5 @@ public class AdminController extends BaseController {
         isAdminUser(request);
 
         return codeService.get(code);
-    }}
+    }
+}

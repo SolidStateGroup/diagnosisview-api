@@ -1,6 +1,5 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -16,15 +15,15 @@ import com.tyler.gson.immutable.ImmutableListDeserializer;
 import com.tyler.gson.immutable.ImmutableMapDeserializer;
 import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -36,24 +35,48 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.String.format;
+import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
+
 /**
- * {@inheritDoc}.
+ * {@inheritDoc}
  */
 @Slf4j
 @Service
 public class CodeSyncServiceImpl implements CodeSyncService {
 
-    @Value("${PATIENTVIEW_USER:NONE}")
-    private String patientviewUser;
+    private static final String PATIENTVIEW_AUTH_ENDPOINT_TEMPLATE = "%sauth/login";
+    private static final String PATIENTVIEW_CODE_ENDPOINT_TEMPLATE =
+            "%scode?filterText=&page=0&size=200000&sortDirection=ASC&sortField=code&standardTypes=134";
+    private static final String AUTH_HEADER = "X-Auth-Token";
+    private static final Header APPLICATION_JSON_HEADER =
+            new BasicHeader("content-type", APPLICATION_JSON_VALUE);
 
-    @Value("${PATIENTVIEW_PASSWORD:NONE}")
-    private String patientviewPassword;
+    private final CodeService codeService;
+    private final String patientviewUser;
+    private final String patientviewPassword;
+    private final String patientviewApiKey;
+    private final String PATIENTVIEW_AUTH_ENDPOINT;
+    private final String PATIENTVIEW_CODE_ENDPOINT;
 
-    @Value("${PATIENTVIEW_APIKEY:NONE}")
-    private String patientviewApiKey;
+    public CodeSyncServiceImpl(CodeService codeService,
+            @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
+            @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
+            @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
+            @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
-    @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}")
-    private String patientviewUrl;
+        this.codeService = codeService;
+        this.patientviewUser = patientviewUser;
+        this.patientviewPassword = patientviewPassword;
+        this.patientviewApiKey = patientviewApiKey;
+
+        PATIENTVIEW_AUTH_ENDPOINT =
+                format(PATIENTVIEW_AUTH_ENDPOINT_TEMPLATE, patientviewUrl);
+
+        PATIENTVIEW_CODE_ENDPOINT =
+                format(PATIENTVIEW_CODE_ENDPOINT_TEMPLATE, patientviewUrl);
+
+    }
 
     private static Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -64,39 +87,39 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
             .create();
 
-    @Autowired
-    private CodeService codeService;
-
     @Override
-   // @Scheduled(cron = "0 0 */2 * * *")
+//   @Scheduled(cron = "0 0 */2 * * *")
     public void syncCodes() {
         try {
+
             log.info("Starting Code Sync from PatientView");
-            //Make request to auth/login
-            HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
+
+            HttpClient httpClient = HttpClientBuilder.create().build();
 
             //Make the request
-            HttpGet request = new HttpGet(patientviewUrl +
-                    "code?filterText=&page=0&size=200000&sortDirection=ASC&sortField=code&standardTypes=134");
-            request.addHeader("content-type", "application/json");
-            request.addHeader("X-Auth-Token", getLoginToken());
+            HttpGet request = new HttpGet(PATIENTVIEW_CODE_ENDPOINT);
+            request.addHeader(APPLICATION_JSON_HEADER);
+            //Make request to auth/login
+            request.addHeader(AUTH_HEADER, getLoginToken());
 
-            HttpResponse response = httpClient.execute(request);
+            String responseString =
+                    EntityUtils
+                            .toString(httpClient
+                                    .execute(request)
+                                    .getEntity(), "UTF-8");
 
-            HttpEntity entity = response.getEntity();
-            String responseString = EntityUtils.toString(entity, "UTF-8");
-
-            Type fooType = new TypeToken<List<Code>>() {
-            }.getType();
+            Type fooType = new TypeToken<List<Code>>() {}.getType();
             String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
                     fooType);
 
             List<Code> codes = gson.fromJson(contentString, fooType);
 
+            codes.forEach(this::updateCode);
 
-            codes.stream().forEach(code -> updateCode(code));
             log.info("Finished Code Sync from PatientView");
+
         } catch (IOException e) {
+
             e.printStackTrace();
         }
     }
@@ -115,23 +138,20 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private String getLoginToken() throws IOException {
 
         //Make request to auth/login
-        HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
+        HttpClient httpClient = HttpClientBuilder.create().build();
 
-        Map<String, String> postbody = new HashMap<>();
-        postbody.put("username", patientviewUser);
-        postbody.put("password", patientviewPassword);
-        postbody.put("apiKey", patientviewApiKey);
+        Map<String, String> body = new HashMap<>();
+        body.put("username", patientviewUser);
+        body.put("password", patientviewPassword);
+        body.put("apiKey", patientviewApiKey);
 
+        HttpPost request = new HttpPost(PATIENTVIEW_AUTH_ENDPOINT);
+        request.addHeader(APPLICATION_JSON_HEADER);
+        request.setEntity(new StringEntity(gson.toJson(body)));
 
-        HttpPost request = new HttpPost(patientviewUrl + "auth/login");
-        StringEntity params = new StringEntity(gson.toJson(postbody));
-        request.addHeader("content-type", "application/json");
-        request.setEntity(params);
-        HttpResponse response = httpClient.execute(request);
+        HttpEntity entity = httpClient.execute(request).getEntity();
 
-        HttpEntity entity = response.getEntity();
         String responseString = EntityUtils.toString(entity, "UTF-8");
-        System.out.println(responseString);
 
         return gson.fromJson(responseString, Map.class).get("token").toString();
     }

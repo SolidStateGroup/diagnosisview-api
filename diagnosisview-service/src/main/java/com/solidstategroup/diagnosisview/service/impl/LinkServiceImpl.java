@@ -117,9 +117,11 @@ public class LinkServiceImpl implements LinkService {
 
         // If the lookupValue is a DV only value, then don't update as it will overlap
         // In future this may need to be a check against all DV only lookup values
-        if (link.getLinkType().getId().equals(niceLinksLookup.getId())) {
+        if (niceLinksLookup != null ||
+                link.getLinkType().getId().equals(niceLinksLookup.getId())) {
 
             link.setLinkType(userLink);
+
         } else {
 
             lookupTypeRepository.save(link.getLinkType().getLookupType());
