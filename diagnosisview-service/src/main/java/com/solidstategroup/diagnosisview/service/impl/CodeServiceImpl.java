@@ -202,15 +202,14 @@ public class CodeServiceImpl implements CodeService {
 
             if (code.getId() == null) {
                 code.setId(selectIdFrom("code_seq"));
-            }
 
-            code.setLinks(
-                    code
-                            .getLinks()
-                            .stream()
-                            .filter(l -> !Objects.nonNull(l.getId()))
-                            .peek(l -> l.setId(selectIdFrom("link_seq")))
-                            .collect(Collectors.toSet()));
+                code.setLinks(
+                        code
+                                .getLinks()
+                                .stream()
+                                .peek(l -> l.setId(selectIdFrom("link_seq")))
+                                .collect(toSet()));
+            }
         }
 
         if (upsertNotRequired(code)) {
