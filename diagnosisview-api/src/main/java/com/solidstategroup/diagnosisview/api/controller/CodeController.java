@@ -100,6 +100,16 @@ public class CodeController extends BaseController {
             return codeService.getByInstitution(code, Institution.UNIVERSITY_OF_EDINBURGH);
         }
 
+        if (user != null && "Other".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getByInstitution(code, Institution.OTHER);
+        }
+
+        if (user != null && "None".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getByInstitution(code, Institution.NONE);
+        }
+
         return codeService.get(code);
     }
 }
