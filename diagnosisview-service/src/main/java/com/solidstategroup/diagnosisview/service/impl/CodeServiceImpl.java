@@ -172,7 +172,6 @@ public class CodeServiceImpl implements CodeService {
                 .getLinks()
                 .forEach(l -> {
                     l.setLink(buildLink(l.getMappingLinks(), institution).orElse(l.getLink()));
-                    l.setDifficultyLevel(buildDifficultyLevel(l));
                     l.setLogoRule(null);
                     l.setMappingLinks(null);
                 });
@@ -358,7 +357,7 @@ public class CodeServiceImpl implements CodeService {
                     return new LinkDto(
                             link.getId(),
                             link.getLinkType(),
-                            buildDifficultyLevel(link),
+                            link.getDifficultyLevel(),
                             linkMapping.orElse(link.getLink()),
                             link.getDisplayOrder(),
                             shouldDisplayLink(linkMapping, link),
