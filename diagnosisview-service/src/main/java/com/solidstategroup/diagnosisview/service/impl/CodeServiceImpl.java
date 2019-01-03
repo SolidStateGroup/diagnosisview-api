@@ -32,10 +32,8 @@ import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -52,6 +50,9 @@ public class CodeServiceImpl implements CodeService {
     private static final String DV_CODE_TEMPLATE = "dv_%s";
     private static final String CODE_SEQ = "code_seq";
     private static final String LINK_SEQ = "link_seq";
+    private static final String CODE_CATEGORY_SEQ = "code_category_seq";
+    private static final String CODE_EXTERNAL_STANDARD = "code_external_standard_seq";
+
     private final CodeRepository codeRepository;
     private final CategoryRepository categoryRepository;
     private final CodeCategoryRepository codeCategoryRepository;
@@ -141,7 +142,7 @@ public class CodeServiceImpl implements CodeService {
      */
     @Override
     public Code get(String code) {
-        Code result =  codeRepository.findOneByCode(code);
+        Code result = codeRepository.findOneByCode(code);
 
         if (result == null) {
 
@@ -153,7 +154,7 @@ public class CodeServiceImpl implements CodeService {
                 .forEach(l -> {
                     l.setLogoRule(null);
                     l.setMappingLinks(null);
-                    });
+                });
 
         return result;
     }
@@ -207,16 +208,41 @@ public class CodeServiceImpl implements CodeService {
 
             }
 
-            code.setLinks(
-                    code
-                            .getLinks()
-                            .stream()
-                            .peek(l -> {
-                                if (l.getId() == null) {
-                                    l.setId(selectIdFrom(LINK_SEQ));
-                                }
-                            })
-                            .collect(toSet()));
+            code.setLinks(code
+                    .getLinks()
+                    .stream()
+                    .peek(l -> {
+                        if (l.getId() == null) {
+                            l.setId(selectIdFrom(LINK_SEQ));
+                        }
+                    })
+                    .collect(toSet()));
+
+            if (code.getExternalStandards() != null) {
+
+                code.setExternalStandards(code
+                        .getExternalStandards()
+                        .stream()
+                        .peek(es -> {
+                            if (es.getId() == null) {
+                                es.setId(selectIdFrom(CODE_EXTERNAL_STANDARD));
+                            }
+                        })
+                        .collect(toSet()));
+            }
+
+            if (code.getCodeCategories() != null) {
+
+                code.setCodeCategories(code
+                        .getCodeCategories()
+                        .stream()
+                        .peek(cc -> {
+                            if (cc.getId() == null) {
+                                cc.setId(selectIdFrom(CODE_CATEGORY_SEQ));
+                            }
+                        })
+                        .collect(toSet()));
+            }
         }
 
         if (upsertNotRequired(code)) {
