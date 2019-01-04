@@ -12,6 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Set;
 
 /**
@@ -51,6 +52,9 @@ public class Link extends AuditModel {
 
     @OneToMany(mappedBy = "link")
     private Set<LinkRuleMapping> mappingLinks;
+
+    @Transient
+    private Boolean displayLink = true;
 
     @ManyToOne
     @JoinColumn(name = "link_logo_id")
@@ -144,6 +148,14 @@ public class Link extends AuditModel {
 
     public void setMappingLinks(Set<LinkRuleMapping> mappingLinks) {
         this.mappingLinks = mappingLinks;
+    }
+
+    public Boolean getDisplayLink() {
+        return displayLink;
+    }
+
+    public void setDisplayLink(Boolean displayLink) {
+        this.displayLink = displayLink;
     }
 
     @JsonIgnore
