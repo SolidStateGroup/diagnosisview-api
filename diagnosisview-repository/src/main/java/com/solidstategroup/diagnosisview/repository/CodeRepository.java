@@ -17,4 +17,6 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
      * @return the found code
      */
     Code findOneByCode(final String code);
+
+    boolean existsByCode(String code);
 }

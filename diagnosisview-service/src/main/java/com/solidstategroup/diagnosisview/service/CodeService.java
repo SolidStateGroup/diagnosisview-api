@@ -57,7 +57,7 @@ public interface CodeService {
      * @param code - code to update or create
      * @param fromSync - If from the sync job, we will allow creation of certain other resources
      */
-    Code upsert(Code code, boolean fromSync);
+    Code upsert(Code code, boolean fromSync) throws Exception;
 
     Code getByInstitution(String code, Institution institution);
 }

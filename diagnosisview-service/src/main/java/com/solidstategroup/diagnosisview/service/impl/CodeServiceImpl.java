@@ -208,14 +208,21 @@ public class CodeServiceImpl implements CodeService {
      */
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public Code upsert(Code code, boolean fromSync) {
+    public Code upsert(Code code, boolean fromSync) throws Exception {
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
 
+            String codeName = format(DV_CODE_TEMPLATE, code.getCode());
+
+            if (codeRepository.existsByCode(codeName)) {
+
+                throw new Exception("Code already exists");
+            }
+
             if (!code.getCode().substring(0, 3).equals(DV_CODE)) {
 
-                code.setCode(format(DV_CODE_TEMPLATE, code.getCode()));
+                code.setCode(codeName);
             }
 
             if (code.getSourceType() == null) {
@@ -224,8 +231,8 @@ public class CodeServiceImpl implements CodeService {
             }
 
             if (code.getId() == null) {
-                code.setId(selectIdFrom(CODE_SEQ));
 
+                code.setId(selectIdFrom(CODE_SEQ));
             }
 
             code.setLinks(code

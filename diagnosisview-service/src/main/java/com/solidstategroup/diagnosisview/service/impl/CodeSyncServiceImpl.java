@@ -128,7 +128,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     @Transactional
     protected void updateCode(Code code) {
 
-        codeService.upsert(code, true);
+        try {
+
+            codeService.upsert(code, true);
+
+        } catch (Exception e) {
+
+           log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
+        }
     }
 
     /**
