@@ -14,6 +14,7 @@ import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -97,6 +98,9 @@ public class LinkRuleServiceImpl implements LinkRuleService {
 
         linkRuleMappingRepository.delete(current.getMappings());
 
+        current.setMappings(new HashSet<>());
+        linkRuleRepository.save(current);
+
         Set<LinkRuleMapping> linkRuleMappings =
                 linkRepository
                         .findLinksByLinkContaining(linkRuleDto.getLink())
@@ -113,9 +117,8 @@ public class LinkRuleServiceImpl implements LinkRuleService {
                                         .build())
                         .collect(toSet());
 
-        current.setMappings(linkRuleMappings);
 
-        linkRuleRepository.save(current);
+        current.setMappings(linkRuleMappings);
 
         linkRuleMappingRepository.save(linkRuleMappings);
 
