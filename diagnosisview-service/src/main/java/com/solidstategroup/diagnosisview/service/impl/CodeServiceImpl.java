@@ -363,6 +363,7 @@ public class CodeServiceImpl implements CodeService {
                 .getLinks()
                 .stream()
                 .map(link -> {
+                    String originalLink = link.getLink();
                     Optional<String> linkMapping = buildLink(link.getMappingLinks(), institution);
 
                     return new LinkDto(
@@ -370,6 +371,7 @@ public class CodeServiceImpl implements CodeService {
                             link.getLinkType(),
                             link.getDifficultyLevel(),
                             linkMapping.orElse(link.getLink()),
+                            originalLink,
                             link.getDisplayOrder(),
                             shouldDisplayLink(linkMapping, link),
                             link.getName(), link.getFreeLink(),
