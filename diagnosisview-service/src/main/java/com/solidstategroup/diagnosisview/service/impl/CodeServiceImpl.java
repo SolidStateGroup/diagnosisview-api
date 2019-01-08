@@ -171,9 +171,11 @@ public class CodeServiceImpl implements CodeService {
         result
                 .getLinks()
                 .forEach(l -> {
+                    String originalLink = l.getLink();
                     Optional<String> transformed = buildLink(l.getMappingLinks(), institution);
                     l.setDisplayLink(shouldDisplayLink(transformed, l));
                     l.setLink(transformed.orElse(l.getLink()));
+                    l.setOriginalLink(originalLink);
                     l.setLogoRule(null);
                     l.setMappingLinks(null);
                 });

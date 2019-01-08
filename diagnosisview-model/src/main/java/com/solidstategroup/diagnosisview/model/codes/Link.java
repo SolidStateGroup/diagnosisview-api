@@ -38,6 +38,9 @@ public class Link extends AuditModel {
     @Column(name = "link")
     private String link;
 
+    @Transient
+    private String originalLink;
+
     @Column(name = "name")
     private String name;
 
@@ -83,6 +86,14 @@ public class Link extends AuditModel {
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    public String getOriginalLink() {
+        return originalLink;
+    }
+
+    public void setOriginalLink(String orginalLink) {
+        this.originalLink = orginalLink;
     }
 
     public String getName() {
