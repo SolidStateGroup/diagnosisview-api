@@ -53,10 +53,14 @@ public class CodeController extends BaseController {
         return code;
     }
 
-    @ApiOperation(value = "Delete code - TEST PURPOSES ONLY",
-            notes = "Pass the code in with an ID to be deleted")
+    @ApiOperation(value = "Delete DV code",
+            notes = "Pass a code name to be deleted. This endpoint will only delete DV created codes")
     @DeleteMapping("/code")
-    public void deleteCode(@RequestBody final Code code) {
+    public void deleteCode(@RequestBody final Code code, HttpServletRequest request)
+            throws Exception {
+
+        isAdminUser(request);
+
         codeService.delete(code);
     }
 
