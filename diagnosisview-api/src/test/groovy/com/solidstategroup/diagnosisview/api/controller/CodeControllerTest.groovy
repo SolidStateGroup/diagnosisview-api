@@ -5,6 +5,7 @@ import com.solidstategroup.diagnosisview.model.codes.Category
 import com.solidstategroup.diagnosisview.model.codes.Code
 import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution
+import com.solidstategroup.diagnosisview.model.enums.RoleType
 import com.solidstategroup.diagnosisview.service.CodeService
 import com.solidstategroup.diagnosisview.service.LinkService
 
@@ -75,12 +76,15 @@ class CodeControllerTest extends AbstractMvcSpec {
         when: "delete code endpoint is called"
 
         deleteAt(CODE, code)
-                .andExpect(status().isOk()
-        )
+                .andExpect(status().isOk())
 
         then: "code is deleted"
 
         1 * codeService.delete(code)
+
+        and: "user is an admin"
+
+        userService.getUserByToken(DEFAULT_AUTH_HEADER_VALUE) >> new User(roleType: RoleType.ADMIN)
     }
 
     def "should return all categories"() {
