@@ -1,5 +1,7 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -8,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
@@ -25,9 +28,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -35,6 +39,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
@@ -59,6 +64,22 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private final String patientviewApiKey;
     private final String PATIENTVIEW_AUTH_ENDPOINT;
     private final String PATIENTVIEW_CODE_ENDPOINT;
+
+    private static final String BMJ_BP_ENDPOINT_TEMPLATE = "https://bestpractice.bmj.com/infobutton?" +
+            "knowledgeResponseType=application/json&" +
+            "mainSearchCriteria.v.cs=%s&" +
+            "mainSearchCriteria.v.c=%s&" +
+            "mainSearchCriteria.v.dn=%s";
+
+    private static final Map<String, String> codeMapping;
+    private static final String SNOMED_CT = "SNOMED-CT";
+    private static final String ICD_10 = "ICD-10";
+
+    static {
+        codeMapping = new HashMap<>();
+        codeMapping.put(SNOMED_CT, "2.16.840.1.113883.6.96");
+        codeMapping.put(ICD_10, "2.16.840.1.113883.6.90");
+    }
 
     public CodeSyncServiceImpl(CodeService codeService,
             @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
@@ -123,6 +144,97 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             e.printStackTrace();
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void syncBmjLinks() {
+
+        RestTemplate template = new RestTemplate();
+
+        for (Code code : codeService.getAll()) {
+
+            final Optional<CodeExternalStandard> snomed_ct = getExternalStandard(code, SNOMED_CT);
+
+            if (snomed_ct.isPresent()) {
+
+                String url = buildUrl(SNOMED_CT, snomed_ct.get().getCodeString(), code.getCode());
+
+                try {
+                    ResponseEntity<ObjectNode> entity = template.getForEntity(url, ObjectNode.class);
+
+                    if (entity.getStatusCode().is2xxSuccessful()) {
+
+                        JsonNode entry = entity.getBody().findValue("entry");
+
+                        if (entry.isArray()) {
+
+                            for (JsonNode jn : entry) {
+
+                                for (JsonNode link : jn.get("link")) {
+
+                                    String href = link.get("href").asText();
+                                    System.out.println(href);
+                                }
+                            }
+                        }
+
+                        continue;
+                    }
+                } catch (Exception e) {
+                    System.out.println("continue...");
+                }
+            }
+
+            final Optional<CodeExternalStandard> icd_10 = getExternalStandard(code, ICD_10);
+
+            if (!icd_10.isPresent()) {
+
+                continue;
+            }
+
+            String url = buildUrl(ICD_10, snomed_ct.get().getCodeString(), code.getCode());
+
+            try {
+
+                ResponseEntity<ObjectNode> entity = template.getForEntity(url, ObjectNode.class);
+
+                if (!entity.getStatusCode().is2xxSuccessful()) {
+
+                    continue;
+                }
+
+                JsonNode entry = entity.getBody().findValue("entry");
+
+                if (entry.isArray()) {
+
+                    for (JsonNode jn : entry) {
+
+                        for (JsonNode link: jn.get("link")) {
+
+                            String href = link.get("href").asText();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("contine ICD-10...  ");
+            }
+        }
+    }
+
+    private String buildUrl(String externalStandard, String code, String codeName) {
+
+        return String.format(BMJ_BP_ENDPOINT_TEMPLATE, codeMapping.getOrDefault(externalStandard, SNOMED_CT), code, codeName);
+    }
+
+    private Optional<CodeExternalStandard> getExternalStandard(Code code, String externalStandard) {
+
+        return code.getExternalStandards()
+                .stream()
+                .filter(es -> es.getExternalStandard().getName().equals(externalStandard))
+                .findAny();
     }
 
     @Transactional

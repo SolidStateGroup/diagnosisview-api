@@ -114,6 +114,11 @@ public class CodeServiceImpl implements CodeService {
                 .collect(toList());
     }
 
+    public List<Code> getAll() {
+
+        return codeRepository.findAll();
+    }
+
     /**
      * {@inheritDoc}
      */

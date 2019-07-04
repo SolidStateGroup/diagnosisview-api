@@ -21,6 +21,13 @@ public interface CodeService {
     List<CategoryDto> getAllCategories();
 
     /**
+     * Fetches all save codes.
+     *
+     * @return List {@link Code}
+     */
+    List<Code> getAll();
+
+    /**
      * Get All codes
      *
      * @return List code dtos
