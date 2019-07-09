@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service.impl
 
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException
 import com.solidstategroup.diagnosisview.model.codes.Category
 import com.solidstategroup.diagnosisview.model.codes.Code
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory
@@ -9,11 +10,13 @@ import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.Lookup
 import com.solidstategroup.diagnosisview.model.codes.LookupType
 import com.solidstategroup.diagnosisview.model.codes.LookupTypes
+import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes
 import com.solidstategroup.diagnosisview.repository.CategoryRepository
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository
 import com.solidstategroup.diagnosisview.repository.CodeRepository
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository
+import com.solidstategroup.diagnosisview.repository.LinkRepository
 import com.solidstategroup.diagnosisview.repository.LookupRepository
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository
 import com.solidstategroup.diagnosisview.service.CodeService
@@ -30,6 +33,7 @@ class CodeServiceImplTest extends Specification {
     def codeCategoryRepository = Mock(CodeCategoryRepository)
     def codeExternalStandardRepository = Mock(CodeExternalStandardRepository)
     def externalStandardRepository = Mock(ExternalStandardRepository)
+    def linkRepository = Mock(LinkRepository)
     def linkService = Mock(LinkService)
     def lookupTypeRepository = Mock(LookupTypeRepository)
     def lookupRepository = Mock(LookupRepository)
@@ -41,6 +45,7 @@ class CodeServiceImplTest extends Specification {
             codeCategoryRepository,
             codeExternalStandardRepository,
             externalStandardRepository,
+            linkRepository,
             linkService,
             lookupTypeRepository,
             lookupRepository,
@@ -85,15 +90,71 @@ class CodeServiceImplTest extends Specification {
 
         given: "a code to delete"
 
+        def codeName = "dv_test_code"
+        def code = new Code(code: codeName)
+
+        when: "service is called"
+
+        codeService.delete(code)
+
+        then: "current code is found"
+
+        1 * codeRepository.findOneByCode(codeName) >> new Code(sourceType: CodeSourceTypes.DIAGNOSISVIEW)
+
+        and: "code is deleted"
+
+        1 * codeRepository.delete(_ as Code)
+    }
+
+    def "should throw exception when trying to delete non-dv code"() {
+
+        given: "a pv generated code to delete"
+
+        def codeName = "pv_code"
+        def code = new Code(code: codeName)
+
+
+        when: "service is called"
+
+        codeService.delete(code)
+
+        then: "currently stored pv code is found"
+
+        1 * codeRepository.findOneByCode(codeName) >> new Code(sourceType: CodeSourceTypes.PATIENTVIEW)
+
+        and: "exception is thrown"
+
+        thrown BadRequestException
+    }
+
+    def "should throw exception when code name not set"() {
+
+        given: "a code without a code name"
+
         def code = new Code()
 
         when: "service is called"
 
         codeService.delete(code)
 
-        then: "code is deleted"
+        then: "exception is thrown"
 
-        1 * codeRepository.delete(code)
+        thrown BadRequestException
+    }
+
+    def "should throw exception when code name not found"() {
+
+        given: "a code that is not saved in database"
+
+        def code = new Code(code: "dv_test")
+
+        when: "service is called"
+
+        codeService.delete(code)
+
+        then: "exception is thrown"
+
+        thrown BadRequestException
     }
 
     def "should store code"() {

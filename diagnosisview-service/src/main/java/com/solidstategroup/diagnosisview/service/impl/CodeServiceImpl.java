@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
+import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
@@ -18,6 +19,7 @@ import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
+import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -28,6 +30,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -60,6 +63,7 @@ public class CodeServiceImpl implements CodeService {
     private final ExternalStandardRepository externalStandardRepository;
     private final LookupTypeRepository lookupTypeRepository;
     private final LookupRepository lookupRepository;
+    private final LinkRepository linkRepository;
     private final LinkService linkService;
 
     // Temporary hack to get ids for codes and links.
@@ -70,6 +74,7 @@ public class CodeServiceImpl implements CodeService {
                            CodeCategoryRepository codeCategoryRepository,
                            CodeExternalStandardRepository codeExternalStandardRepository,
                            ExternalStandardRepository externalStandardRepository,
+                           LinkRepository linkRepository,
                            LinkService linkService,
                            LookupTypeRepository lookupTypeRepository,
                            LookupRepository lookupRepository,
@@ -80,6 +85,7 @@ public class CodeServiceImpl implements CodeService {
         this.codeCategoryRepository = codeCategoryRepository;
         this.codeExternalStandardRepository = codeExternalStandardRepository;
         this.externalStandardRepository = externalStandardRepository;
+        this.linkRepository = linkRepository;
         this.linkService = linkService;
         this.lookupTypeRepository = lookupTypeRepository;
         this.lookupRepository = lookupRepository;
@@ -192,9 +198,29 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public void delete(Code code) {
-        codeRepository.delete(code);
+
+        if (code.getCode() == null) {
+
+            throw new BadRequestException("code not set");
+        }
+
+        Code currentCode = codeRepository.findOneByCode(code.getCode());
+
+        if (currentCode == null) {
+
+            throw new BadRequestException("code not found");
+        }
+
+        if (currentCode.getSourceType() != CodeSourceTypes.DIAGNOSISVIEW) {
+
+            throw new BadRequestException("can only delete diagnosis view created codes");
+        }
+
+        linkRepository.deleteByCode(currentCode);
+        codeRepository.delete(currentCode);
     }
 
     /**
