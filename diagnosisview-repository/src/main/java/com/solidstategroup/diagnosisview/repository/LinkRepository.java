@@ -15,5 +15,7 @@ public interface LinkRepository extends JpaRepository<Link, Long> {
 
     Set<Link> findLinksByLinkContaining(String message);
 
+    Link findLinkByExternalId(String externalId);
+
     void deleteByCode(Code code);
 }

@@ -63,6 +63,9 @@ public class Link extends AuditModel {
     @JoinColumn(name = "link_logo_id")
     private LogoRule logoRule;
 
+    @Column(name = "external_id")
+    private String externalId;
+
     public Lookup getLinkType() {
         return linkType;
     }
@@ -176,5 +179,13 @@ public class Link extends AuditModel {
 
     public void setLogoRule(LogoRule logoRule) {
         this.logoRule = logoRule;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 }

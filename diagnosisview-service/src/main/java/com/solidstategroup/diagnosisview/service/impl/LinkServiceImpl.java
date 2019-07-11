@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
+import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
@@ -15,7 +16,9 @@ import com.solidstategroup.diagnosisview.service.LogoRulesService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,6 +28,9 @@ import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
 @Service
 public class LinkServiceImpl implements LinkService {
 
+    private static final String LINK_SEQ = "link_seq";
+
+    private final EntityManager entityManager;
     private final LinkRuleService linkRuleService;
     private final LinkRuleMappingRepository linkRuleMappingRepository;
     private final LinkRepository linkRepository;
@@ -36,6 +42,7 @@ public class LinkServiceImpl implements LinkService {
 
     public
     LinkServiceImpl(
+            EntityManager entityManager,
             LinkRuleService linkRuleService,
             LinkRuleMappingRepository linkRuleMappingRepository,
             LinkRepository linkRepository,
@@ -43,6 +50,7 @@ public class LinkServiceImpl implements LinkService {
             LookupTypeRepository lookupTypeRepository,
             LogoRulesService logoRulesService) {
 
+        this.entityManager = entityManager;
         this.linkRuleService = linkRuleService;
         this.linkRuleMappingRepository = linkRuleMappingRepository;
         this.linkRepository = linkRepository;
@@ -142,6 +150,66 @@ public class LinkServiceImpl implements LinkService {
         return linkRepository.save(link);
     }
 
+    public Link addExternalLink(Link link, Code code) throws Exception {
+
+        if (link.getLinkType() == null) {
+
+            throw new Exception("link type must be set");
+        }
+
+        if (link.getName() == null) {
+
+            throw new Exception("link must have name set");
+        }
+
+        if (link.getExternalId() == null) {
+
+            throw new Exception("link must have an external id set");
+        }
+
+        link.setOriginalLink(link.getLink());
+
+        logoRulesService
+                .matchLinkToRule(link)
+                .ifPresent(link::setLogoRule);
+
+        Date now = new Date();
+
+        link.setCode(code);
+        link.setDifficultyLevel(DifficultyLevel.AMBER);
+        link.setDisplayLink(true);
+        link.setDisplayOrder(1);
+        link.setTransformationsOnly(false);
+        link.setFreeLink(false);
+        link.setCreated(now);
+        link.setLastUpdate(now);
+
+        link.setId(selectIdFrom(LINK_SEQ));
+
+        return linkRepository.save(link);
+    }
+
+    @Override
+    public Link updateExternalLink(Link link) throws Exception {
+
+        if (link.getExternalId() == null) {
+
+            throw new Exception("link must have an external id set");
+        }
+
+        Link savedLink = linkRepository.findLinkByExternalId(link.getExternalId());
+
+        if (savedLink == null) {
+
+            throw new Exception("no link found");
+        }
+
+        savedLink.setName(link.getName());
+        savedLink.setLink(link.getLink());
+
+        return linkRepository.save(savedLink);
+    }
+
     /**
      * Check an existing link and see if it has the difficulty set etc
      *
@@ -212,6 +280,11 @@ public class LinkServiceImpl implements LinkService {
 
             userLink = lookupRepository.findOneByValue("CUSTOM");
         }
+    }
+
+    private long selectIdFrom(String sequence) {
+        String sql = "SELECT nextval('" + sequence + "')";
+        return ((BigInteger) entityManager.createNativeQuery(sql).getSingleResult()).longValue();
     }
 }
 

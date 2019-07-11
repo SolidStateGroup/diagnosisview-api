@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.SubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,9 @@ import java.io.IOException;
 @RequestMapping("/api/admin")
 public class TempAdminApiController {
 
-    private CodeSyncService codeSyncService;
-    private SubscriptionService subscriptionService;
+    private final BmjBestPractices bmjBestPractices;
+    private final CodeSyncService codeSyncService;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Instantiate API controller, includes required services.
@@ -25,8 +27,11 @@ public class TempAdminApiController {
      * @param subscriptionService Subscription service
      */
     @Autowired
-    public TempAdminApiController(final CodeSyncService codeSyncService,
+    public TempAdminApiController(final BmjBestPractices bmjBestPractices,
+                                  final CodeSyncService codeSyncService,
                                   final SubscriptionService subscriptionService) {
+
+        this.bmjBestPractices = bmjBestPractices;
         this.codeSyncService = codeSyncService;
         this.subscriptionService = subscriptionService;
     }
@@ -43,9 +48,9 @@ public class TempAdminApiController {
     }
 
     @GetMapping(value = "/sync-bmj")
-    public void syncBmjLinks() throws IOException {
+    public void syncBmjLinks() {
 
-        codeSyncService.syncBmjLinks();
+        bmjBestPractices.syncBmjLinks();
     }
 
     /**

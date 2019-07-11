@@ -70,5 +70,10 @@
             <artifactId>compiler</artifactId>
             <version>0.9.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

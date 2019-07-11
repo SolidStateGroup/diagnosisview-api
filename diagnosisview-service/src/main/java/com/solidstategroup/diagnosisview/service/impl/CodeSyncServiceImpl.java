@@ -1,7 +1,5 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -10,7 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
+import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
@@ -28,18 +26,19 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
@@ -57,7 +56,16 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private static final String AUTH_HEADER = "X-Auth-Token";
     private static final Header APPLICATION_JSON_HEADER =
             new BasicHeader("content-type", APPLICATION_JSON_VALUE);
+    private static Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+            .registerTypeAdapter(Date.class, new DatetimeParser())
+            .registerTypeAdapter(ImmutableSortedMap.class, new ImmutableSortedMapDeserializer())
+            .registerTypeAdapter(ImmutableList.class, new ImmutableListDeserializer())
+            .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
+            .create();
 
+    private final BmjBestPractices bmjBestPractices;
     private final CodeService codeService;
     private final String patientviewUser;
     private final String patientviewPassword;
@@ -65,28 +73,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private final String PATIENTVIEW_AUTH_ENDPOINT;
     private final String PATIENTVIEW_CODE_ENDPOINT;
 
-    private static final String BMJ_BP_ENDPOINT_TEMPLATE = "https://bestpractice.bmj.com/infobutton?" +
-            "knowledgeResponseType=application/json&" +
-            "mainSearchCriteria.v.cs=%s&" +
-            "mainSearchCriteria.v.c=%s&" +
-            "mainSearchCriteria.v.dn=%s";
+    public CodeSyncServiceImpl(BmjBestPractices bmjBestPractices,
+                               CodeService codeService,
+                               @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
+                               @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
+                               @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
+                               @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
-    private static final Map<String, String> codeMapping;
-    private static final String SNOMED_CT = "SNOMED-CT";
-    private static final String ICD_10 = "ICD-10";
-
-    static {
-        codeMapping = new HashMap<>();
-        codeMapping.put(SNOMED_CT, "2.16.840.1.113883.6.96");
-        codeMapping.put(ICD_10, "2.16.840.1.113883.6.90");
-    }
-
-    public CodeSyncServiceImpl(CodeService codeService,
-            @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
-            @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
-            @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
-            @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
-
+        this.bmjBestPractices = bmjBestPractices;
         this.codeService = codeService;
         this.patientviewUser = patientviewUser;
         this.patientviewPassword = patientviewPassword;
@@ -97,17 +91,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         PATIENTVIEW_CODE_ENDPOINT =
                 format(PATIENTVIEW_CODE_ENDPOINT_TEMPLATE, patientviewUrl);
-
     }
-
-    private static Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
-            .registerTypeAdapter(Date.class, new DatetimeParser())
-            .registerTypeAdapter(ImmutableSortedMap.class, new ImmutableSortedMapDeserializer())
-            .registerTypeAdapter(ImmutableList.class, new ImmutableListDeserializer())
-            .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
-            .create();
 
     @Override
 //   @Scheduled(cron = "0 0 */2 * * *")
@@ -130,7 +114,8 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                                     .execute(request)
                                     .getEntity(), "UTF-8");
 
-            Type fooType = new TypeToken<List<Code>>() {}.getType();
+            Type fooType = new TypeToken<List<Code>>() {
+            }.getType();
             String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
                     fooType);
 
@@ -146,95 +131,28 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Scheduled(cron = "0 0 */2 * * *")
     @Override
     public void syncBmjLinks() {
 
-        RestTemplate template = new RestTemplate();
+        final UUID correlation = UUID.randomUUID();
+        log.info("Correlation id: {}. Starting BMJ link job", correlation);
+        Instant start = Instant.now();
 
-        for (Code code : codeService.getAll()) {
+        try {
 
-            final Optional<CodeExternalStandard> snomed_ct = getExternalStandard(code, SNOMED_CT);
+            bmjBestPractices.syncBmjLinks();
 
-            if (snomed_ct.isPresent()) {
+        } catch (Exception e) {
 
-                String url = buildUrl(SNOMED_CT, snomed_ct.get().getCodeString(), code.getCode());
+            log.error("Correlation id: {}. BMJ link job threw an exception: {}", correlation, e);
 
-                try {
-                    ResponseEntity<ObjectNode> entity = template.getForEntity(url, ObjectNode.class);
 
-                    if (entity.getStatusCode().is2xxSuccessful()) {
+        } finally {
 
-                        JsonNode entry = entity.getBody().findValue("entry");
-
-                        if (entry.isArray()) {
-
-                            for (JsonNode jn : entry) {
-
-                                for (JsonNode link : jn.get("link")) {
-
-                                    String href = link.get("href").asText();
-                                    System.out.println(href);
-                                }
-                            }
-                        }
-
-                        continue;
-                    }
-                } catch (Exception e) {
-                    System.out.println("continue...");
-                }
-            }
-
-            final Optional<CodeExternalStandard> icd_10 = getExternalStandard(code, ICD_10);
-
-            if (!icd_10.isPresent()) {
-
-                continue;
-            }
-
-            String url = buildUrl(ICD_10, snomed_ct.get().getCodeString(), code.getCode());
-
-            try {
-
-                ResponseEntity<ObjectNode> entity = template.getForEntity(url, ObjectNode.class);
-
-                if (!entity.getStatusCode().is2xxSuccessful()) {
-
-                    continue;
-                }
-
-                JsonNode entry = entity.getBody().findValue("entry");
-
-                if (entry.isArray()) {
-
-                    for (JsonNode jn : entry) {
-
-                        for (JsonNode link: jn.get("link")) {
-
-                            String href = link.get("href").asText();
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("contine ICD-10...  ");
-            }
+            log.info("Correlation id: {}. BMJ link job finished", correlation);
+            log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
         }
-    }
-
-    private String buildUrl(String externalStandard, String code, String codeName) {
-
-        return String.format(BMJ_BP_ENDPOINT_TEMPLATE, codeMapping.getOrDefault(externalStandard, SNOMED_CT), code, codeName);
-    }
-
-    private Optional<CodeExternalStandard> getExternalStandard(Code code, String externalStandard) {
-
-        return code.getExternalStandards()
-                .stream()
-                .filter(es -> es.getExternalStandard().getName().equals(externalStandard))
-                .findAny();
     }
 
     @Transactional
@@ -246,7 +164,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         } catch (Exception e) {
 
-           log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
+            log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
         }
     }
 

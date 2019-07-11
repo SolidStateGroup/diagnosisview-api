@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 
 public interface LinkService {
@@ -28,4 +29,9 @@ public interface LinkService {
      * @return created/updated link
      */
     Link upsert(Link link);
+
+
+    Link addExternalLink(Link link, Code code) throws Exception;
+
+    Link updateExternalLink(Link link) throws Exception;
 }
