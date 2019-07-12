@@ -8,8 +8,27 @@ build:
     - script:
         name: Run Maven upload
         code: |
+          echo $GOOGLE_PLAY_KEY > diagnosisview-api/src/main/resources/google-play-key.json
+          echo $GOOGLE_PLAY_KEY > diagnosisview-service/src/main/resources/google-play-key.json
+          mvn clean install -DskipTests=true -P staging
+
+deploy:
+  box: maven:3.5.2-jdk-8
+  steps:
+    - edgecaseadmin/install-aws-cli:
+      key: $AWS_ACCESS_KEY_ID
+      secret: $AWS_SECRET_ACCESS_KEY
+      region: $AWS_DEFAULT_REGION
+    - script:
+        name: Run Maven upload
+        code: |
+          echo $GOOGLE_PLAY_KEY > diagnosisview-api/src/main/resources/google-play-key.json
+          echo $GOOGLE_PLAY_KEY > diagnosisview-service/src/main/resources/google-play-key.json
           mvn clean install -DskipTests=true -P staging
           cd diagnosisview-api
           mvn -Dfile.encoding=UTF-8 -DskipTests=true beanstalk:clean-previous-versions  beanstalk:upload-source-bundle beanstalk:create-application-version beanstalk:update-environment -f pom.xml -P $WERCKER_GIT_BRANCH
+
+
+
 
 

@@ -5,7 +5,7 @@ import com.solidstategroup.diagnosisview.model.BaseModel;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -16,11 +16,11 @@ import javax.persistence.Table;
 @Table(name = "pv_code_category")
 public class CodeCategory extends BaseModel {
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "code_id", nullable = false)
     private Code code;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 

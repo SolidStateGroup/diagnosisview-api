@@ -2,8 +2,8 @@ package com.solidstategroup.diagnosisview.api.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
+import org.springframework.boot.autoconfigure.web.ErrorController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,10 +18,14 @@ import java.util.Map;
  * Generic exception handler, returns JSON on exception.
  */
 @RestController
-public class ErrorController implements org.springframework.boot.autoconfigure.web.ErrorController {
+public class ExceptionController implements ErrorController {
 
-    @Autowired
-    private ErrorAttributes errorAttributes;
+    private final ErrorAttributes errorAttributes;
+
+    public ExceptionController(ErrorAttributes errorAttributes) {
+
+        this.errorAttributes = errorAttributes;
+    }
 
     /**
      * Generic exception handler to return errors in standard ErrorJson format.
@@ -32,11 +36,15 @@ public class ErrorController implements org.springframework.boot.autoconfigure.w
      */
     @RequestMapping("/error")
     @ResponseBody
-    public ErrorJson error(final HttpServletRequest request, final HttpServletResponse response) throws Exception {
+    public ErrorJson error(final HttpServletRequest request, final HttpServletResponse response) {
+
         RequestAttributes requestAttributes = new ServletRequestAttributes(request);
         Map<String, Object> err = errorAttributes.getErrorAttributes(requestAttributes, false);
+
         return new ErrorJson(
-                response.getStatus(), (String) err.get("error"), (String) err.get("message"),
+                response.getStatus(),
+                (String) err.get("error"),
+                (String) err.get("message"),
                 err.get("timestamp").toString());
     }
 

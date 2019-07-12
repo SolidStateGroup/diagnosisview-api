@@ -1,4 +1,4 @@
-package com.solidstategroup.diagnosisview.model.codes;
+package com.solidstategroup.diagnosisview.model.codes.enums;
 
 
 /**
@@ -7,6 +7,7 @@ package com.solidstategroup.diagnosisview.model.codes;
  * Created on 08/06/2016
  */
 public enum CodeSourceTypes {
+    DIAGNOSISVIEW("DiagnosisView"),
     PATIENTVIEW("PatientView"),
     NHS_CHOICES("NHS Choices");
 

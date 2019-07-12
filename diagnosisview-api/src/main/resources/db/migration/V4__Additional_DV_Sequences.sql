@@ -1,0 +1,2 @@
+CREATE SEQUENCE IF NOT EXISTS code_external_standard_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS code_category_seq START 1;

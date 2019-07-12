@@ -1,114 +1,120 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solidstategroup.diagnosisview.model.CategoryDto;
+import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.repository.CodeRepository;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
+import com.solidstategroup.diagnosisview.service.CodeService;
+import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-/**
- * Secured API controller, handles main methods.
- */
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.PUT;
+
 @RestController
 @RequestMapping("/api")
-@Log
-public class CodeController {
+public class CodeController extends BaseController {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-    private UserService userService;
-    private CodeRepository codeRepository;
+    private final CodeService codeService;
+    private final LinkService linkService;
 
-    /**
-     * Instantiate API controller, includes required services.
-     *
-     * @param userService UserService manages the dashboard users
-     */
-    @Autowired
-    public CodeController(final UserService userService, final CodeRepository codeRepository) {
-        this.userService = userService;
-        this.codeRepository = codeRepository;
+    public CodeController(final UserService userService,
+                          final CodeService codeService,
+                          final LinkService linkService) {
+
+        super(userService);
+        this.codeService = codeService;
+        this.linkService = linkService;
     }
 
-
-    /**
-     * Create a code within DV.
-     *
-     * @param code - code to create
-     * @return the created code with ID
-     * @throws Exception
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.POST)
     @ApiOperation(value = "Create Code",
-            notes = "Creates code within DV (unsure if required)",
-            response = User.class)
-    public Code createUser(@RequestBody final Code code) throws Exception {
-        return null;
+            notes = "Creates/Updates code within DV",
+            response = Code.class)
+    @RequestMapping(value = "/code", method = {PUT, POST})
+    public Code upsertCode(@RequestBody final Code code) {
+
+        codeService
+                .save(code)
+
+                .getLinks()
+                .forEach(linkService::update);
+
+        return code;
     }
 
+    @ApiOperation(value = "Delete DV code",
+            notes = "Pass a code name to be deleted. This endpoint will only delete DV created codes")
+    @DeleteMapping("/code")
+    public void deleteCode(@RequestBody final Code code, HttpServletRequest request)
+            throws Exception {
 
-    /**
-     * @param code
-     * @return
-     * @throws Exception
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.PUT)
-    @ApiOperation(value = "Update Code",
-            notes = "Update a user, pass the password in which will then be encrypted",
-            response = User.class)
-    public Code updateUser(@RequestBody final Code code) throws Exception {
-        return null;
+        isAdminUser(request);
+
+        codeService.delete(code);
     }
 
-
-    /**
-     * Update a code.
-     *
-     * @param code Code code to delete
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.DELETE)
-    @ApiOperation(value = "Delete code - TEST PURPOSES ONLY",
-            notes = "Pass the code in with an ID to be deleted")
-    public void deleteUser(@RequestBody final Code code) throws Exception {
-    }
-
-    /**
-     * Get all codes.
-     *
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/code", method = RequestMethod.GET)
     @ApiOperation(value = "Get All Codes",
             notes = "Admin User endpoint to get all codes within the DiagnosisView",
-            response = Code[].class)
-    public List<Code> getAllUsers() throws Exception {
-        return codeRepository.findAll();
+            response = CodeDto[].class)
+    @GetMapping("/code")
+    public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
+
+        User user = getUserFromRequest(request);
+
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        return codeService.getAll(null);
     }
 
+    @ApiOperation(value = "Get All Categories",
+            notes = "Get all categories from DiagnosisView",
+            response = CategoryDto[].class)
+    @GetMapping("/category")
+    public List<CategoryDto> getAllCategories() {
+        return codeService.getAllCategories();
+    }
 
-    /**
-     * Get a single code by querying using the id.
-     *
-     * @return User the updated user
-     * @throws Exception thrown adding projects config
-     */
-    @RequestMapping(value = "/code/{code}", method = RequestMethod.GET)
     @ApiOperation(value = "Get A single Codes",
-            notes = "Admin User endpoint to get all codes within the DiagnosisView",
-            response = Code.class)
-    public Code getAllUsers(@PathVariable("code") final String code) throws Exception {
-        return codeRepository.findOneByCode(code);
-    }
+            notes = "Admin endpoint to get a code by it's name",
+            response = CodeDto.class)
+    @GetMapping("/code/{code}")
+    public Code getCodeByName(@PathVariable("code") final String code, HttpServletRequest request)
+            throws Exception {
 
+        User user = getUserFromRequest(request);
+
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getByInstitution(code, Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        if (user != null && "Other".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getByInstitution(code, Institution.OTHER);
+        }
+
+        if (user != null && "None".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getByInstitution(code, Institution.NONE);
+        }
+
+        return codeService.get(code);
+    }
 }
+

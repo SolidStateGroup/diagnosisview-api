@@ -1,54 +1,66 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by jamesr@solidstategroup.com
- * Created on 25/06/2014
- */
+@Data
 @Entity
 @Table(name = "pv_code")
-public class Code extends AuditModel {
+public class Code {
+
+    @Id
+    private Long id;
 
     @Column(name = "code")
     private String code;
 
-    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CodeCategory> codeCategories = new HashSet<>();
 
     @OneToOne
     @JoinColumn(name = "type_id")
     private Lookup codeType;
 
-    @Column(name = "display_order" )
+    @Column(name = "display_order")
     private Integer displayOrder;
 
-    // called Name in ui
-    @Column(name = "description")
-    private String description;
-
-    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH},
+            orphanRemoval = true)
     private Set<CodeExternalStandard> externalStandards = new HashSet<>();
 
+    // called Name in ui
+    @Column(name = "description", length = 500)
+    private String description;
+
     // from NHS choices initially
-    @Column(name = "full_description")
+    @Column(name = "full_description", length = 500)
     private String fullDescription;
 
     @Column(name = "hide_from_patients")
     private boolean hideFromPatients = false;
 
-    @OneToMany(mappedBy = "code", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER)
     private Set<Link> links = new HashSet<>();
 
     // used for PATIENTVIEW code standard Codes, from NHS choices initially
@@ -59,115 +71,40 @@ public class Code extends AuditModel {
     @Column(name = "removed_externally")
     private boolean removedExternally = false;
 
-    @Column(name = "source_type", nullable = false)
     @Enumerated(EnumType.STRING)
-    private CodeSourceTypes sourceType = CodeSourceTypes.PATIENTVIEW;
+    @Column(name = "source_type", nullable = false)
+    private CodeSourceTypes sourceType;
 
     @OneToOne
     @JoinColumn(name = "standard_type_id")
     private Lookup standardType;
 
-    public String getCode() {
-        return code;
-    }
+    @CreationTimestamp
+    @Column(name = "creation_date", updatable = false)
+    private Date created;
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    @JsonIgnore
+    @CreatedBy
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User creator;
 
-    public Set<CodeCategory> getCodeCategories() {
-        return codeCategories;
-    }
+    @UpdateTimestamp
+    @Column(name = "last_update_date")
+    private Date lastUpdate;
 
-    public void setCodeCategories(Set<CodeCategory> codeCategories) {
-        this.codeCategories = codeCategories;
-    }
+    @JsonIgnore
+    @LastModifiedBy
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_updated_by")
+    private User lastUpdater;
 
-    public Lookup getCodeType() {
-        return codeType;
-    }
+    /**
+     * Adds a link to the current code.
+     */
+    public void addLink(Link link) {
 
-    public void setCodeType(Lookup codeType) {
-        this.codeType = codeType;
-    }
-
-    public Integer getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(Integer displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Set<CodeExternalStandard> getExternalStandards() {
-        return externalStandards;
-    }
-
-    public void setExternalStandards(Set<CodeExternalStandard> externalStandards) {
-        this.externalStandards = externalStandards;
-    }
-
-    public String getFullDescription() {
-        return fullDescription;
-    }
-
-    public void setFullDescription(String fullDescription) {
-        this.fullDescription = fullDescription;
-    }
-
-    public boolean isHideFromPatients() {
-        return hideFromPatients;
-    }
-
-    public void setHideFromPatients(boolean hideFromPatients) {
-        this.hideFromPatients = hideFromPatients;
-    }
-
-    public Set<Link> getLinks() {
-        return links;
-    }
-
-    public void setLinks(Set<Link> links) {
-        this.links = links;
-    }
-
-    public String getPatientFriendlyName() {
-        return patientFriendlyName;
-    }
-
-    public void setPatientFriendlyName(String patientFriendlyName) {
-        this.patientFriendlyName = patientFriendlyName;
-    }
-
-    public boolean isRemovedExternally() {
-        return removedExternally;
-    }
-
-    public void setRemovedExternally(boolean removedExternally) {
-        this.removedExternally = removedExternally;
-    }
-
-    public CodeSourceTypes getSourceType() {
-        return sourceType;
-    }
-
-    public void setSourceType(CodeSourceTypes sourceType) {
-        this.sourceType = sourceType;
-    }
-
-    public Lookup getStandardType() {
-        return standardType;
-    }
-
-    public void setStandardType(Lookup standardType) {
-        this.standardType = standardType;
+        links.add(link);
+        link.setCode(this);
     }
 }

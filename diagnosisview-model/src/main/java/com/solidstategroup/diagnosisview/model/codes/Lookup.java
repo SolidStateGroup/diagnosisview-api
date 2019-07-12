@@ -1,5 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -15,6 +17,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "pv_lookup_value")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Lookup extends AuditModel {
 
     @Column(name = "value")
@@ -32,6 +35,9 @@ public class Lookup extends AuditModel {
 
     @Column(name = "display_order")
     private Long displayOrder;
+
+    @Column(name = "dv_only")
+    private Boolean dvOnly;
 
     public String getValue() {
         return value;
@@ -71,5 +77,16 @@ public class Lookup extends AuditModel {
 
     public void setDisplayOrder(Long displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public Boolean getDvOnly() {
+        if (dvOnly == null) {
+            return false;
+        }
+        return dvOnly;
+    }
+
+    public void setDvOnly(Boolean dvOnly) {
+        this.dvOnly = dvOnly;
     }
 }

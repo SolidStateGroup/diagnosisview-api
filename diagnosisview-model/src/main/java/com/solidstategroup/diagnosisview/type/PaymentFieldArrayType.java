@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +37,7 @@ public class PaymentFieldArrayType implements UserType {
 
     @Override
     public final Serializable disassemble(final Object value) throws HibernateException {
-        return (PaymentDetails[]) this.deepCopy(value);
+        return (ArrayList<PaymentDetails>) this.deepCopy(value);
     }
 
     @Override
@@ -95,8 +96,8 @@ public class PaymentFieldArrayType implements UserType {
     }
 
     @Override
-    public final Class<PaymentDetails[]> returnedClass() {
-        return PaymentDetails[].class;
+    public final Class<ArrayList> returnedClass() {
+        return ArrayList.class;
     }
 
     @Override
