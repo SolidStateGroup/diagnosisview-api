@@ -40,8 +40,7 @@ public class LinkServiceImpl implements LinkService {
     private Lookup niceLinksLookup;
     private Lookup userLink;
 
-    public
-    LinkServiceImpl(
+    public LinkServiceImpl(
             EntityManager entityManager,
             LinkRuleService linkRuleService,
             LinkRuleMappingRepository linkRuleMappingRepository,
