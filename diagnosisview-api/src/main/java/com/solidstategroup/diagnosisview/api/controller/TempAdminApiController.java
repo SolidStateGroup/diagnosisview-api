@@ -41,7 +41,7 @@ public class TempAdminApiController {
      *
      * @throws Exception
      */
-    @GetMapping(value = "/sync-codes", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/sync-codes")
     public void syncContent() {
 
         codeSyncService.syncCodes();
