@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
@@ -31,10 +32,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
@@ -52,7 +56,16 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private static final String AUTH_HEADER = "X-Auth-Token";
     private static final Header APPLICATION_JSON_HEADER =
             new BasicHeader("content-type", APPLICATION_JSON_VALUE);
+    private static Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+            .registerTypeAdapter(Date.class, new DatetimeParser())
+            .registerTypeAdapter(ImmutableSortedMap.class, new ImmutableSortedMapDeserializer())
+            .registerTypeAdapter(ImmutableList.class, new ImmutableListDeserializer())
+            .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
+            .create();
 
+    private final BmjBestPractices bmjBestPractices;
     private final CodeService codeService;
     private final String patientviewUser;
     private final String patientviewPassword;
@@ -60,12 +73,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private final String PATIENTVIEW_AUTH_ENDPOINT;
     private final String PATIENTVIEW_CODE_ENDPOINT;
 
-    public CodeSyncServiceImpl(CodeService codeService,
-            @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
-            @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
-            @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
-            @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
+    public CodeSyncServiceImpl(BmjBestPractices bmjBestPractices,
+                               CodeService codeService,
+                               @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
+                               @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
+                               @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
+                               @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
+        this.bmjBestPractices = bmjBestPractices;
         this.codeService = codeService;
         this.patientviewUser = patientviewUser;
         this.patientviewPassword = patientviewPassword;
@@ -76,20 +91,10 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         PATIENTVIEW_CODE_ENDPOINT =
                 format(PATIENTVIEW_CODE_ENDPOINT_TEMPLATE, patientviewUrl);
-
     }
 
-    private static Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
-            .registerTypeAdapter(Date.class, new DatetimeParser())
-            .registerTypeAdapter(ImmutableSortedMap.class, new ImmutableSortedMapDeserializer())
-            .registerTypeAdapter(ImmutableList.class, new ImmutableListDeserializer())
-            .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
-            .create();
-
     @Override
-//   @Scheduled(cron = "0 0 */2 * * *")
+    @Scheduled(cron = "0 0 */2 * * *")
     public void syncCodes() {
         try {
 
@@ -109,7 +114,8 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                                     .execute(request)
                                     .getEntity(), "UTF-8");
 
-            Type fooType = new TypeToken<List<Code>>() {}.getType();
+            Type fooType = new TypeToken<List<Code>>() {
+            }.getType();
             String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
                     fooType);
 
@@ -125,6 +131,30 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         }
     }
 
+    @Scheduled(cron = "0 0 */2 * * *")
+    @Override
+    public void syncBmjLinks() {
+
+        final UUID correlation = UUID.randomUUID();
+        log.info("Correlation id: {}. Starting BMJ link job", correlation);
+        Instant start = Instant.now();
+
+        try {
+
+            bmjBestPractices.syncBmjLinks();
+
+        } catch (Exception e) {
+
+            log.error("Correlation id: {}. BMJ link job threw an exception: {}", correlation, e);
+
+
+        } finally {
+
+            log.info("Correlation id: {}. BMJ link job finished", correlation);
+            log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
+        }
+    }
+
     @Transactional
     protected void updateCode(Code code) {
 
@@ -134,7 +164,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         } catch (Exception e) {
 
-           log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
+            log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
         }
     }
 

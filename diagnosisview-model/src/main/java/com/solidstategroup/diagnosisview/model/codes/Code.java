@@ -98,4 +98,13 @@ public class Code {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_updated_by")
     private User lastUpdater;
+
+    /**
+     * Adds a link to the current code.
+     */
+    public void addLink(Link link) {
+
+        links.add(link);
+        link.setCode(this);
+    }
 }

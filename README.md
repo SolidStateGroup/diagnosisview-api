@@ -1,5 +1,6 @@
-# ADL whitelabel-dashboard API
-Handles refreshing data from KeyedIn and retrieval of a project summary used to build the React based front end.
+# Diagnosis View Api
+
+Aggregates data from multiple providers and provides diagnosis data via an api.
 
 ## Authentication
 All authentication is handled using an inbuilt login service, which will create a token for a user.

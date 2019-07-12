@@ -11,8 +11,11 @@ import com.solidstategroup.diagnosisview.service.LinkService
 import com.solidstategroup.diagnosisview.service.LogoRulesService
 import spock.lang.Specification
 
+import javax.persistence.EntityManager
+
 class LinkServiceImplTest extends Specification {
 
+    def entityManager = Mock(EntityManager)
     def linkRuleService = Mock(LinkRuleService)
     def linkRuleMappingRepository = Mock(LinkRuleMappingRepository)
     def linkRepository = Mock(LinkRepository)
@@ -21,6 +24,7 @@ class LinkServiceImplTest extends Specification {
     def logoRuleService = Mock(LogoRulesService)
 
     LinkService linkService = new LinkServiceImpl(
+            entityManager,
             linkRuleService,
             linkRuleMappingRepository,
             linkRepository,

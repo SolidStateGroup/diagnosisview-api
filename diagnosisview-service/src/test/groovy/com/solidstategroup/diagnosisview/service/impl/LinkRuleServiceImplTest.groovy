@@ -114,49 +114,4 @@ class LinkRuleServiceImplTest extends Specification {
 
         thrown BadRequestException
     }
-
-    def "should create link mappings for a rule"() {
-        given:
-
-        def originalLinkOne = "https://www.nhs.uk/conditions/bunions/"
-        def replacementLinkOne = "https://www.nhs.uk.ezproxy.is.edu.ac.uk/conditions/bunions/"
-        def originalLinkTwo = "https://www.nhs.uk/conditions/crohns-disease/"
-        def replacementLinkTwo = "https://www.nhs.uk.ezproxy.is.edu.ac.uk/conditions/crohns-disease/"
-        def link = "www.nhs.uk"
-        def transform = "www.nhs.uk.ezproxy.is.edu.ac.uk"
-        def criteria = "UNIVERSITY_OF_EDINBURGH"
-
-        def linkRuleDto =
-                new LinkRuleDto(
-                        link: link,
-                        transformation: transform,
-                        criteriaType: CriteriaType.INSTITUTION,
-                        criteria: criteria)
-
-        when:
-
-        linkRuleService.add(linkRuleDto)
-
-        then:
-
-        1 * linkRepository.findLinksByLinkContaining(link) >> [
-                new Link(link: originalLinkOne),
-                new Link(link: originalLinkTwo)
-        ]
-
-        1 * linkRuleRepository.save(_ as LinkRule) >> new LinkRule(link: link, transform: transform)
-
-        1 * linkRuleMappingRepository.save(_ as Set) >> {
-            def args = it[0]
-            // NOTE this is dependent on how the Set object stores the links. I'm assuming here
-            // that the 1st link in is store at index zero.
-            def linkRuleOne = (LinkRuleMapping)args[0]
-            assert linkRuleOne.replacementLink == replacementLinkOne
-
-            def linkRuleTwo = (LinkRuleMapping)args[1]
-            assert linkRuleTwo.replacementLink == replacementLinkTwo
-
-            return [linkRuleOne, linkRuleTwo]
-        }
-    }
 }
