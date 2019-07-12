@@ -94,7 +94,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     }
 
     @Override
-//   @Scheduled(cron = "0 0 */2 * * *")
+    @Scheduled(cron = "0 0 */2 * * *")
     public void syncCodes() {
         try {
 

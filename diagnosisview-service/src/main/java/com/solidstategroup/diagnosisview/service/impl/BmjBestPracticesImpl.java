@@ -11,6 +11,7 @@ import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -38,6 +39,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
     private static final Map<String, String> codeMapping;
     private static final String SNOMED_CT = "SNOMED-CT";
     private static final String ICD_10 = "ICD-10";
+    private static final String linkName = "BMJ Best Practice";
     private static RestTemplate template = new RestTemplate();
 
     static {
@@ -63,13 +65,14 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
     /**
      * {@inheritDoc}
      */
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     @Override
     public void syncBmjLinks() {
 
 
         List<Code> codes = codeService.getAll();
 
-        log.info("Processing {}", codes.size());
+        log.info("Processing {} codes.", codes.size());
 
         codes.forEach(code -> {
 
@@ -94,7 +97,6 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                 );
             }
         });
-
     }
 
     /**
@@ -157,12 +159,12 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
 
                                 // we have an updated link...
                                 Link linkToUpdate = new Link();
-                                linkToUpdate.setName(title);
+                                linkToUpdate.setName(linkName);
                                 linkToUpdate.setLink(href);
                                 linkToUpdate.setExternalId(id);
                                 linkService.updateExternalLink(linkToUpdate);
 
-                                log.debug("Correlation id: {}. Link updated {}", linkToUpdate.getId());
+                                log.info("Correlation id: {}. Link updated {}", linkToUpdate.getId());
                                 log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
 
                                 return true;
@@ -170,9 +172,9 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
 
                         } else {
 
-                            // save as new link
+                            // we have a new link...
                             Link newLink = new Link();
-                            newLink.setName(title);
+                            newLink.setName(linkName);
                             newLink.setLink(href);
                             newLink.setExternalId(id);
                             newLink.setLinkType(BMJ);
@@ -180,9 +182,8 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                             Link saved = linkService.addExternalLink(newLink, code);
                             code.addLink(saved);
                             codeService.save(code);
-                            System.out.println("saved link " + newLink.getId().toString());
 
-                            log.debug("Correlation id: {}. New link saved {}", newLink.getId());
+                            log.info("Correlation id: {}. New link saved {}", newLink.getId());
                             log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
 
                             return true;
