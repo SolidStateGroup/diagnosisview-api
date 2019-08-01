@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
-import com.solidstategroup.diagnosisview.model.RestPageImpl;
+import com.solidstategroup.diagnosisview.model.RestPage;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -31,7 +31,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -137,10 +136,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             headers.set(AUTH_HEADER, getLoginToken());
             org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
 
-            Map<String, String> params = new HashMap<>();
-            params.put("hotel", "42");
-            params.put("room", "21");
-
             //&page=0&size=200000
             UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(PATIENTVIEW_CODE_ENDPOINT)
                     .queryParam("pageSize", "2000")
@@ -149,11 +144,11 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             //uriBuilder.getQueryParams().replace("page", String.valueOf(2));
 
-            ParameterizedTypeReference<RestPageImpl<Code>> responseType =
-                    new ParameterizedTypeReference<RestPageImpl<Code>>() {
+            ParameterizedTypeReference<RestPage<Code>> responseType =
+                    new ParameterizedTypeReference<RestPage<Code>>() {
                     };
 
-            ResponseEntity<RestPageImpl<Code>> response =
+            ResponseEntity<RestPage<Code>> response =
                     restTemplate.exchange(PATIENTVIEW_CODE_ENDPOINT, HttpMethod.GET, entity, responseType);
 
 
