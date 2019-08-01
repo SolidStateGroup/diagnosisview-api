@@ -3,10 +3,10 @@ package com.solidstategroup.diagnosisview.service.impl;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
+import com.solidstategroup.diagnosisview.model.RestPageImpl;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -19,21 +19,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -94,65 +102,101 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 */2 * * *")
+    //@Scheduled(cron = "0 0 */2 * * *") // every 2 hours
+//    @Scheduled(cron = "0 */5 * * * ?") // every 2 min
     public void syncCodes() {
         try {
 
             log.info("Starting Code Sync from PatientView");
+            long start = System.currentTimeMillis();
 
-            HttpClient httpClient = HttpClientBuilder.create().build();
+//            HttpClient httpClient = HttpClientBuilder.create().build();
+//
+//            //Make the request
+//            HttpGet request = new HttpGet(PATIENTVIEW_CODE_ENDPOINT);
+//            request.addHeader(APPLICATION_JSON_HEADER);
+//            //Make request to auth/login
+//            request.addHeader(AUTH_HEADER, getLoginToken());
+//
+//            HttpResponse response = httpClient.execute(request);
+//            HttpEntity entity = response.getEntity();
+//            String responseString = EntityUtils.toString(entity, "UTF-8");
+//
+//            Type fooType = new TypeToken<List<Code>>() {
+//            }.getType();
+//            String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
+//                    fooType);
+//
+//            List<Code> codes = gson.fromJson(contentString, fooType);
 
-            //Make the request
-            HttpGet request = new HttpGet(PATIENTVIEW_CODE_ENDPOINT);
-            request.addHeader(APPLICATION_JSON_HEADER);
-            //Make request to auth/login
-            request.addHeader(AUTH_HEADER, getLoginToken());
+            RestTemplate restTemplate = new RestTemplate();
 
-            String responseString =
-                    EntityUtils
-                            .toString(httpClient
-                                    .execute(request)
-                                    .getEntity(), "UTF-8");
 
-            Type fooType = new TypeToken<List<Code>>() {
-            }.getType();
-            String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
-                    fooType);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+            headers.set(AUTH_HEADER, getLoginToken());
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
 
-            List<Code> codes = gson.fromJson(contentString, fooType);
+            Map<String, String> params = new HashMap<>();
+            params.put("hotel", "42");
+            params.put("room", "21");
 
-            codes.forEach(this::updateCode);
+            //&page=0&size=200000
+            UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(PATIENTVIEW_CODE_ENDPOINT)
+                    .queryParam("pageSize", "2000")
+                    .queryParam("page", "0")
+                    .build();
 
-            log.info("Finished Code Sync from PatientView");
+            //uriBuilder.getQueryParams().replace("page", String.valueOf(2));
 
-        } catch (IOException e) {
+            ParameterizedTypeReference<RestPageImpl<Code>> responseType =
+                    new ParameterizedTypeReference<RestPageImpl<Code>>() {
+                    };
 
-            e.printStackTrace();
+            ResponseEntity<RestPageImpl<Code>> response =
+                    restTemplate.exchange(PATIENTVIEW_CODE_ENDPOINT, HttpMethod.GET, entity, responseType);
+
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                log.info("Got Codes from PatientView, timing {}", (System.currentTimeMillis() - start));
+                List<Code> codes = response.getBody().getContent();
+                codes.forEach(this::updateCode);
+            } else {
+                log.error("Could not connect to PV, code {}", response.getStatusCode());
+            }
+
+
+            long stop = System.currentTimeMillis();
+            log.info("Finished Code Sync from PatientView, timing {}", (stop - start));
+
+        } catch (Exception e) {
+            log.error("Failed to sync PV codes", e);
         }
     }
 
-    @Scheduled(cron = "0 0 */2 * * *")
+
+    //    @Scheduled(cron = "0 0 */2 * * *")
+//    @Scheduled(cron = "0 */5 * * * ?") // every 5 min
     @Override
     public void syncBmjLinks() {
 
         final UUID correlation = UUID.randomUUID();
         log.info("Correlation id: {}. Starting BMJ link job", correlation);
         Instant start = Instant.now();
+        long start2 = System.currentTimeMillis();
 
         try {
 
             bmjBestPractices.syncBmjLinks();
 
         } catch (Exception e) {
-
             log.error("Correlation id: {}. BMJ link job threw an exception: {}", correlation, e);
-
-
         } finally {
-
-            log.info("Correlation id: {}. BMJ link job finished", correlation);
-            log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
+            log.info("Correlation id: {}. BMJ link job finished, timing: {}", correlation, Duration.between(start, Instant.now()));
         }
+
+        long stop = System.currentTimeMillis();
+        log.info("Finished BMJ link job, timing {}", (stop - start2));
     }
 
     @Transactional

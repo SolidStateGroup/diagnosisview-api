@@ -244,7 +244,8 @@ public class CodeServiceImpl implements CodeService {
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code upsert(Code code, boolean fromSync) throws Exception {
-
+        log.info("upsert CODE {}", code.getCode());
+        long start = System.currentTimeMillis();
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
 
@@ -354,6 +355,8 @@ public class CodeServiceImpl implements CodeService {
                 .map(linkService::upsert)
                 .collect(toSet()));
 
+        long stop = System.currentTimeMillis();
+        log.info("DONE upsert() Code {} timing {}", code.getCode(), (stop - start));
         return codeRepository.save(code);
     }
 
