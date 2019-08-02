@@ -94,7 +94,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 */2 * * *")
+    @Scheduled(cron = "0 0 23 * * ?") // every day at 23:00
     public void syncCodes() {
         try {
 
@@ -131,7 +131,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         }
     }
 
-    @Scheduled(cron = "0 0 */2 * * *")
+    @Scheduled(cron = "0 0 22 * * ?") // every day at 22:00
     @Override
     public void syncBmjLinks() {
 
