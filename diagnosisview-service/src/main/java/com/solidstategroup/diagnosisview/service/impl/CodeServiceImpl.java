@@ -361,12 +361,12 @@ public class CodeServiceImpl implements CodeService {
     public void batchProcess(List<Code> codes) {
         codes.forEach(code -> {
             long start = System.currentTimeMillis();
-            log.info(" batchProcess CODE {}", code.getCode());
+            log.debug(" batchProcess CODE {}", code.getCode());
 
             updateCode(code);
 
             long stop = System.currentTimeMillis();
-            log.info("DONE batchProcess() Code {} timing {}", code.getCode(), (stop - start));
+            log.debug("DONE batchProcess() Code {} timing {}", code.getCode(), (stop - start));
         });
     }
 
