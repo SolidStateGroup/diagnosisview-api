@@ -3,7 +3,6 @@ package com.solidstategroup.diagnosisview.service;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 
 import java.util.List;
@@ -61,10 +60,17 @@ public interface CodeService {
      * Create or update a code, creating all the pre-requestite categories, external standards etc
      * where required
      *
-     * @param code - code to update or create
+     * @param code     - code to update or create
      * @param fromSync - If from the sync job, we will allow creation of certain other resources
      */
     Code upsert(Code code, boolean fromSync) throws Exception;
+
+    /**
+     * Create or update a Code from the given list
+     *
+     * @param codes a list of codes to save
+     */
+    void batchProcess(List<Code> codes);
 
     Code getByInstitution(String code, Institution institution);
 }
