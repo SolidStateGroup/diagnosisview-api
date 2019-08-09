@@ -21,11 +21,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -101,7 +101,6 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
 
     /**
      * Builds a BMJ link. Uses the external code standard mapping to build the link with the correct codes.
-     *
      */
     private String buildUrl(String externalStandard, String code, String codeName) {
 
@@ -193,8 +192,8 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
             }
         } catch (Exception e) {
 
-            log.debug("Correlation id: {}. Could not get links for {} using standard {} ", correlation,code.getCode(), standard);
-            log.debug("Correlation id: {}. Url: {}, Response status code: {}",
+            log.debug("Correlation id: {}. Could not get links for {} using standard {} ", correlation, code.getCode(), standard);
+            log.error("Correlation id: {}. Url: {}, Response status code: {}",
                     correlation, url, entity != null ? entity.getStatusCode() : "none returned");
         }
 
