@@ -163,8 +163,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     }
 
 
-    //    @Scheduled(cron = "0 0 */2 * * *")
-//    @Scheduled(cron = "0 */5 * * * ?") // every 5 min
+    @Scheduled(cron = "0 0 22 * * ?") // every day at 22:00
     @Override
     public void syncBmjLinks() {
 
