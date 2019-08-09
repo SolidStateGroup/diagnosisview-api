@@ -9,9 +9,9 @@ import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.RestPage;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
-import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
+import com.solidstategroup.diagnosisview.task.CodeProcessor;
 import com.tyler.gson.immutable.ImmutableListDeserializer;
 import com.tyler.gson.immutable.ImmutableMapDeserializer;
 import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
@@ -31,8 +31,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -41,11 +41,14 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
@@ -73,7 +76,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             .create();
 
     private final BmjBestPractices bmjBestPractices;
-    private final CodeService codeService;
+    private final CodeProcessor codeProcessor;
     private final String patientviewUser;
     private final String patientviewPassword;
     private final String patientviewApiKey;
@@ -81,14 +84,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private final String PATIENTVIEW_CODE_ENDPOINT;
 
     public CodeSyncServiceImpl(BmjBestPractices bmjBestPractices,
-                               CodeService codeService,
+                               final CodeProcessor codeProcessor,
                                @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
                                @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
                                @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
                                @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
         this.bmjBestPractices = bmjBestPractices;
-        this.codeService = codeService;
+        this.codeProcessor = codeProcessor;
         this.patientviewUser = patientviewUser;
         this.patientviewPassword = patientviewPassword;
         this.patientviewApiKey = patientviewApiKey;
@@ -101,35 +104,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     }
 
     @Override
-    //@Scheduled(cron = "0 0 */2 * * *") // every 2 hours
-//    @Scheduled(cron = "0 */5 * * * ?") // every 2 min
+    @Scheduled(cron = "0 0 23 * * ?") // every day at 23:00
     public void syncCodes() {
         try {
 
             log.info("Starting Code Sync from PatientView");
             long start = System.currentTimeMillis();
 
-//            HttpClient httpClient = HttpClientBuilder.create().build();
-//
-//            //Make the request
-//            HttpGet request = new HttpGet(PATIENTVIEW_CODE_ENDPOINT);
-//            request.addHeader(APPLICATION_JSON_HEADER);
-//            //Make request to auth/login
-//            request.addHeader(AUTH_HEADER, getLoginToken());
-//
-//            HttpResponse response = httpClient.execute(request);
-//            HttpEntity entity = response.getEntity();
-//            String responseString = EntityUtils.toString(entity, "UTF-8");
-//
-//            Type fooType = new TypeToken<List<Code>>() {
-//            }.getType();
-//            String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
-//                    fooType);
-//
-//            List<Code> codes = gson.fromJson(contentString, fooType);
-
             RestTemplate restTemplate = new RestTemplate();
-
 
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
@@ -141,7 +123,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                     .queryParam("pageSize", "2000")
                     .queryParam("page", "0")
                     .build();
-
             //uriBuilder.getQueryParams().replace("page", String.valueOf(2));
 
             ParameterizedTypeReference<RestPage<Code>> responseType =
@@ -151,15 +132,27 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             ResponseEntity<RestPage<Code>> response =
                     restTemplate.exchange(PATIENTVIEW_CODE_ENDPOINT, HttpMethod.GET, entity, responseType);
 
-
             if (response.getStatusCode() == HttpStatus.OK) {
-                log.info("Got Codes from PatientView, timing {}", (System.currentTimeMillis() - start));
                 List<Code> codes = response.getBody().getContent();
-                codes.forEach(this::updateCode);
+                log.info("Got Codes {} from PatientView, timing {}", codes.size(), (System.currentTimeMillis() - start));
+
+                final int batchSize = 10;
+                final AtomicInteger counter = new AtomicInteger();
+
+                // chunk the list of codes and process in batches
+                final Collection<List<Code>> result = codes.stream()
+                        .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / batchSize))
+                        .values();
+
+                // process in batches async to speed up code update
+                int index = 0;
+                for (List<Code> list : result) {
+                    codeProcessor.processBatch(list, index++);
+                }
+
             } else {
                 log.error("Could not connect to PV, code {}", response.getStatusCode());
             }
-
 
             long stop = System.currentTimeMillis();
             log.info("Finished Code Sync from PatientView, timing {}", (stop - start));
@@ -192,19 +185,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         long stop = System.currentTimeMillis();
         log.info("Finished BMJ link job, timing {}", (stop - start2));
-    }
-
-    @Transactional
-    protected void updateCode(Code code) {
-
-        try {
-
-            codeService.upsert(code, true);
-
-        } catch (Exception e) {
-
-            log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
-        }
     }
 
     /**
