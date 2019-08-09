@@ -28,9 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -244,7 +244,6 @@ public class CodeServiceImpl implements CodeService {
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code upsert(Code code, boolean fromSync) throws Exception {
-
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
 
@@ -355,6 +354,75 @@ public class CodeServiceImpl implements CodeService {
                 .collect(toSet()));
 
         return codeRepository.save(code);
+    }
+
+    @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
+    public void batchProcess(List<Code> codes) {
+        codes.forEach(code -> {
+            long start = System.currentTimeMillis();
+            log.debug(" batchProcess CODE {}", code.getCode());
+
+            updateCode(code);
+
+            long stop = System.currentTimeMillis();
+            log.debug("DONE batchProcess() Code {} timing {}", code.getCode(), (stop - start));
+        });
+    }
+
+    @Transactional
+    protected void updateCode(Code code) {
+
+        try {
+
+            if (upsertNotRequired(code)) {
+                return;
+            }
+
+            saveAdditionalSyncObjects(code);
+
+            if (code.getSourceType() == null) {
+                code.setSourceType(CodeSourceTypes.PATIENTVIEW);
+            }
+
+            Set<Link> links = code.getLinks();
+            Set<CodeCategory> codeCategories = code.getCodeCategories();
+            Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+
+            // Remove code related fields, as PV already provides ids if the
+            // objects have not already been saved to the repository jpa will thrown
+            // an exception because it can't the the non-existent ids in the db.
+            code.setLinks(new HashSet<>());
+            code.setCodeCategories(new HashSet<>());
+            code.setExternalStandards(new HashSet<>());
+
+            final Code persistedCode = codeRepository.save(code);
+            code.setCreated(persistedCode.getCreated());
+            code.setLastUpdate(persistedCode.getLastUpdate());
+
+            code.setCodeCategories(codeCategories
+                    .stream()
+                    .peek(cc -> cc.setCode(code))
+                    .map(codeCategoryRepository::save)
+                    .collect(toSet()));
+
+            code.setExternalStandards(externalStandards
+                    .stream()
+                    .peek(es -> es.setCode(code))
+                    .map(codeExternalStandardRepository::save)
+                    .collect(toSet()));
+
+            code.setLinks(links
+                    .stream()
+                    .peek(l -> l.setCode(code))
+                    .map(linkService::upsert)
+                    .collect(toSet()));
+
+            codeRepository.save(code);
+
+        } catch (Exception e) {
+            log.error("Update failed for code: " + code.getCode() + " with error: " + e.getMessage());
+        }
     }
 
     private boolean upsertNotRequired(Code code) {

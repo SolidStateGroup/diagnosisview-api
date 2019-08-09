@@ -3,15 +3,15 @@ package com.solidstategroup.diagnosisview.service.impl;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
+import com.solidstategroup.diagnosisview.model.RestPage;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
-import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
+import com.solidstategroup.diagnosisview.task.CodeProcessor;
 import com.tyler.gson.immutable.ImmutableListDeserializer;
 import com.tyler.gson.immutable.ImmutableMapDeserializer;
 import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
@@ -19,26 +19,34 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.time.Duration;
-import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
@@ -66,7 +74,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             .create();
 
     private final BmjBestPractices bmjBestPractices;
-    private final CodeService codeService;
+    private final CodeProcessor codeProcessor;
     private final String patientviewUser;
     private final String patientviewPassword;
     private final String patientviewApiKey;
@@ -74,14 +82,14 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private final String PATIENTVIEW_CODE_ENDPOINT;
 
     public CodeSyncServiceImpl(BmjBestPractices bmjBestPractices,
-                               CodeService codeService,
+                               final CodeProcessor codeProcessor,
                                @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
                                @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
                                @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
                                @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
         this.bmjBestPractices = bmjBestPractices;
-        this.codeService = codeService;
+        this.codeProcessor = codeProcessor;
         this.patientviewUser = patientviewUser;
         this.patientviewPassword = patientviewPassword;
         this.patientviewApiKey = patientviewApiKey;
@@ -99,37 +107,59 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         try {
 
             log.info("Starting Code Sync from PatientView");
+            long start = System.currentTimeMillis();
 
-            HttpClient httpClient = HttpClientBuilder.create().build();
+            RestTemplate restTemplate = new RestTemplate();
 
-            //Make the request
-            HttpGet request = new HttpGet(PATIENTVIEW_CODE_ENDPOINT);
-            request.addHeader(APPLICATION_JSON_HEADER);
-            //Make request to auth/login
-            request.addHeader(AUTH_HEADER, getLoginToken());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+            headers.set(AUTH_HEADER, getLoginToken());
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
 
-            String responseString =
-                    EntityUtils
-                            .toString(httpClient
-                                    .execute(request)
-                                    .getEntity(), "UTF-8");
+            //&page=0&size=200000
+            UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(PATIENTVIEW_CODE_ENDPOINT)
+                    .queryParam("pageSize", "2000")
+                    .queryParam("page", "0")
+                    .build();
+            //uriBuilder.getQueryParams().replace("page", String.valueOf(2));
 
-            Type fooType = new TypeToken<List<Code>>() {
-            }.getType();
-            String contentString = gson.toJson(gson.fromJson(responseString, Map.class).get("content"),
-                    fooType);
+            ParameterizedTypeReference<RestPage<Code>> responseType =
+                    new ParameterizedTypeReference<RestPage<Code>>() {
+                    };
 
-            List<Code> codes = gson.fromJson(contentString, fooType);
+            ResponseEntity<RestPage<Code>> response =
+                    restTemplate.exchange(PATIENTVIEW_CODE_ENDPOINT, HttpMethod.GET, entity, responseType);
 
-            codes.forEach(this::updateCode);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                List<Code> codes = response.getBody().getContent();
+                log.info("Got Codes {} from PatientView, timing {}", codes.size(), (System.currentTimeMillis() - start));
 
-            log.info("Finished Code Sync from PatientView");
+                final int batchSize = 10;
+                final AtomicInteger counter = new AtomicInteger();
 
-        } catch (IOException e) {
+                // chunk the list of codes and process in batches
+                final Collection<List<Code>> result = codes.stream()
+                        .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / batchSize))
+                        .values();
 
-            e.printStackTrace();
+                // process in batches async to speed up code update
+                int index = 0;
+                for (List<Code> list : result) {
+                    codeProcessor.processBatch(list, index++);
+                }
+
+            } else {
+                log.error("Could not connect to PV, code {}", response.getStatusCode());
+            }
+
+            long stop = System.currentTimeMillis();
+            log.info("Finished Code Sync from PatientView, timing {}", (stop - start));
+
+        } catch (Exception e) {
+            log.error("Failed to sync PV codes", e);
         }
     }
+
 
     @Scheduled(cron = "0 0 22 * * ?") // every day at 22:00
     @Override
@@ -137,35 +167,17 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         final UUID correlation = UUID.randomUUID();
         log.info("Correlation id: {}. Starting BMJ link job", correlation);
-        Instant start = Instant.now();
-
+        long start = System.currentTimeMillis();
         try {
 
             bmjBestPractices.syncBmjLinks();
 
         } catch (Exception e) {
-
             log.error("Correlation id: {}. BMJ link job threw an exception: {}", correlation, e);
-
-
-        } finally {
-
-            log.info("Correlation id: {}. BMJ link job finished", correlation);
-            log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
         }
-    }
 
-    @Transactional
-    protected void updateCode(Code code) {
-
-        try {
-
-            codeService.upsert(code, true);
-
-        } catch (Exception e) {
-
-            log.info("Insert failed for code: " + code.getCode() + " with error: " + e.getMessage());
-        }
+        long stop = System.currentTimeMillis();
+        log.info("Finished BMJ link job, timing {}", (stop - start));
     }
 
     /**
