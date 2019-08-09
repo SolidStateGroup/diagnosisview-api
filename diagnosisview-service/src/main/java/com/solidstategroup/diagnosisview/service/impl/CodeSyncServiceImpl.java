@@ -38,8 +38,6 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -169,21 +167,17 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         final UUID correlation = UUID.randomUUID();
         log.info("Correlation id: {}. Starting BMJ link job", correlation);
-        Instant start = Instant.now();
-        long start2 = System.currentTimeMillis();
-
+        long start = System.currentTimeMillis();
         try {
 
             bmjBestPractices.syncBmjLinks();
 
         } catch (Exception e) {
             log.error("Correlation id: {}. BMJ link job threw an exception: {}", correlation, e);
-        } finally {
-            log.info("Correlation id: {}. BMJ link job finished, timing: {}", correlation, Duration.between(start, Instant.now()));
         }
 
         long stop = System.currentTimeMillis();
-        log.info("Finished BMJ link job, timing {}", (stop - start2));
+        log.info("Finished BMJ link job, timing {}", (stop - start));
     }
 
     /**
