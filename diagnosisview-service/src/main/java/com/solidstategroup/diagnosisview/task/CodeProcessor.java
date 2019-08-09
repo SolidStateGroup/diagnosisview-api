@@ -25,7 +25,7 @@ public class CodeProcessor {
         this.codeService = codeService;
     }
 
-    @Async
+    @Async(value = "asyncExecutor")
     public void processBatch(List<Code> codes, int index) {
         log.info("Starting code batch {} {}", index, codes.size());
         long start = System.currentTimeMillis();
