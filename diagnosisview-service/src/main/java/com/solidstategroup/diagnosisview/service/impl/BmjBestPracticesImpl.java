@@ -131,7 +131,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
 
             JsonNode entry = entity.getBody().findValue("entry");
 
-            if (entry.isArray()) {
+            if (entry != null && entry.isArray()) {
 
                 for (JsonNode jn : entry) {
 
@@ -161,7 +161,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                                 linkToUpdate.setName(linkName);
                                 linkToUpdate.setLink(href);
                                 linkToUpdate.setExternalId(id);
-                                linkService.updateExternalLink(linkToUpdate);
+                                linkService.updateExternalLinks(linkToUpdate);
 
                                 log.info("Correlation id: {}. Link updated {}", linkToUpdate.getId());
                                 log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
