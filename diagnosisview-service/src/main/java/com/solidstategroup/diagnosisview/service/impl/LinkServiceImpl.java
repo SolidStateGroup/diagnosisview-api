@@ -13,19 +13,23 @@ import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
 
 @Service
+@Slf4j
 public class LinkServiceImpl implements LinkService {
 
     private static final String LINK_SEQ = "link_seq";
@@ -207,6 +211,27 @@ public class LinkServiceImpl implements LinkService {
         savedLink.setLink(link.getLink());
 
         return linkRepository.save(savedLink);
+    }
+
+    @Override
+    public void updateExternalLinks(Link link) throws Exception {
+
+        if (link.getExternalId() == null) {
+            throw new Exception("link must have an external id set");
+        }
+
+        // make sure to ignore removed_externally = true
+        List<Link> savedLinks = linkRepository.findLinksByExternalId(link.getExternalId());
+
+        if (CollectionUtils.isEmpty(savedLinks)) {
+            throw new Exception("no links found");
+        }
+
+        savedLinks.forEach(l -> {
+            l.setName(link.getName());
+            l.setLink(link.getLink());
+            linkRepository.save(l);
+        });
     }
 
     /**
