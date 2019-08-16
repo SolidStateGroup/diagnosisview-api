@@ -191,7 +191,6 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                 }
             }
         } catch (Exception e) {
-            log.error("Exception thrown ",e);
 
             log.debug("Correlation id: {}. Could not get links for {} using standard {} ", correlation, code.getCode(), standard);
             log.error("Correlation id: {}. Url: {}, Response status code: {}",
