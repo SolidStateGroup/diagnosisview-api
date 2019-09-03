@@ -8,10 +8,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.RestPage;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
+import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
-import com.solidstategroup.diagnosisview.task.CodeProcessor;
 import com.tyler.gson.immutable.ImmutableListDeserializer;
 import com.tyler.gson.immutable.ImmutableMapDeserializer;
 import com.tyler.gson.immutable.ImmutableSortedMapDeserializer;
@@ -24,7 +25,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,19 +36,21 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -58,9 +63,10 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @Service
 public class CodeSyncServiceImpl implements CodeSyncService {
 
+    private static final int PAGE_SIZE = 40;
     private static final String PATIENTVIEW_AUTH_ENDPOINT_TEMPLATE = "%sauth/login";
     private static final String PATIENTVIEW_CODE_ENDPOINT_TEMPLATE =
-            "%scode?filterText=&page=0&size=200000&sortDirection=ASC&sortField=code&standardTypes=134";
+            "%scode?filterText=&sortDirection=ASC&sortField=code&standardTypes=134";//&page=47&size=20
     private static final String AUTH_HEADER = "X-Auth-Token";
     private static final Header APPLICATION_JSON_HEADER =
             new BasicHeader("content-type", APPLICATION_JSON_VALUE);
@@ -74,32 +80,35 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             .create();
 
     private final BmjBestPractices bmjBestPractices;
-    private final CodeProcessor codeProcessor;
+    private final CodeService codeService;
     private final String patientviewUser;
     private final String patientviewPassword;
     private final String patientviewApiKey;
     private final String PATIENTVIEW_AUTH_ENDPOINT;
-    private final String PATIENTVIEW_CODE_ENDPOINT;
+    private final String PATIENTVIEW_CODES_ENDPOINT;
+    private final String PATIENTVIEW_CODE_DETAILS_ENDPOINT;
+    private final Executor taskExecutor;
 
     public CodeSyncServiceImpl(BmjBestPractices bmjBestPractices,
-                               final CodeProcessor codeProcessor,
+                               final CodeService codeService,
+                               @Qualifier("asyncExecutor") final Executor taskExecutor,
                                @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
                                @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
                                @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
                                @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
         this.bmjBestPractices = bmjBestPractices;
-        this.codeProcessor = codeProcessor;
+        this.codeService = codeService;
+        this.taskExecutor = taskExecutor;
         this.patientviewUser = patientviewUser;
         this.patientviewPassword = patientviewPassword;
         this.patientviewApiKey = patientviewApiKey;
 
-        PATIENTVIEW_AUTH_ENDPOINT =
-                format(PATIENTVIEW_AUTH_ENDPOINT_TEMPLATE, patientviewUrl);
-
-        PATIENTVIEW_CODE_ENDPOINT =
-                format(PATIENTVIEW_CODE_ENDPOINT_TEMPLATE, patientviewUrl);
+        PATIENTVIEW_AUTH_ENDPOINT = format(PATIENTVIEW_AUTH_ENDPOINT_TEMPLATE, patientviewUrl);
+        PATIENTVIEW_CODES_ENDPOINT = format(PATIENTVIEW_CODE_ENDPOINT_TEMPLATE, patientviewUrl);
+        PATIENTVIEW_CODE_DETAILS_ENDPOINT = format("%scode/", patientviewUrl);
     }
+
 
     @Override
     @Scheduled(cron = "0 0 23 * * ?") // every day at 23:00
@@ -116,41 +125,33 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             headers.set(AUTH_HEADER, getLoginToken());
             org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
 
-            //&page=0&size=200000
-            UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(PATIENTVIEW_CODE_ENDPOINT)
-                    .queryParam("pageSize", "2000")
-                    .queryParam("page", "0")
-                    .build();
-            //uriBuilder.getQueryParams().replace("page", String.valueOf(2));
+            int currentPage = 0;
+            ResponseEntity<RestPage<Code>> response = null;
+            
+            do {
 
-            ParameterizedTypeReference<RestPage<Code>> responseType =
-                    new ParameterizedTypeReference<RestPage<Code>>() {
-                    };
+                // call codes end point with small size per page, otherwise will run out of memory
+                String codesUrl = UriComponentsBuilder.fromHttpUrl(PATIENTVIEW_CODES_ENDPOINT)
+                        .queryParam("size", PAGE_SIZE)
+                        .queryParam("page", currentPage)
+                        .build()
+                        .toUriString();
 
-            ResponseEntity<RestPage<Code>> response =
-                    restTemplate.exchange(PATIENTVIEW_CODE_ENDPOINT, HttpMethod.GET, entity, responseType);
+                ParameterizedTypeReference<RestPage<Code>> responseType =
+                        new ParameterizedTypeReference<RestPage<Code>>() {
+                        };
 
-            if (response.getStatusCode() == HttpStatus.OK) {
-                List<Code> codes = response.getBody().getContent();
-                log.info("Got Codes {} from PatientView, timing {}", codes.size(), (System.currentTimeMillis() - start));
+                response = restTemplate.exchange(codesUrl, HttpMethod.GET, entity, responseType);
 
-                final int batchSize = 10;
-                final AtomicInteger counter = new AtomicInteger();
-
-                // chunk the list of codes and process in batches
-                final Collection<List<Code>> result = codes.stream()
-                        .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / batchSize))
-                        .values();
-
-                // process in batches async to speed up code update
-                int index = 0;
-                for (List<Code> list : result) {
-                    codeProcessor.processBatch(list, index++);
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    List<Code> codes = response.getBody().getContent();
+                    batchProcess(codes, currentPage, entity);
+                    currentPage++;
+                } else {
+                    log.error("Could not connect to PV, code {}", response.getStatusCode());
+                    break;
                 }
-
-            } else {
-                log.error("Could not connect to PV, code {}", response.getStatusCode());
-            }
+            } while (response != null && response.getBody().hasNext());
 
             long stop = System.currentTimeMillis();
             log.info("Finished Code Sync from PatientView, timing {}", (stop - start));
@@ -159,7 +160,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             log.error("Failed to sync PV codes", e);
         }
     }
-
 
     @Scheduled(cron = "0 0 22 * * ?") // every day at 22:00
     @Override
@@ -178,6 +178,89 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
         long stop = System.currentTimeMillis();
         log.info("Finished BMJ link job, timing {}", (stop - start));
+    }
+
+
+    /**
+     * Update a list of Codes.
+     * We are using CompletableFuture to process each code async.
+     *
+     * @param codesToProcess a list of codes to process
+     * @param page           a page number that getting processes
+     * @param entity         a HttpEntity containing required headers to be used to re fetch code details if needed
+     */
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
+    public void batchProcess(List<Code> codesToProcess, int page, org.springframework.http.HttpEntity<String> entity) {
+        log.info("Starting code batchProcess {}, page {}", codesToProcess.size(), page);
+        long start = System.currentTimeMillis();
+
+        codes(codesToProcess)
+                .thenCompose(codes -> {
+                    List<CompletionStage<Code>> updatedCodes = codes.stream()
+                            .map(code -> checkLinksAndUpdate(code, entity)
+                                    .thenApply(r -> {
+                                        log.debug("-> completed code {}", code.getCode());
+                                        // check for missing link then do a call again
+                                        return code;
+                                    })
+                            ).collect(Collectors.toList());
+                    CompletableFuture<Void> done = CompletableFuture
+                            .allOf(updatedCodes.toArray(new CompletableFuture[updatedCodes.size()]));
+                    return done.thenApply(v -> updatedCodes.stream()
+                            .map(CompletionStage::toCompletableFuture)
+                            .map(CompletableFuture::join)
+                            .collect(Collectors.toList()));
+                })
+                .toCompletableFuture().join();
+
+        long stop = System.currentTimeMillis();
+        log.info("Finished code batchProcess, page {} timing {}", page, (stop - start));
+    }
+
+    /**
+     * Update code details.
+     * We have ddd issue where some links are getting stripped ﻿https://www.nhs.uk when returned
+     * with a Code. Re fetch Code details to fix it.
+     *
+     * @param code a Code to update
+     * @return a CompletionStage<Code>
+     */
+    @Transactional
+    protected CompletionStage<Code> checkLinksAndUpdate(Code code, org.springframework.http.HttpEntity<String> entity) {
+
+        return CompletableFuture.supplyAsync(() -> {
+
+            RestTemplate restTemplate = new RestTemplate();
+            boolean needRefetch = false;
+            // need to check if all the links formatted correctly
+            for (Link l : code.getLinks()) {
+                if (!StringUtils.isEmpty(l.getLink()) && !l.getLink().startsWith("http")) {
+                    log.info("Code {} missing http for link Link {} {} ", code.getCode(), l.getId(), l.getLink());
+                    needRefetch = true;
+                    break;
+                }
+            }
+
+            if (needRefetch) {
+                ResponseEntity<Code> response = restTemplate
+                        .exchange(PATIENTVIEW_CODE_DETAILS_ENDPOINT + code.getId(), HttpMethod.GET, entity, Code.class);
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    return codeService.updateCode(response.getBody());
+                }
+            }
+
+            return codeService.updateCode(code);
+        }, taskExecutor).exceptionally(th -> null);
+    }
+
+    /**
+     * Wraps a list of Codes in CompletionStage for async processing
+     *
+     * @param codes a list of Code objects
+     * @return CompletionStage<List<Code>>
+     */
+    private CompletionStage<List<Code>> codes(List<Code> codes) {
+        return CompletableFuture.supplyAsync(() -> codes);
     }
 
     /**
