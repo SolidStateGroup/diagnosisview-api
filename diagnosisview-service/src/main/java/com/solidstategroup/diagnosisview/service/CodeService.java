@@ -66,11 +66,11 @@ public interface CodeService {
     Code upsert(Code code, boolean fromSync) throws Exception;
 
     /**
-     * Create or update a Code from the given list
+     * Create or update a Code
      *
-     * @param codes a list of codes to save
+     * @param code a code to save
      */
-    void batchProcess(List<Code> codes);
+    Code updateCode(Code code);
 
     Code getByInstitution(String code, Institution institution);
 }
