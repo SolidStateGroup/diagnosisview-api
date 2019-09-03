@@ -357,26 +357,16 @@ public class CodeServiceImpl implements CodeService {
     }
 
     @Override
-    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public void batchProcess(List<Code> codes) {
-        codes.forEach(code -> {
-            long start = System.currentTimeMillis();
-            log.debug(" batchProcess CODE {}", code.getCode());
-
-            updateCode(code);
-
-            long stop = System.currentTimeMillis();
-            log.debug("DONE batchProcess() Code {} timing {}", code.getCode(), (stop - start));
-        });
-    }
-
-    @Transactional
-    protected void updateCode(Code code) {
+    public Code updateCode(Code code) {
+        
+        long start = System.currentTimeMillis();
+        log.debug(" processing CODE {}", code.getCode());
 
         try {
 
             if (upsertNotRequired(code)) {
-                return;
+                log.info(" Update not required CODE {}", code.getCode());
+                return code;
             }
 
             saveAdditionalSyncObjects(code);
@@ -423,6 +413,9 @@ public class CodeServiceImpl implements CodeService {
         } catch (Exception e) {
             log.error("Update failed for code: " + code.getCode() + " with error: " + e.getMessage());
         }
+        long stop = System.currentTimeMillis();
+        log.debug("  DONE code update {} timing {}", code.getCode(), (stop - start));
+        return code;
     }
 
     private boolean upsertNotRequired(Code code) {

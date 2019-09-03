@@ -18,9 +18,9 @@ public class SpringAsyncConfig {
     public Executor getAsyncExecutor() {
         // keep here if we need more fine tune executor
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(20);
-        taskExecutor.setMaxPoolSize(20);
-        //taskExecutor.setQueueCapacity(200); // throws org.springframework.core.task.TaskRejectedException
+        taskExecutor.setCorePoolSize(40);
+        taskExecutor.setMaxPoolSize(75);
+        //taskExecutor.setQueueCapacity(1000); // throws org.springframework.core.task.TaskRejectedException
         taskExecutor.setThreadNamePrefix("async-exec-");
         taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
         taskExecutor.setAllowCoreThreadTimeOut(true);
