@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -120,6 +121,10 @@ public class LinkServiceImpl implements LinkService {
     @Transactional
     @Override
     public Link upsert(Link link) {
+
+        if (!StringUtils.isEmpty(link.getLink()) && !link.getLink().startsWith("http")) {
+            log.error(" Link url not formatted correctly {} {} ", link.getId(), link.getLink());
+        }
 
         //Get the NICE lookup if it exists
         populatDVLookups();
