@@ -127,7 +127,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
             int currentPage = 0;
             ResponseEntity<RestPage<Code>> response = null;
-            
+
             do {
 
                 // call codes end point with small size per page, otherwise will run out of memory

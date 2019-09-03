@@ -163,9 +163,9 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                                 linkToUpdate.setExternalId(id);
                                 linkService.updateExternalLinks(linkToUpdate);
 
-                                log.info("Correlation id: {}. Link updated {}", linkToUpdate.getId());
-                                log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
-
+                                log.info("Correlation id: {}. Link updated {}", correlation, linkToUpdate.getId());
+                                log.debug("Correlation id: {}. Time taken: {}", correlation,
+                                        Duration.between(start, Instant.now()));
                                 return true;
                             }
 
