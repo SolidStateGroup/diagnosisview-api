@@ -9,6 +9,15 @@
     <name>DiagnosisView API</name>
     <packaging>pom</packaging>
 
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.0.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+
     <profiles>
         <profile>
             <id>local</id>
@@ -48,11 +57,12 @@
         <commons.io.version>2.6</commons.io.version>
     </properties>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.4.RELEASE</version>
-    </parent>
+    <!--<parent>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-starter-parent</artifactId>-->
+        <!--&lt;!&ndash;<version>1.5.4.RELEASE</version>&ndash;&gt;-->
+        <!--<version>2.0.0.RELEASE</version>-->
+    <!--</parent>-->
 
     <modules>
         <module>diagnosisview-api</module>
@@ -97,11 +107,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webmvc</artifactId>
-            <version>4.3.5.RELEASE</version>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.16.18</version>
@@ -115,7 +120,6 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>4.2.0</version>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
