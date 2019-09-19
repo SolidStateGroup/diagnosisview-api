@@ -68,7 +68,7 @@ public class LinkServiceImpl implements LinkService {
      */
     @Override
     public Link get(Long id) {
-        return linkRepository.findOne(id);
+        return linkRepository.findById(id).orElse(null);
     }
 
     /**
@@ -78,12 +78,8 @@ public class LinkServiceImpl implements LinkService {
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Link update(Link link) {
 
-        Link existingLink = linkRepository.findOne(link.getId());
-
-        if (existingLink == null) {
-
-            throw new BadRequestException("The link does not exist within DiagnosisView.");
-        }
+        Link existingLink = linkRepository.findById(link.getId())
+                .orElseThrow(() -> new BadRequestException("The link does not exist within DiagnosisView."));
 
         //Currently you can only update certain fields
         if (link.hasDifficultyLevelSet()) {
@@ -247,7 +243,8 @@ public class LinkServiceImpl implements LinkService {
      */
     private Link checkLink(Link link) {
 
-        Link existingLink = linkRepository.findOne(link.getId());
+        Link existingLink = linkRepository.findById(link.getId())
+                .orElse(null);
 
         //Ensure that difficulty is not overwritten
         if (existingLink != null) {
@@ -272,9 +269,9 @@ public class LinkServiceImpl implements LinkService {
 
                 if (mappings.size() > 0) {
 
-                    linkRuleMappingRepository.delete(existingLink.getMappingLinks());
+                    linkRuleMappingRepository.deleteAll(existingLink.getMappingLinks());
                     link.setMappingLinks(mappings);
-                    linkRuleMappingRepository.save(mappings);
+                    linkRuleMappingRepository.saveAll(mappings);
                 }
             }
         }

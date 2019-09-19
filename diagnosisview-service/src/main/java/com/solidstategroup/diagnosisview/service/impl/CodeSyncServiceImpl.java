@@ -63,7 +63,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @Service
 public class CodeSyncServiceImpl implements CodeSyncService {
 
-    private static final int PAGE_SIZE = 40;
+    private static final int PAGE_SIZE = 30;
     private static final String PATIENTVIEW_AUTH_ENDPOINT_TEMPLATE = "%sauth/login";
     private static final String PATIENTVIEW_CODE_ENDPOINT_TEMPLATE =
             "%scode?filterText=&sortDirection=ASC&sortField=code&standardTypes=134";//&page=47&size=20
@@ -111,7 +111,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
 
     @Override
-    @Scheduled(cron = "0 0 23 * * ?") // every day at 23:00
+    @Scheduled(cron = "${cron.job.sync.code}")
     public void syncCodes() {
         try {
 
@@ -161,7 +161,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         }
     }
 
-    @Scheduled(cron = "0 0 22 * * ?") // every day at 22:00
+    @Scheduled(cron = "${cron.job.sync.bmj.links}")
     @Override
     public void syncBmjLinks() {
 

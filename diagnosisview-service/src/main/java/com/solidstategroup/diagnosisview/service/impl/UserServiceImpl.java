@@ -203,7 +203,8 @@ public class UserServiceImpl implements UserService {
             User savedUser = null;
 
             if (user.getId() != null) {
-                savedUser = userRepository.findOne(user.getId());
+                savedUser = userRepository.findById(user.getId())
+                        .orElseThrow(() -> new IllegalStateException("Could not find user"));
             } else {
                 //Only certain fields can be updated, these are in this section.
                 savedUser = userRepository.findOneByUsername(user.getUsername().toLowerCase());

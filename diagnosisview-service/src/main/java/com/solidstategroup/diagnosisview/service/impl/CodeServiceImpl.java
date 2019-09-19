@@ -424,7 +424,8 @@ public class CodeServiceImpl implements CodeService {
             return false;
         }
 
-        Code currentCode = codeRepository.findOne(code.getId());
+        Code currentCode = codeRepository.findById(code.getId())
+         .orElse(null);
 
         //If there is a code, or it has been updated, update
         return !(currentCode == null ||
