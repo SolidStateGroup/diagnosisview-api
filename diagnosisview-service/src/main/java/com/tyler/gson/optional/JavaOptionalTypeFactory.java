@@ -1,10 +1,10 @@
 package com.tyler.gson.optional;
 
-import java.lang.reflect.ParameterizedType;
-import java.util.Optional;
-
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.ParameterizedType;
+import java.util.Optional;
 
 class JavaOptionalTypeFactory extends OptionalTypeFactory {
 

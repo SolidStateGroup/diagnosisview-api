@@ -1,13 +1,14 @@
 package com.solidstategroup.diagnosisview.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
-import com.solidstategroup.diagnosisview.type.PaymentFieldArrayType;
-import com.solidstategroup.diagnosisview.type.SavedUserCodeArrayType;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import org.hibernate.annotations.Type;
@@ -22,6 +23,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,10 +34,13 @@ import java.util.List;
 @Data
 @Entity
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Table(name = "dv_user")
-@TypeDefs({@TypeDef(name = "PaymentFieldArrayType", typeClass = PaymentFieldArrayType.class),
-        @TypeDef(name = "SavedUserCodeFieldArrayType", typeClass = SavedUserCodeArrayType.class)})
-public class User {
+@TypeDefs({
+        @TypeDef(name = "json", typeClass = JsonStringType.class),
+        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
+public class User implements Serializable {
     @Id
     @GeneratedValue
     private Long id;
@@ -99,15 +104,17 @@ public class User {
     @Column
     private Date dateCreated;
 
-    @Type(type = "SavedUserCodeFieldArrayType")
-    @Column
-    private List<SavedUserCode> favourites;
+    @Type(type = "jsonb")
+    @Column(name = "favourites", columnDefinition = "jsonb")
+    private List<SavedUserCode> favourites = new ArrayList<>();
 
-    @Type(type = "SavedUserCodeFieldArrayType")
-    @Column
-    private List<SavedUserCode> history;
+    @Type(type = "jsonb")
+    @Column(name = "history", columnDefinition = "jsonb")
+    private List<SavedUserCode> history = new ArrayList<>();
 
-    @Type(type = "PaymentFieldArrayType")
+    @Type(type = "jsonb")
+    @Column(name = "payment_data", columnDefinition = "jsonb")
+    @Builder.Default
     private List<PaymentDetails> paymentData = new ArrayList<>();
 
     @Transient

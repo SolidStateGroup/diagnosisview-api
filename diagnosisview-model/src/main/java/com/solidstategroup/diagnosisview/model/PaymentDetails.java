@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.io.Serializable;
 
 /**
  * JSON payment details that comes from the IAP service used
@@ -13,7 +13,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentDetails {
+public class PaymentDetails implements Serializable {
     private String response;
     private GoogleReceipt googleReceipt;
     private PaymentType paymentType;

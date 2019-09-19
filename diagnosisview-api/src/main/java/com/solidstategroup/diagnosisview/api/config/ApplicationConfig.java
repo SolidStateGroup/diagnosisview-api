@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 
@@ -17,14 +18,16 @@ import java.util.Arrays;
  * General application configuration.
  */
 @Configuration
-@ComponentScan(basePackages = { "com.solidstategroup.diagnosisview.*" })
+@ComponentScan(basePackages = {"com.solidstategroup.diagnosisview.*"})
+@EnableScheduling
 @EnableCaching
 @EnableJpaRepositories(basePackages = "com.solidstategroup.diagnosisview.repository")
 @EntityScan(basePackages = {"com.solidstategroup.diagnosisview.model"})
-public class ApplicationConfig extends WebMvcConfigurerAdapter {
+public class ApplicationConfig implements WebMvcConfigurer {
 
     /**
      * Set up in memory caching including listing all caches.
+     *
      * @return CacheManager
      */
     @Bean
