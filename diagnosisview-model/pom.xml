@@ -18,7 +18,13 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.4</version>
+        </dependency>
+
+        <!-- Used for mapping jsonb fields-->
+        <dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.3.0</version>
         </dependency>
 
         <dependency>

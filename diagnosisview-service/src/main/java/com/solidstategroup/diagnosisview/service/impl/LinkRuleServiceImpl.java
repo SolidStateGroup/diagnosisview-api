@@ -74,7 +74,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
                                         .build())
                         .collect(toSet());
 
-        linkRuleMappingRepository.save(linkRuleMappings);
+        linkRuleMappingRepository.saveAll(linkRuleMappings);
 
         return linkRule;
     }
@@ -83,11 +83,8 @@ public class LinkRuleServiceImpl implements LinkRuleService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto) {
 
-        LinkRule current = linkRuleRepository.findOne(id);
-
-        if (current == null) {
-            throw new BadRequestException(LINK_NOT_FOUND);
-        }
+        LinkRule current = linkRuleRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(LINK_NOT_FOUND));
 
         Institution institution = Institution.valueOf(linkRuleDto.getCriteria());
 
@@ -96,7 +93,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
         current.setCriteriaType(linkRuleDto.getCriteriaType());
         current.setLink(linkRuleDto.getLink());
 
-        linkRuleMappingRepository.delete(current.getMappings());
+        linkRuleMappingRepository.deleteAll(current.getMappings());
 
         current.setMappings(new HashSet<>());
         linkRuleRepository.save(current);
@@ -120,7 +117,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
 
         current.setMappings(linkRuleMappings);
 
-        linkRuleMappingRepository.save(linkRuleMappings);
+        linkRuleMappingRepository.saveAll(linkRuleMappings);
 
         return current;
     }
@@ -129,7 +126,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public void deleteLinkRule(String uuid) {
 
-        linkRuleRepository.delete(uuid);
+        linkRuleRepository.deleteById(uuid);
     }
 
     @Override
@@ -141,11 +138,8 @@ public class LinkRuleServiceImpl implements LinkRuleService {
     @Override
     public LinkRule getLinkRule(String uuid) {
 
-        LinkRule linkRule = linkRuleRepository.findOne(uuid);
-
-        if (linkRule == null) {
-            throw new BadRequestException(LINK_NOT_FOUND);
-        }
+        LinkRule linkRule = linkRuleRepository.findById(uuid)
+                .orElseThrow(() -> new BadRequestException(LINK_NOT_FOUND));
 
         return linkRule;
     }

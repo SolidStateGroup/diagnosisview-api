@@ -13,19 +13,24 @@ import com.solidstategroup.diagnosisview.repository.LookupTypeRepository;
 import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.LogoRulesService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
 
 @Service
+@Slf4j
 public class LinkServiceImpl implements LinkService {
 
     private static final String LINK_SEQ = "link_seq";
@@ -63,7 +68,7 @@ public class LinkServiceImpl implements LinkService {
      */
     @Override
     public Link get(Long id) {
-        return linkRepository.findOne(id);
+        return linkRepository.findById(id).orElse(null);
     }
 
     /**
@@ -73,12 +78,8 @@ public class LinkServiceImpl implements LinkService {
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Link update(Link link) {
 
-        Link existingLink = linkRepository.findOne(link.getId());
-
-        if (existingLink == null) {
-
-            throw new BadRequestException("The link does not exist within DiagnosisView.");
-        }
+        Link existingLink = linkRepository.findById(link.getId())
+                .orElseThrow(() -> new BadRequestException("The link does not exist within DiagnosisView."));
 
         //Currently you can only update certain fields
         if (link.hasDifficultyLevelSet()) {
@@ -116,6 +117,10 @@ public class LinkServiceImpl implements LinkService {
     @Transactional
     @Override
     public Link upsert(Link link) {
+
+        if (!StringUtils.isEmpty(link.getLink()) && !link.getLink().startsWith("http")) {
+            log.error(" Link url not formatted correctly {} {} ", link.getId(), link.getLink());
+        }
 
         //Get the NICE lookup if it exists
         populatDVLookups();
@@ -209,6 +214,27 @@ public class LinkServiceImpl implements LinkService {
         return linkRepository.save(savedLink);
     }
 
+    @Override
+    public void updateExternalLinks(Link link) throws Exception {
+
+        if (link.getExternalId() == null) {
+            throw new Exception("link must have an external id set");
+        }
+
+        // make sure to ignore removed_externally = true
+        List<Link> savedLinks = linkRepository.findLinksByExternalId(link.getExternalId());
+
+        if (CollectionUtils.isEmpty(savedLinks)) {
+            throw new Exception("no links found");
+        }
+
+        savedLinks.forEach(l -> {
+            l.setName(link.getName());
+            l.setLink(link.getLink());
+            linkRepository.save(l);
+        });
+    }
+
     /**
      * Check an existing link and see if it has the difficulty set etc
      *
@@ -217,7 +243,8 @@ public class LinkServiceImpl implements LinkService {
      */
     private Link checkLink(Link link) {
 
-        Link existingLink = linkRepository.findOne(link.getId());
+        Link existingLink = linkRepository.findById(link.getId())
+                .orElse(null);
 
         //Ensure that difficulty is not overwritten
         if (existingLink != null) {
@@ -242,9 +269,9 @@ public class LinkServiceImpl implements LinkService {
 
                 if (mappings.size() > 0) {
 
-                    linkRuleMappingRepository.delete(existingLink.getMappingLinks());
+                    linkRuleMappingRepository.deleteAll(existingLink.getMappingLinks());
                     link.setMappingLinks(mappings);
-                    linkRuleMappingRepository.save(mappings);
+                    linkRuleMappingRepository.saveAll(mappings);
                 }
             }
         }

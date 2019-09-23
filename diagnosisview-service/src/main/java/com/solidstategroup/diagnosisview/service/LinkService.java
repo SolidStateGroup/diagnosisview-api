@@ -34,4 +34,6 @@ public interface LinkService {
     Link addExternalLink(Link link, Code code) throws Exception;
 
     Link updateExternalLink(Link link) throws Exception;
+
+    void updateExternalLinks(Link link) throws Exception;
 }

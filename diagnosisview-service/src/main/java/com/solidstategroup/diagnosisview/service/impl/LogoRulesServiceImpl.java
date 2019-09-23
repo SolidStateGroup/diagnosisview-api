@@ -61,7 +61,7 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @Override
     public LogoRule get(String id) {
 
-        return logoRuleRepository.findOne(id);
+        return logoRuleRepository.findById(id).orElse(null);
     }
 
     /**
@@ -82,9 +82,10 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     public void delete(String id) {
 
         logoRuleRepository.clearLogoRule(
-                logoRuleRepository.findOne(id));
+                logoRuleRepository.findById(id)
+                        .orElseThrow(() -> new IllegalStateException("Could not find LogoRule")));
 
-        logoRuleRepository.delete(id);
+        logoRuleRepository.deleteById(id);
     }
 
     /**
@@ -95,11 +96,8 @@ public class LogoRulesServiceImpl implements LogoRulesService {
     @CacheEvict(value = "getAllCodes", allEntries = true)
     public LogoRule update(String id, LogoRuleDto logoRuleDto) throws Exception {
 
-        LogoRule current = logoRuleRepository.findOne(id);
-
-        if (current == null) {
-            throw new Exception();
-        }
+        LogoRule current = logoRuleRepository.findById(id)
+                .orElseThrow(() -> new Exception());
 
         LogoRule.LogoRuleBuilder builder = LogoRule.builder().id(id);
 
