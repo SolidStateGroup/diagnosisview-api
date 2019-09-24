@@ -58,9 +58,6 @@ public class UserServiceImpl implements UserService {
     private AppleReceiptValidation appleReceiptValidation;
     private EmailService emailService;
 
-    @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
-    private String appleUrlString;
-
     @Value("${IOS_SANDBOX:true}")
     private boolean isIosSandbox;
 
