@@ -61,6 +61,9 @@ public class UserServiceImpl implements UserService {
     @Value("${APPLE_URL:https://sandbox.itunes.apple.com/verifyReceipt}")
     private String appleUrlString;
 
+    @Value("${IOS_SANDBOX:true}")
+    private boolean isIosSandbox;
+
     @Value("${ANDROID_APPLICATION_NAME:NONE}")
     private String androidApplicationName;
 
@@ -463,7 +466,7 @@ public class UserServiceImpl implements UserService {
     public User verifyAppleReceiptData(User user, String receipt) throws Exception {
         User savedUser = this.getUser(user.getUsername());
         //validate the receipt using the sandbox (or use false for production)
-        JsonObject responseJson = appleReceiptValidation.validateReciept(receipt, true);
+        JsonObject responseJson = appleReceiptValidation.validateReciept(receipt, isIosSandbox);
         //prints response
         log.info(responseJson.toString());
 
@@ -473,7 +476,7 @@ public class UserServiceImpl implements UserService {
         savedUser.setPaymentData(payments);
         Date expiryDate;
 
-        //If the application is the test application, then add 1 hour to the expiry time,
+        // If the application is the test application, then add 1 hour to the expiry time,
         // otherwise, assume it is the production application and allow 1  year as the expiry time
         if (responseJson.get("receipt_type").toString().toLowerCase().contains("sandbox")) {
             expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
