@@ -35,4 +35,4 @@ target/
 !.elasticbeanstalk/*.global.yml
 
 
-**/google-play-key.json
+**/google-play-key*.json
