@@ -60,7 +60,8 @@ public class Code {
     @Column(name = "hide_from_patients")
     private boolean hideFromPatients = false;
 
-    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "code", fetch = FetchType.EAGER,
+            cascade = {CascadeType.PERSIST, CascadeType.REFRESH}, orphanRemoval = true)
     private Set<Link> links = new HashSet<>();
 
     // used for PATIENTVIEW code standard Codes, from NHS choices initially
