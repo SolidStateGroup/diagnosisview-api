@@ -4,6 +4,8 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * JPA repository for Code objects.
  */
@@ -17,6 +19,8 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
      * @return the found code
      */
     Code findOneByCode(final String code);
+
+    List<Code> findByCode(final String code);
 
     boolean existsByCode(String code);
 }
