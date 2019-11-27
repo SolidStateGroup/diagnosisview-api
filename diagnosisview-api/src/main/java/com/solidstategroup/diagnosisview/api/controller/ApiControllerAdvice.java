@@ -5,15 +5,20 @@ import com.solidstategroup.diagnosisview.exceptions.ImageIOException;
 import com.solidstategroup.diagnosisview.exceptions.ImageNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import javax.persistence.EntityExistsException;
 
 /**
  * Provides controller advice (Exception handling etc...)
  */
+@Slf4j
 @RestControllerAdvice
 public class ApiControllerAdvice {
 
@@ -51,5 +56,12 @@ public class ApiControllerAdvice {
     @AllArgsConstructor
     public static class ErrorMessage {
         private String message;
+    }
+
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    @ExceptionHandler(EntityExistsException.class)
+    public ErrorMessage handleEntityException(EntityExistsException e) {
+        log.error("Handling Entity Exception: ", e);
+        return new ErrorMessage(e.getMessage());
     }
 }
