@@ -29,7 +29,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -153,15 +156,14 @@ public class CodeServiceImpl implements CodeService {
      */
     @Override
     public Code get(String code) {
-        Code result = codeRepository.findOneByCode(code);
-
-        if (result == null) {
-
+        // should not happen, this to allow deleting and editing duplicates
+        List<Code> existing = codeRepository.findByCode(code);
+        if (CollectionUtils.isEmpty(existing)) {
             return null;
         }
 
-        result
-                .getLinks()
+        Code result = existing.get(0);
+        result.getLinks()
                 .forEach(l -> {
                     l.setLogoRule(null);
                     l.setMappingLinks(null);
@@ -244,23 +246,38 @@ public class CodeServiceImpl implements CodeService {
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code upsert(Code code, boolean fromSync) throws Exception {
+
+        if (code == null) {
+            throw new Exception("Missing code object");
+        }
+
+        if (StringUtils.isEmpty(code.getCode())) {
+            throw new Exception("Missing code for Diagnosis Code");
+        }
+
         // If the code is from dv web, then we append dv_ to the code so its unique.
         if (!fromSync) {
 
-            String codeName = format(DV_CODE_TEMPLATE, code.getCode());
-
-            if (codeRepository.existsByCode(codeName)) {
-
-                throw new Exception("Code already exists");
+            String codeName = code.getCode();
+            if (!code.getCode().startsWith(DV_CODE)) {
+                codeName = format(DV_CODE_TEMPLATE, code.getCode());
             }
+            code.setCode(codeName);
 
-            if (!code.getCode().substring(0, 3).equals(DV_CODE)) {
-
-                code.setCode(codeName);
+            List<Code> existing = codeRepository.findByCode(codeName);
+            if (!CollectionUtils.isEmpty(existing)) {
+                if (code.getId() == null) {
+                    throw new EntityExistsException("Code already exists");
+                } else {
+                    existing.forEach(c -> {
+                        if (!(code.getId().equals(c.getId()))) {
+                            throw new EntityExistsException("Code already exists");
+                        }
+                    });
+                }
             }
 
             if (code.getSourceType() == null) {
-
                 code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
             }
 
@@ -425,7 +442,7 @@ public class CodeServiceImpl implements CodeService {
         }
 
         Code currentCode = codeRepository.findById(code.getId())
-         .orElse(null);
+                .orElse(null);
 
         //If there is a code, or it has been updated, update
         return !(currentCode == null ||
