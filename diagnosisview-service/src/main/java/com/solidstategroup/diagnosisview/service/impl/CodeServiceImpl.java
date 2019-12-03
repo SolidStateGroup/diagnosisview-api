@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -243,6 +244,7 @@ public class CodeServiceImpl implements CodeService {
     /**
      * {@inheritDoc}
      */
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code upsert(Code code, boolean fromSync) throws Exception {
@@ -347,10 +349,6 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(new HashSet<>());
         code.setCodeCategories(new HashSet<>());
         code.setExternalStandards(new HashSet<>());
-
-        final Code persistedCode = codeRepository.save(code);
-        code.setCreated(persistedCode.getCreated());
-        code.setLastUpdate(persistedCode.getLastUpdate());
 
         code.setCodeCategories(codeCategories
                 .stream()
