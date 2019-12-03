@@ -1,0 +1,1 @@
+UPDATE pv_lookup_value SET lookup_type_id = 22 WHERE id = 987654;
