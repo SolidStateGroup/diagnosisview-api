@@ -5,6 +5,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.support.SimpleCacheManager;
+import org.springframework.cache.transaction.TransactionAwareCacheManagerProxy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +38,10 @@ public class ApplicationConfig implements WebMvcConfigurer {
                 new ConcurrentMapCache("getAllCodes"),
                 new ConcurrentMapCache("getAllCategories")
         ));
-        return cacheManager;
+        // manually call initialize the caches as our SimpleCacheManager is not declared as a bean
+        cacheManager.initializeCaches();
+
+        // to support transactions with caching
+        return new TransactionAwareCacheManagerProxy(cacheManager);
     }
 }
