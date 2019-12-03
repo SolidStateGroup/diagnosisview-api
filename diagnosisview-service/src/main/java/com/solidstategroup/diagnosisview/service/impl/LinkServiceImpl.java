@@ -22,7 +22,6 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -102,8 +101,7 @@ public class LinkServiceImpl implements LinkService {
         }
 
         existingLink.setLastUpdate(new Date());
-
-        existingLink.setMappingLinks(new HashSet<>());
+        // existingLink.setMappingLinks(new HashSet<>());
 
         linkRepository.save(existingLink);
 
