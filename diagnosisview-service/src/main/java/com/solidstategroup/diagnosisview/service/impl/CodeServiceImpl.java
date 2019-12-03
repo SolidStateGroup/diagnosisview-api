@@ -261,7 +261,7 @@ public class CodeServiceImpl implements CodeService {
         if (!fromSync) {
 
             String codeName = code.getCode();
-            if (!code.getCode().startsWith(DV_CODE)) {
+            if (!code.getCode().toLowerCase().startsWith(DV_CODE)) {
                 codeName = format(DV_CODE_TEMPLATE, code.getCode());
             }
             code.setCode(codeName);
@@ -269,11 +269,13 @@ public class CodeServiceImpl implements CodeService {
             List<Code> existing = codeRepository.findByCode(codeName);
             if (!CollectionUtils.isEmpty(existing)) {
                 if (code.getId() == null) {
-                    throw new EntityExistsException("Code already exists");
+                    throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                            "Please amend and try again");
                 } else {
                     existing.forEach(c -> {
                         if (!(code.getId().equals(c.getId()))) {
-                            throw new EntityExistsException("Code already exists");
+                            throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                                    "Please amend and try again");
                         }
                     });
                 }
@@ -373,7 +375,7 @@ public class CodeServiceImpl implements CodeService {
 
     @Override
     public Code updateCode(Code code) {
-        
+
         long start = System.currentTimeMillis();
         log.debug(" processing CODE {}", code.getCode());
 
