@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -35,7 +37,8 @@ public class LinkRuleMapping {
     @JoinColumn(name = "mapping_id")
     private LinkRule rule;
 
-    @ManyToOne
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "link_id")
     private Link link;
 
