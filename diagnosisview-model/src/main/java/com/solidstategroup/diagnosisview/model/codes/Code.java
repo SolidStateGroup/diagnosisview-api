@@ -1,13 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -20,14 +14,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Data
 @Entity
 @Table(name = "pv_code")
-public class Code {
+public class Code extends AuditModel {
 
     @Id
     private Long id;
@@ -79,26 +72,6 @@ public class Code {
     @OneToOne
     @JoinColumn(name = "standard_type_id")
     private Lookup standardType;
-
-    @CreationTimestamp
-    @Column(name = "creation_date", updatable = false)
-    private Date created;
-
-    @JsonIgnore
-    @CreatedBy
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User creator;
-
-    @UpdateTimestamp
-    @Column(name = "last_update_date")
-    private Date lastUpdate;
-
-    @JsonIgnore
-    @LastModifiedBy
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "last_updated_by")
-    private User lastUpdater;
 
     /**
      * Adds a link to the current code.
