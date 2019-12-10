@@ -41,6 +41,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
     private static final String ICD_10 = "ICD-10";
     private static final String linkName = "BMJ Best Practice";
     private static RestTemplate template = new RestTemplate();
+    private static Integer DEFAULT_BMJ_ORDER = 11;
 
     static {
         codeMapping = new HashMap<>();
@@ -177,12 +178,13 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                             newLink.setLink(href);
                             newLink.setExternalId(id);
                             newLink.setLinkType(BMJ);
+                            newLink.setDisplayOrder(DEFAULT_BMJ_ORDER);
 
                             Link saved = linkService.addExternalLink(newLink, code);
                             code.addLink(saved);
                             codeService.save(code);
 
-                            log.info("Correlation id: {}. New link saved {}", newLink.getId());
+                            log.info("Correlation id: {}. New link saved {}", correlation, newLink.getId());
                             log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
 
                             return true;

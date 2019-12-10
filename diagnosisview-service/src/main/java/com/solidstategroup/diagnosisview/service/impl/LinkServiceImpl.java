@@ -178,7 +178,9 @@ public class LinkServiceImpl implements LinkService {
         link.setCode(code);
         link.setDifficultyLevel(DifficultyLevel.AMBER);
         link.setDisplayLink(true);
-        link.setDisplayOrder(1);
+        if(link.getDisplayOrder() == null){
+            link.setDisplayOrder(1);
+        }
         link.setTransformationsOnly(false);
         link.setFreeLink(false);
         link.setCreated(now);
