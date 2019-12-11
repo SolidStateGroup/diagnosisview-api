@@ -198,7 +198,7 @@ class CodeServiceImplTest extends Specification {
 
         when: "upsert is called"
 
-        def code = codeService.upsert(syncCode, true)
+        def code = codeService.upsert(syncCode)
 
         then: "created code is returned"
 
@@ -237,7 +237,7 @@ class CodeServiceImplTest extends Specification {
 
         when: "upsert is called"
 
-        def result = codeService.upsert(code, true)
+        def result = codeService.upsert(code)
 
         then: "result is null"
 
@@ -258,7 +258,7 @@ class CodeServiceImplTest extends Specification {
 
         when:
 
-        def result = codeService.upsert(newCode,false)
+        def result = codeService.upsert(newCode)
 
         then:
 

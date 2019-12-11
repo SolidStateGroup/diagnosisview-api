@@ -129,7 +129,7 @@ public class AdminController extends BaseController {
 
         isAdminUser(request);
 
-        return codeService.upsert(code, false);
+        return codeService.upsert(code);
     }
 
     @ApiOperation(value = "Update Link",

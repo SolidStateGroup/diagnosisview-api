@@ -3,16 +3,19 @@ package com.solidstategroup.diagnosisview.model.codes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -27,7 +30,7 @@ public class Link extends AuditModel {
     @JoinColumn(name = "type_id")
     private Lookup linkType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "code_id")
     private Code code;
 
@@ -53,8 +56,9 @@ public class Link extends AuditModel {
     @Column(name = "transformations_only")
     private Boolean transformationsOnly = false;
 
-    @OneToMany(mappedBy = "link")
-    private Set<LinkRuleMapping> mappingLinks;
+    @OneToMany(mappedBy = "link", fetch = FetchType.EAGER,
+            cascade = {CascadeType.PERSIST, CascadeType.REFRESH}, orphanRemoval = true)
+    private Set<LinkRuleMapping> mappingLinks = new HashSet<>();
 
     @Transient
     private Boolean displayLink = true;

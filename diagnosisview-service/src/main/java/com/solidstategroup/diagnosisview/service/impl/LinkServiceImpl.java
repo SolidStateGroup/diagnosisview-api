@@ -20,10 +20,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -103,8 +101,7 @@ public class LinkServiceImpl implements LinkService {
         }
 
         existingLink.setLastUpdate(new Date());
-
-        existingLink.setMappingLinks(new HashSet<>());
+        // existingLink.setMappingLinks(new HashSet<>());
 
         linkRepository.save(existingLink);
 
@@ -114,7 +111,6 @@ public class LinkServiceImpl implements LinkService {
     /**
      * {@inheritDoc}
      */
-    @Transactional
     @Override
     public Link upsert(Link link) {
 
@@ -182,7 +178,9 @@ public class LinkServiceImpl implements LinkService {
         link.setCode(code);
         link.setDifficultyLevel(DifficultyLevel.AMBER);
         link.setDisplayLink(true);
-        link.setDisplayOrder(1);
+        if(link.getDisplayOrder() == null){
+            link.setDisplayOrder(1);
+        }
         link.setTransformationsOnly(false);
         link.setFreeLink(false);
         link.setCreated(now);
@@ -259,6 +257,10 @@ public class LinkServiceImpl implements LinkService {
 
             if (existingLink.getTransformationsOnly()) {
                 link.setTransformationsOnly(existingLink.getTransformationsOnly());
+            }
+
+            if (!CollectionUtils.isEmpty(existingLink.getMappingLinks())) {
+                link.setMappingLinks(existingLink.getMappingLinks());
             }
 
             if (compareIgnoreCase(existingLink.getLink(), link.getLink()) != 0

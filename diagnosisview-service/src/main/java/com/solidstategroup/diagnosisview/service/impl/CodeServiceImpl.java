@@ -28,11 +28,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -153,15 +158,14 @@ public class CodeServiceImpl implements CodeService {
      */
     @Override
     public Code get(String code) {
-        Code result = codeRepository.findOneByCode(code);
-
-        if (result == null) {
-
+        // should not happen, this to allow deleting and editing duplicates
+        List<Code> existing = codeRepository.findByCode(code);
+        if (CollectionUtils.isEmpty(existing)) {
             return null;
         }
 
-        result
-                .getLinks()
+        Code result = existing.get(0);
+        result.getLinks()
                 .forEach(l -> {
                     l.setLogoRule(null);
                     l.setMappingLinks(null);
@@ -241,83 +245,85 @@ public class CodeServiceImpl implements CodeService {
     /**
      * {@inheritDoc}
      */
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public Code upsert(Code code, boolean fromSync) throws Exception {
+    public Code upsert(Code code) throws Exception {
+
+        if (code == null) {
+            throw new Exception("Missing code object");
+        }
+
+        if (StringUtils.isEmpty(code.getCode())) {
+            throw new Exception("Missing code for Diagnosis Code");
+        }
+
         // If the code is from dv web, then we append dv_ to the code so its unique.
-        if (!fromSync) {
 
-            String codeName = format(DV_CODE_TEMPLATE, code.getCode());
+        String codeName = code.getCode();
+        if (!code.getCode().toLowerCase().startsWith(DV_CODE)) {
+            codeName = format(DV_CODE_TEMPLATE, code.getCode());
+        }
+        code.setCode(codeName);
 
-            if (codeRepository.existsByCode(codeName)) {
-
-                throw new Exception("Code already exists");
-            }
-
-            if (!code.getCode().substring(0, 3).equals(DV_CODE)) {
-
-                code.setCode(codeName);
-            }
-
-            if (code.getSourceType() == null) {
-
-                code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
-            }
-
+        List<Code> existing = codeRepository.findByCode(codeName);
+        if (!CollectionUtils.isEmpty(existing)) {
             if (code.getId() == null) {
-
-                code.setId(selectIdFrom(CODE_SEQ));
+                throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                        "Please amend and try again");
+            } else {
+                existing.forEach(c -> {
+                    if (!(code.getId().equals(c.getId()))) {
+                        throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                                "Please amend and try again");
+                    }
+                });
             }
+        }
 
-            code.setLinks(code
-                    .getLinks()
+        if (code.getSourceType() == null) {
+            code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
+        }
+
+        if (code.getId() == null) {
+
+            code.setId(selectIdFrom(CODE_SEQ));
+        }
+
+        code.setLinks(code
+                .getLinks()
+                .stream()
+                .peek(l -> {
+                    if (l.getId() == null) {
+                        l.setId(selectIdFrom(LINK_SEQ));
+                    }
+                })
+                .collect(toSet()));
+
+        if (code.getExternalStandards() != null) {
+
+            code.setExternalStandards(code
+                    .getExternalStandards()
                     .stream()
-                    .peek(l -> {
-                        if (l.getId() == null) {
-                            l.setId(selectIdFrom(LINK_SEQ));
+                    .peek(es -> {
+                        if (es.getId() == null) {
+                            es.setId(selectIdFrom(CODE_EXTERNAL_STANDARD));
                         }
                     })
                     .collect(toSet()));
-
-            if (code.getExternalStandards() != null) {
-
-                code.setExternalStandards(code
-                        .getExternalStandards()
-                        .stream()
-                        .peek(es -> {
-                            if (es.getId() == null) {
-                                es.setId(selectIdFrom(CODE_EXTERNAL_STANDARD));
-                            }
-                        })
-                        .collect(toSet()));
-            }
-
-            if (code.getCodeCategories() != null) {
-
-                code.setCodeCategories(code
-                        .getCodeCategories()
-                        .stream()
-                        .peek(cc -> {
-                            if (cc.getId() == null) {
-                                cc.setId(selectIdFrom(CODE_CATEGORY_SEQ));
-                            }
-                        })
-                        .collect(toSet()));
-            }
         }
 
-        if (upsertNotRequired(code)) {
-            return null;
-        }
+        if (code.getCodeCategories() != null) {
 
-        // The following are all items that wont be sent with the web creation
-        if (fromSync) {
-
-            saveAdditionalSyncObjects(code);
-
-            if (code.getSourceType() == null) {
-                code.setSourceType(CodeSourceTypes.PATIENTVIEW);
-            }
+            code.setCodeCategories(code
+                    .getCodeCategories()
+                    .stream()
+                    .peek(cc -> {
+                        if (cc.getId() == null) {
+                            cc.setId(selectIdFrom(CODE_CATEGORY_SEQ));
+                        }
+                    })
+                    .collect(toSet()));
         }
 
         Set<Link> links = code.getLinks();
@@ -330,10 +336,7 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(new HashSet<>());
         code.setCodeCategories(new HashSet<>());
         code.setExternalStandards(new HashSet<>());
-
-        final Code persistedCode = codeRepository.save(code);
-        code.setCreated(persistedCode.getCreated());
-        code.setLastUpdate(persistedCode.getLastUpdate());
+        code.setLastUpdate(new Date());
 
         code.setCodeCategories(codeCategories
                 .stream()
@@ -358,7 +361,7 @@ public class CodeServiceImpl implements CodeService {
 
     @Override
     public Code updateCode(Code code) {
-        
+
         long start = System.currentTimeMillis();
         log.debug(" processing CODE {}", code.getCode());
 
@@ -425,14 +428,21 @@ public class CodeServiceImpl implements CodeService {
         }
 
         Code currentCode = codeRepository.findById(code.getId())
-         .orElse(null);
+                .orElse(null);
 
         //If there is a code, or it has been updated, update
         return !(currentCode == null ||
+                !currentCode.getCode().equals(code.getCode()) ||
+                (!StringUtils.isEmpty(currentCode.getPatientFriendlyName()) &&
+                        !currentCode.getPatientFriendlyName().equals(code.getPatientFriendlyName())) ||
+                (!StringUtils.isEmpty(currentCode.getDescription()) &&
+                        !currentCode.getDescription().equals(code.getDescription())) ||
+                (!StringUtils.isEmpty(currentCode.getFullDescription()) &&
+                        !currentCode.getFullDescription().equals(code.getFullDescription())) ||
                 currentCode.getLinks().size() != code.getLinks().size() ||
                 currentCode.getExternalStandards().size() != code.getExternalStandards().size() ||
                 currentCode.getCodeCategories().size() != code.getCodeCategories().size() ||
-                currentCode.getLastUpdate().before(code.getLastUpdate()));
+                (currentCode.getLastUpdate() != null && currentCode.getLastUpdate().before(code.getLastUpdate())));
     }
 
     private void saveAdditionalSyncObjects(Code code) {
