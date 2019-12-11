@@ -37,6 +37,7 @@ import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -351,6 +352,7 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(new HashSet<>());
         code.setCodeCategories(new HashSet<>());
         code.setExternalStandards(new HashSet<>());
+        code.setLastUpdate(new Date());
 
         code.setCodeCategories(codeCategories
                 .stream()
@@ -446,10 +448,14 @@ public class CodeServiceImpl implements CodeService {
 
         //If there is a code, or it has been updated, update
         return !(currentCode == null ||
+                !currentCode.getCode().equals(code.getCode()) ||
+                !currentCode.getPatientFriendlyName().equals(code.getPatientFriendlyName()) ||
+                !currentCode.getDescription().equals(code.getDescription()) ||
+                !currentCode.getFullDescription().equals(code.getFullDescription()) ||
                 currentCode.getLinks().size() != code.getLinks().size() ||
                 currentCode.getExternalStandards().size() != code.getExternalStandards().size() ||
                 currentCode.getCodeCategories().size() != code.getCodeCategories().size() ||
-                currentCode.getLastUpdate().before(code.getLastUpdate()));
+                (currentCode.getLastUpdate() != null && currentCode.getLastUpdate().before(code.getLastUpdate())));
     }
 
     private void saveAdditionalSyncObjects(Code code) {
