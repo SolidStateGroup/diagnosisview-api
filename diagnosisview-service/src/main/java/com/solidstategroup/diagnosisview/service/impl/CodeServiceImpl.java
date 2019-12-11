@@ -248,7 +248,7 @@ public class CodeServiceImpl implements CodeService {
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public Code upsert(Code code, boolean fromSync) throws Exception {
+    public Code upsert(Code code) throws Exception {
 
         if (code == null) {
             throw new Exception("Missing code object");
@@ -259,87 +259,71 @@ public class CodeServiceImpl implements CodeService {
         }
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
-        if (!fromSync) {
 
-            String codeName = code.getCode();
-            if (!code.getCode().toLowerCase().startsWith(DV_CODE)) {
-                codeName = format(DV_CODE_TEMPLATE, code.getCode());
-            }
-            code.setCode(codeName);
+        String codeName = code.getCode();
+        if (!code.getCode().toLowerCase().startsWith(DV_CODE)) {
+            codeName = format(DV_CODE_TEMPLATE, code.getCode());
+        }
+        code.setCode(codeName);
 
-            List<Code> existing = codeRepository.findByCode(codeName);
-            if (!CollectionUtils.isEmpty(existing)) {
-                if (code.getId() == null) {
-                    throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
-                            "Please amend and try again");
-                } else {
-                    existing.forEach(c -> {
-                        if (!(code.getId().equals(c.getId()))) {
-                            throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
-                                    "Please amend and try again");
-                        }
-                    });
-                }
-            }
-
-            if (code.getSourceType() == null) {
-                code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
-            }
-
+        List<Code> existing = codeRepository.findByCode(codeName);
+        if (!CollectionUtils.isEmpty(existing)) {
             if (code.getId() == null) {
-
-                code.setId(selectIdFrom(CODE_SEQ));
+                throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                        "Please amend and try again");
+            } else {
+                existing.forEach(c -> {
+                    if (!(code.getId().equals(c.getId()))) {
+                        throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                                "Please amend and try again");
+                    }
+                });
             }
+        }
 
-            code.setLinks(code
-                    .getLinks()
+        if (code.getSourceType() == null) {
+            code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
+        }
+
+        if (code.getId() == null) {
+
+            code.setId(selectIdFrom(CODE_SEQ));
+        }
+
+        code.setLinks(code
+                .getLinks()
+                .stream()
+                .peek(l -> {
+                    if (l.getId() == null) {
+                        l.setId(selectIdFrom(LINK_SEQ));
+                    }
+                })
+                .collect(toSet()));
+
+        if (code.getExternalStandards() != null) {
+
+            code.setExternalStandards(code
+                    .getExternalStandards()
                     .stream()
-                    .peek(l -> {
-                        if (l.getId() == null) {
-                            l.setId(selectIdFrom(LINK_SEQ));
+                    .peek(es -> {
+                        if (es.getId() == null) {
+                            es.setId(selectIdFrom(CODE_EXTERNAL_STANDARD));
                         }
                     })
                     .collect(toSet()));
-
-            if (code.getExternalStandards() != null) {
-
-                code.setExternalStandards(code
-                        .getExternalStandards()
-                        .stream()
-                        .peek(es -> {
-                            if (es.getId() == null) {
-                                es.setId(selectIdFrom(CODE_EXTERNAL_STANDARD));
-                            }
-                        })
-                        .collect(toSet()));
-            }
-
-            if (code.getCodeCategories() != null) {
-
-                code.setCodeCategories(code
-                        .getCodeCategories()
-                        .stream()
-                        .peek(cc -> {
-                            if (cc.getId() == null) {
-                                cc.setId(selectIdFrom(CODE_CATEGORY_SEQ));
-                            }
-                        })
-                        .collect(toSet()));
-            }
         }
 
-        if (upsertNotRequired(code)) {
-            return null;
-        }
+        if (code.getCodeCategories() != null) {
 
-        // The following are all items that wont be sent with the web creation
-        if (fromSync) {
-
-            saveAdditionalSyncObjects(code);
-
-            if (code.getSourceType() == null) {
-                code.setSourceType(CodeSourceTypes.PATIENTVIEW);
-            }
+            code.setCodeCategories(code
+                    .getCodeCategories()
+                    .stream()
+                    .peek(cc -> {
+                        if (cc.getId() == null) {
+                            cc.setId(selectIdFrom(CODE_CATEGORY_SEQ));
+                        }
+                    })
+                    .collect(toSet()));
         }
 
         Set<Link> links = code.getLinks();
@@ -449,9 +433,12 @@ public class CodeServiceImpl implements CodeService {
         //If there is a code, or it has been updated, update
         return !(currentCode == null ||
                 !currentCode.getCode().equals(code.getCode()) ||
-                !currentCode.getPatientFriendlyName().equals(code.getPatientFriendlyName()) ||
-                !currentCode.getDescription().equals(code.getDescription()) ||
-                !currentCode.getFullDescription().equals(code.getFullDescription()) ||
+                (!StringUtils.isEmpty(currentCode.getPatientFriendlyName()) &&
+                        !currentCode.getPatientFriendlyName().equals(code.getPatientFriendlyName())) ||
+                (!StringUtils.isEmpty(currentCode.getDescription()) &&
+                        !currentCode.getDescription().equals(code.getDescription())) ||
+                (!StringUtils.isEmpty(currentCode.getFullDescription()) &&
+                        !currentCode.getFullDescription().equals(code.getFullDescription())) ||
                 currentCode.getLinks().size() != code.getLinks().size() ||
                 currentCode.getExternalStandards().size() != code.getExternalStandards().size() ||
                 currentCode.getCodeCategories().size() != code.getCodeCategories().size() ||
