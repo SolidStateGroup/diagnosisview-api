@@ -293,6 +293,10 @@ public class LinkServiceImpl implements LinkService {
                 link.setTransformationsOnly(existingLink.getTransformationsOnly());
             }
 
+            if (existingLink.getDisplayOrder() != null && fromSync) {
+                link.setDisplayOrder(existingLink.getDisplayOrder());
+            }
+
             if (!CollectionUtils.isEmpty(existingLink.getMappingLinks())) {
                 link.setMappingLinks(existingLink.getMappingLinks());
             }
