@@ -185,6 +185,8 @@ public class LinkServiceImpl implements LinkService {
 
         Date now = new Date();
 
+        // TODO: apply position number rules
+
         link.setCode(code);
         link.setDifficultyLevel(DifficultyLevel.AMBER);
         link.setDisplayLink(true);
@@ -323,6 +325,7 @@ public class LinkServiceImpl implements LinkService {
             link.setLinkType(niceLinksLookup);
 
             if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
+                // TODO: apply position number rules
                 link.setDifficultyLevel(DifficultyLevel.AMBER);
             }
         }
