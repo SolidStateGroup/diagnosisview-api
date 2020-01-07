@@ -8,7 +8,7 @@ import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import java.util.List;
 
 /**
- * Interface to interact with dashboard users.
+ * Interface to interact with codes.
  */
 public interface CodeService {
 
@@ -58,18 +58,23 @@ public interface CodeService {
 
     /**
      * Create or update a code, creating all the pre-requestite categories, external standards etc
-     * where required
+     * where required.
      *
-     * @param code     - code to update or create
+     * Used when creating or updating Code from the DV Web.
+     *
+     * @param code - code to update or create
      */
     Code upsert(Code code) throws Exception;
 
     /**
-     * Create or update a Code
+     * Create or update a Code from syn job.
+     *
+     * Should be used with sync only as has sync specific logic.
+     * Use upsert(Code) for DV Web code update
      *
      * @param code a code to save
      */
-    Code updateCode(Code code);
+    Code updateCodeFromSync(Code code);
 
     Code getByInstitution(String code, Institution institution);
 }
