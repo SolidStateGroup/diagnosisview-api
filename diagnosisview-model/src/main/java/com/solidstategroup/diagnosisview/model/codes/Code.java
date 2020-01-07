@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "pv_code")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // need this to avoid Serialization issue
 public class Code extends AuditModel {
 
     @Id
