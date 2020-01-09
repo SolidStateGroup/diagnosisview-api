@@ -159,7 +159,6 @@ public class CodeServiceImpl implements CodeService {
     }
 
     /**
-     *
      * {@inheritDoc}
      */
     public List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution) {
@@ -424,7 +423,7 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(links
                 .stream()
                 .peek(l -> l.setCode(code))
-                .map(l -> linkService.upsert(l, false))
+                .map(l -> linkService.upsert(l, links, false))
                 .collect(toSet()));
 
         return codeRepository.save(code);
@@ -479,7 +478,7 @@ public class CodeServiceImpl implements CodeService {
             code.setLinks(links
                     .stream()
                     .peek(l -> l.setCode(code))
-                    .map(l -> linkService.upsert(l, true))
+                    .map(l -> linkService.upsert(l, links, true))
                     .collect(toSet()));
 
             codeRepository.save(code);
