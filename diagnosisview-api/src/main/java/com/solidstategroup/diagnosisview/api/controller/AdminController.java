@@ -1,10 +1,12 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LoginRequest;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -131,6 +133,21 @@ public class AdminController extends BaseController {
         isAdminUser(request);
 
         return codeService.upsert(code);
+    }
+
+    @ApiOperation(value = "Get All Codes",
+            notes = "Admin User endpoint to get all codes within the DiagnosisView",
+            response = CodeDto[].class)
+    @GetMapping("/codes")
+    public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
+
+        User user = getUserFromRequest(request);
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        return codeService.getAll(null);
     }
 
     @ApiOperation(value = "Update Link",
