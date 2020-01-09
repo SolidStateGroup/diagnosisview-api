@@ -34,6 +34,15 @@ public interface CodeService {
     List<CodeDto> getAll(Institution institution);
 
     /**
+     * Search for Codes by synonyms.
+     *
+     * @param searchTerm  a synonym value to search for
+     * @param institution
+     * @return a List code dtos
+     */
+    List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution);
+
+    /**
      * Get a code by a given code
      *
      * @param code the code to lookup
@@ -62,7 +71,7 @@ public interface CodeService {
      *
      * Used when creating or updating Code from the DV Web.
      *
-     * @param code - code to update or create
+     * @param code     - code to update or create
      */
     Code upsert(Code code) throws Exception;
 

@@ -24,8 +24,20 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
 
 
     @Query("SELECT c FROM Code c " +
-        "WHERE UPPER(c.code) LIKE UPPER(:code) ")
+            " WHERE UPPER(c.code) LIKE UPPER(:code) ")
     List<Code> findByCode(@Param("code") String code);
+
+
+    @Query("SELECT c FROM Code c " +
+            " JOIN c.externalStandards es " +
+            " WHERE es.codeString LIKE :code")
+    List<Code> findByExternalStandards(@Param("code") String code);
+
+    @Query(value = "SELECT * FROM pv_code, " +
+            " jsonb_array_elements(synonyms) " +
+            " WHERE  value->>'name' LIKE :synonym",
+            nativeQuery = true)
+    List<Code> findBySynonym(@Param("synonym") String synonym);//
 
     boolean existsByCode(String code);
 }

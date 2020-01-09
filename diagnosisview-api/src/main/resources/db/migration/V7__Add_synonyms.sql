@@ -1,0 +1,1 @@
+ALTER TABLE pv_code ADD COLUMN synonyms jsonb;

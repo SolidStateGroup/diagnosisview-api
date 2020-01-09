@@ -63,6 +63,24 @@ public class CodeController extends BaseController {
         return codeService.getAll(null);
     }
 
+    @ApiOperation(value = "Find Codes by synonyms",
+            notes = "Admin User endpoint to get all codes within the DiagnosisView by synonyms",
+            response = CodeDto[].class)
+    @GetMapping("/code/synonyms/{term}")
+    public List<CodeDto> findCodesBySynonyms(@PathVariable("term") final String term,
+                                             HttpServletRequest request) throws Exception {
+
+        User user = getUserFromRequest(request);
+
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getCodesBySynonyms(term, Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        return codeService.getCodesBySynonyms(term, null);
+    }
+
     @ApiOperation(value = "Get All Categories",
             notes = "Get all categories from DiagnosisView",
             response = CategoryDto[].class)
