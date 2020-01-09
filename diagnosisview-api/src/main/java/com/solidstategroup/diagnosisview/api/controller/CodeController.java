@@ -46,21 +46,21 @@ public class CodeController extends BaseController {
         codeService.delete(code);
     }
 
-    @ApiOperation(value = "Get All Codes",
-            notes = "Admin User endpoint to get all codes within the DiagnosisView",
+    @ApiOperation(value = "Get All activeCodes",
+            notes = "User endpoint to get all active codes within the DiagnosisView",
             response = CodeDto[].class)
     @GetMapping("/code")
-    public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
+    public List<CodeDto> getAllActiveCodes(HttpServletRequest request) throws Exception {
 
         User user = getUserFromRequest(request);
 
         if (user != null &&
                 "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
 
-            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+            return codeService.getAllActive(Institution.UNIVERSITY_OF_EDINBURGH);
         }
 
-        return codeService.getAll(null);
+        return codeService.getAllActive(null);
     }
 
     @ApiOperation(value = "Find Codes by synonyms",

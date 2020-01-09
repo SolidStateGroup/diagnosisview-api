@@ -161,6 +161,29 @@ public class CodeServiceImpl implements CodeService {
     /**
      * {@inheritDoc}
      */
+    @Override
+    @Cacheable("getAllCodes")
+    public List<CodeDto> getAllActive(Institution institution) {
+
+        return codeRepository
+                .findAllActive()
+                .parallelStream()
+                .map(code -> CodeDto
+                        .builder()
+                        .code(code.getCode())
+                        .links(buildLinkDtos(code, institution))
+                        .categories(buildCategories(code))
+                        .deleted(shouldBeDeleted(code))
+                        .friendlyName(code.getPatientFriendlyName())
+                        .build())
+                .sorted(Comparator.comparing(CodeDto::getFriendlyName,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .collect(toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution) {
         List<CodeDto> filteredCodes = new ArrayList<>();
         Set<Code> foundCodes = new HashSet<>();

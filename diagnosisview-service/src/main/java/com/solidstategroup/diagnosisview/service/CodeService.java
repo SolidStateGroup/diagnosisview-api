@@ -33,6 +33,15 @@ public interface CodeService {
      */
     List<CodeDto> getAll(Institution institution);
 
+
+    /**
+     * Get All active codes, has not been removed externally and not hidden from patient.
+     * Used for mobile app.
+     *
+     * @return List code dtos
+     */
+    List<CodeDto> getAllActive(Institution institution);
+
     /**
      * Search for Codes by synonyms.
      *
@@ -71,7 +80,7 @@ public interface CodeService {
      *
      * Used when creating or updating Code from the DV Web.
      *
-     * @param code     - code to update or create
+     * @param code - code to update or create
      */
     Code upsert(Code code) throws Exception;
 

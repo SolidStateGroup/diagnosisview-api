@@ -22,11 +22,9 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
      */
     Code findOneByCode(final String code);
 
-
     @Query("SELECT c FROM Code c " +
             " WHERE UPPER(c.code) LIKE UPPER(:code) ")
     List<Code> findByCode(@Param("code") String code);
-
 
     @Query("SELECT c FROM Code c " +
             " JOIN c.externalStandards es " +
@@ -35,9 +33,19 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
 
     @Query(value = "SELECT * FROM pv_code, " +
             " jsonb_array_elements(synonyms) " +
-            " WHERE  value->>'name' LIKE :synonym",
+            " WHERE removed_externally = false AND hide_from_patients = false " +
+            " AND UPPER(value->>'name') LIKE UPPER(:synonym)",
             nativeQuery = true)
-    List<Code> findBySynonym(@Param("synonym") String synonym);//
+    List<Code> findBySynonym(@Param("synonym") String synonym);
 
     boolean existsByCode(String code);
+
+    /**
+     * Find all the Code that has not been removed externally and not hidden from patient.
+     *
+     * @return a list of Code objects
+     */
+    @Query("SELECT c FROM Code c  " +
+            " WHERE c.removedExternally = false AND c.hideFromPatients = false ")
+    List<Code> findAllActive();
 }
