@@ -23,7 +23,9 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
@@ -33,6 +35,13 @@ import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
 public class LinkServiceImpl implements LinkService {
 
     private static final String LINK_SEQ = "link_seq";
+    private static Map<DifficultyLevel, Integer> defaultOrder = new HashMap<>();
+
+    static {
+        defaultOrder.put(DifficultyLevel.GREEN, 1);
+        defaultOrder.put(DifficultyLevel.AMBER, 11);
+        defaultOrder.put(DifficultyLevel.RED, 21);
+    }
 
     private final EntityManager entityManager;
     private final LinkRuleService linkRuleService;
@@ -121,7 +130,7 @@ public class LinkServiceImpl implements LinkService {
      * {@inheritDoc}
      */
     @Override
-    public Link upsert(Link link, boolean fromSync) {
+    public Link upsert(Link link, Set<Link> codeLinks, boolean fromSync) {
         // TODO: check Links transformationsOnly and freeLink are set from sync
 
         if (!StringUtils.isEmpty(link.getLink()) && !link.getLink().startsWith("http")) {
@@ -131,7 +140,7 @@ public class LinkServiceImpl implements LinkService {
         //Get the NICE lookup if it exists
         populatDVLookups();
 
-        link = checkLink(link, fromSync);
+        link = checkLink(link, codeLinks, fromSync);
 
         // Check if the link matches any urls for logos,
         // if it does, assign it that logo url
@@ -160,6 +169,7 @@ public class LinkServiceImpl implements LinkService {
         return linkRepository.save(link);
     }
 
+    @Override
     public Link addExternalLink(Link link, Code code) throws Exception {
 
         if (link.getLinkType() == null) {
@@ -185,14 +195,10 @@ public class LinkServiceImpl implements LinkService {
 
         Date now = new Date();
 
-        // TODO: apply position number rules
-
         link.setCode(code);
-        link.setDifficultyLevel(DifficultyLevel.AMBER);
         link.setDisplayLink(true);
-        if (link.getDisplayOrder() == null) {
-            link.setDisplayOrder(1);
-        }
+        link.setDifficultyLevel(DifficultyLevel.AMBER); // adding new Link, set Difficulty level and display order
+        setLinkDisplayOrder(link, code.getLinks());
         link.setTransformationsOnly(false);
         link.setFreeLink(false);
         link.setCreated(now);
@@ -272,10 +278,12 @@ public class LinkServiceImpl implements LinkService {
     /**
      * Check an existing link and see if it has the difficulty set etc
      *
-     * @param link
+     * @param link      a link to check
+     * @param codeLinks an list of Link objects from the Code this link belongs to
+     * @param fromSync  if we executing from code sync
      * @return
      */
-    private Link checkLink(Link link, boolean fromSync) {
+    private Link checkLink(Link link, Set<Link> codeLinks, boolean fromSync) {
 
         Link existingLink = linkRepository.findById(link.getId())
                 .orElse(null);
@@ -320,13 +328,14 @@ public class LinkServiceImpl implements LinkService {
 
         // If the link is a NICE link, we should categorise it as such
         // In the future this maybe extended into its own function
+        // if link is new we set difficulty level to AMBER and set Display Order based on rules
         if (link.getLink() != null && link.getLink().contains("nice.org.uk")) {
 
             link.setLinkType(niceLinksLookup);
 
             if (existingLink == null || !existingLink.hasDifficultyLevelSet()) {
-                // TODO: apply position number rules
                 link.setDifficultyLevel(DifficultyLevel.AMBER);
+                setLinkDisplayOrder(link, codeLinks);
             }
         }
 
@@ -410,6 +419,31 @@ public class LinkServiceImpl implements LinkService {
         }
         // all links validated
         return true;
+    }
+
+
+    /**
+     * Based on the difficulty level and existing links in the Code
+     * set correct display order.
+     *
+     * @param link      a link to set display order for
+     * @param codeLinks an list of Link objects from the Code
+     */
+    private void setLinkDisplayOrder(Link link, Set<Link> codeLinks) {
+
+        int highestOrder = defaultOrder.get(link.getDifficultyLevel());
+        if (!CollectionUtils.isEmpty(codeLinks)) {
+            for (Link codeLink : codeLinks) {
+                if ((codeLink.getId() != null && !codeLink.getId().equals(link.getId()))
+                        && codeLink.getDifficultyLevel().equals(link.getDifficultyLevel())) {
+                    if (highestOrder < codeLink.getDisplayOrder()) {
+                        highestOrder = codeLink.getDisplayOrder();
+                    }
+                }
+            }
+        }
+
+        link.setDisplayOrder(++highestOrder);
     }
 
 

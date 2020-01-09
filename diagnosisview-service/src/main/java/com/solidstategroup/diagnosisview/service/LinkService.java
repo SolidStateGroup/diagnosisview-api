@@ -27,11 +27,14 @@ public interface LinkService {
      * Creates a new link if link does not already
      * exist or updates a link.
      *
-     * @param link     new link or updated link
-     * @param fromSync a flag to indicate if the upsert triggered from sync job
+     * Called by DV web as well as PV sync job
+     *
+     * @param link      new link or updated link
+     * @param codeLinks an list of Link objects from the Code this link belongs to
+     * @param fromSync  a flag to indicate if the upsert triggered from sync job
      * @return created/updated link
      */
-    Link upsert(Link link, boolean fromSync);
+    Link upsert(Link link, Set<Link> codeLinks, boolean fromSync);
 
     Link addExternalLink(Link link, Code code) throws Exception;
 
