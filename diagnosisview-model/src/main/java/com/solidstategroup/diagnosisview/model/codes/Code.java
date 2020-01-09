@@ -1,7 +1,14 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.solidstategroup.diagnosisview.model.Synonym;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import lombok.Builder;
 import lombok.Data;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -20,6 +27,10 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "pv_code")
+@TypeDefs({
+        @TypeDef(name = "json", typeClass = JsonStringType.class),
+        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
 public class Code extends AuditModel {
 
     @Id
@@ -72,6 +83,11 @@ public class Code extends AuditModel {
     @OneToOne
     @JoinColumn(name = "standard_type_id")
     private Lookup standardType;
+
+    @Type(type = "jsonb")
+    @Column(name = "synonyms", columnDefinition = "jsonb")
+    @Builder.Default
+    private Set<Synonym> synonyms = new HashSet<>();
 
     /**
      * Adds a link to the current code.
