@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
 import com.solidstategroup.diagnosisview.model.Synonym;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -31,6 +32,7 @@ import java.util.Set;
         @TypeDef(name = "json", typeClass = JsonStringType.class),
         @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 })
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // need this to avoid Serialization issue
 public class Code extends AuditModel {
 
     @Id

@@ -13,6 +13,7 @@ import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -123,7 +124,7 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Upsert Code",
             notes = "Creates code within DV or updates if already exists",
             response = Code.class)
-    @RequestMapping(path = "/code", method = {POST, PUT})
+    @RequestMapping(path = "/code", method = {POST, PUT}, produces = MediaType.APPLICATION_JSON_VALUE)
     public Code upsertCode(@RequestBody final Code code,
                            HttpServletRequest request) throws Exception {
 

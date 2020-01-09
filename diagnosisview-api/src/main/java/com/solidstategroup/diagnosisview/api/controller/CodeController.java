@@ -19,9 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
-import static org.springframework.web.bind.annotation.RequestMethod.PUT;
-
 @RestController
 @RequestMapping("/api")
 public class CodeController extends BaseController {
@@ -36,21 +33,6 @@ public class CodeController extends BaseController {
         super(userService);
         this.codeService = codeService;
         this.linkService = linkService;
-    }
-
-    @ApiOperation(value = "Create Code",
-            notes = "Creates/Updates code within DV",
-            response = Code.class)
-    @RequestMapping(value = "/code", method = {PUT, POST})
-    public Code upsertCode(@RequestBody final Code code) {
-
-        codeService
-                .save(code)
-
-                .getLinks()
-                .forEach(linkService::update);
-
-        return code;
     }
 
     @ApiOperation(value = "Delete DV code",

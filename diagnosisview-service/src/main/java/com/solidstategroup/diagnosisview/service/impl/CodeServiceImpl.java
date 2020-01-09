@@ -358,6 +358,9 @@ public class CodeServiceImpl implements CodeService {
             code.setId(selectIdFrom(CODE_SEQ));
         }
 
+        // validate Links order for the Code
+        linkService.checkLinksOrder(code.getLinks(), code);
+
         code.setLinks(code
                 .getLinks()
                 .stream()
@@ -421,14 +424,14 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(links
                 .stream()
                 .peek(l -> l.setCode(code))
-                .map(linkService::upsert)
+                .map(l -> linkService.upsert(l, false))
                 .collect(toSet()));
 
         return codeRepository.save(code);
     }
 
     @Override
-    public Code updateCode(Code code) {
+    public Code updateCodeFromSync(Code code) {
 
         long start = System.currentTimeMillis();
         log.debug(" processing CODE {}", code.getCode());
@@ -476,7 +479,7 @@ public class CodeServiceImpl implements CodeService {
             code.setLinks(links
                     .stream()
                     .peek(l -> l.setCode(code))
-                    .map(linkService::upsert)
+                    .map(l -> linkService.upsert(l, true))
                     .collect(toSet()));
 
             codeRepository.save(code);
@@ -498,7 +501,7 @@ public class CodeServiceImpl implements CodeService {
         Code currentCode = codeRepository.findById(code.getId())
                 .orElse(null);
 
-        //If there is a code, or it has been updated, update
+        // If there is a code, or it has been updated, update
         return !(currentCode == null ||
                 !currentCode.getCode().equals(code.getCode()) ||
                 (!StringUtils.isEmpty(currentCode.getPatientFriendlyName()) &&
