@@ -452,6 +452,20 @@ public class CodeServiceImpl implements CodeService {
         return codeRepository.save(code);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
+    public Code updateCodeSynonyms(Code code) throws Exception {
+        Code existingCode = codeRepository.findById(code.getId())
+                .orElseThrow(() -> new BadRequestException("The Code not exist within DiagnosisView."));
+
+
+        existingCode.getSynonyms().clear();
+        existingCode.setSynonyms(code.getSynonyms());
+
+        return codeRepository.save(existingCode);
+    }
+
     @Override
     public Code updateCodeFromSync(Code code) {
 
