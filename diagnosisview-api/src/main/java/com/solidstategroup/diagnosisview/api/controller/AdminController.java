@@ -163,7 +163,7 @@ public class AdminController extends BaseController {
     }
 
     @ApiOperation(value = "Update Synonyms for code",
-            notes = "Updates a link with DV editable fields.",
+            notes = "Updates a synonyms for existing Code, overriding old ones with new list.",
             response = Link.class)
     @PutMapping(value = "/code/synonyms")
     public Code updateCodeSynonyms(@RequestBody final Code code,

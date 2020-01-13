@@ -85,7 +85,7 @@ public interface CodeService {
     Code upsert(Code code) throws Exception;
 
     /**
-     * Updates synonyms for a Code from DV Web
+     * Updates synonyms for a Code from DV Web, by overriding old ones with new list.
      *
      * @param code - code to update synonyms for
      */
