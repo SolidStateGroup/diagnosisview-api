@@ -162,6 +162,18 @@ public class AdminController extends BaseController {
         return linkService.update(link);
     }
 
+    @ApiOperation(value = "Update Synonyms for code",
+            notes = "Updates a link with DV editable fields.",
+            response = Link.class)
+    @PutMapping(value = "/code/synonyms")
+    public Code updateCodeSynonyms(@RequestBody final Code code,
+                           HttpServletRequest request) throws Exception {
+
+        isAdminUser(request);
+
+        return codeService.updateCodeSynonyms(code);
+    }
+
     @ApiOperation(value = "Get External Standards",
             notes = "Get all external standards within DV",
             response = ExternalStandard.class,

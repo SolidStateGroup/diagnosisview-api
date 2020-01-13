@@ -85,6 +85,13 @@ public interface CodeService {
     Code upsert(Code code) throws Exception;
 
     /**
+     * Updates synonyms for a Code from DV Web
+     *
+     * @param code - code to update synonyms for
+     */
+    Code updateCodeSynonyms(Code code) throws Exception;
+
+    /**
      * Create or update a Code from syn job.
      *
      * Should be used with sync only as has sync specific logic.
