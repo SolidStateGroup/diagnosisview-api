@@ -459,8 +459,7 @@ public class CodeServiceImpl implements CodeService {
         Code existingCode = codeRepository.findById(code.getId())
                 .orElseThrow(() -> new BadRequestException("The Code not exist within DiagnosisView."));
 
-
-        existingCode.getSynonyms().clear();
+        existingCode.setSynonyms(new HashSet<>());
         existingCode.setSynonyms(code.getSynonyms());
 
         return codeRepository.save(existingCode);
