@@ -28,7 +28,7 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
 
     @Query("SELECT c FROM Code c " +
             " JOIN c.externalStandards es " +
-            " WHERE es.codeString LIKE :code")
+            " WHERE removed_externally = false AND hide_from_patients = false AND es.codeString LIKE :code")
     List<Code> findByExternalStandards(@Param("code") String code);
 
     @Query(value = "SELECT * FROM pv_code, " +

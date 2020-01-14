@@ -209,14 +209,18 @@ public class CodeServiceImpl implements CodeService {
 
             // do wildcard search eg search on I25%
             List<Code> wildcardCodes = codeRepository.findByExternalStandards(codePrefix.concat("%"));
-            // if more then 1 found do exact match search
-            if (wildcardCodes.size() > 1) {
 
-                List<Code> fullMatchCodes = codeRepository.findByExternalStandards(code);
-                // found codes add to main list, otherwise
-                // default to wildcard search
-                if (!CollectionUtils.isEmpty(fullMatchCodes)) {
-                    foundCodes.addAll(fullMatchCodes);
+            if (!CollectionUtils.isEmpty(wildcardCodes)) {
+                // if more then 1 found do exact match search
+                if (wildcardCodes.size() > 1) {
+                    List<Code> fullMatchCodes = codeRepository.findByExternalStandards(code);
+                    // found codes add to main list, otherwise
+                    // default to wildcard search
+                    if (!CollectionUtils.isEmpty(fullMatchCodes)) {
+                        foundCodes.addAll(fullMatchCodes);
+                    } else {
+                        foundCodes.addAll(wildcardCodes);
+                    }
                 } else {
                     foundCodes.addAll(wildcardCodes);
                 }
