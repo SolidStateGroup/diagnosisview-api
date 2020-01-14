@@ -56,8 +56,7 @@ public class Link extends AuditModel {
     @Column(name = "transformations_only")
     private Boolean transformationsOnly = false;
 
-    @OneToMany(mappedBy = "link", fetch = FetchType.EAGER,
-            cascade = {CascadeType.PERSIST, CascadeType.REFRESH}, orphanRemoval = true)
+    @OneToMany(mappedBy = "link", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<LinkRuleMapping> mappingLinks = new HashSet<>();
 
     @Transient
@@ -149,7 +148,9 @@ public class Link extends AuditModel {
         this.freeLink = freeLink;
     }
 
-    public boolean hasTransformationOnly() { return this.transformationsOnly != null; }
+    public boolean hasTransformationOnly() {
+        return this.transformationsOnly != null;
+    }
 
     public boolean getTransformationsOnly() {
         return transformationsOnly;

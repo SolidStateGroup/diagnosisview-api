@@ -1,7 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
-import com.solidstategroup.diagnosisview.model.Synonym;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.solidstategroup.diagnosisview.model.Synonym;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -17,7 +17,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -34,9 +33,6 @@ import java.util.Set;
 })
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // need this to avoid Serialization issue
 public class Code extends AuditModel {
-
-    @Id
-    private Long id;
 
     @Column(name = "code")
     private String code;
