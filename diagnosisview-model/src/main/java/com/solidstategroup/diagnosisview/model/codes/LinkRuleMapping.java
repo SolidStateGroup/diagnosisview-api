@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 @Getter
 @Setter
@@ -26,7 +27,7 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "dv_link_rule_mapping")
-public class LinkRuleMapping {
+public class LinkRuleMapping implements Serializable {
 
     @Id
     @GeneratedValue(generator = "uuid2")
