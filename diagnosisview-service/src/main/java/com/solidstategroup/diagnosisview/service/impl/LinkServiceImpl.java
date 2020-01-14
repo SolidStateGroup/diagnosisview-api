@@ -24,6 +24,7 @@ import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -203,6 +204,7 @@ public class LinkServiceImpl implements LinkService {
         link.setFreeLink(false);
         link.setCreated(now);
         link.setLastUpdate(now);
+        link.setMappingLinks(new HashSet<>());
 
         link.setId(selectIdFrom(LINK_SEQ));
 
@@ -247,6 +249,7 @@ public class LinkServiceImpl implements LinkService {
         savedLinks.forEach(l -> {
             l.setName(link.getName());
             l.setLink(link.getLink());
+            l.setLastUpdate(new Date());
             linkRepository.save(l);
         });
     }
