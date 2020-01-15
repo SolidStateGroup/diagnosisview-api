@@ -70,10 +70,10 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
     @Override
     public void syncBmjLinks() {
 
-
+        long start = System.currentTimeMillis();
         List<Code> codes = codeService.getAll();
 
-        log.info("Processing {} codes.", codes.size());
+        log.info("BMJ Processing {} codes.", codes.size());
 
         codes.forEach(code -> {
 
@@ -98,6 +98,8 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                 );
             }
         });
+        long stop = System.currentTimeMillis();
+        log.info("BMJ DONE Processing codes, timing {}.", (stop - start));
     }
 
     @Override
