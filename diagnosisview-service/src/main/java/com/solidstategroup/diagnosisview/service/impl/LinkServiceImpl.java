@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.compareIgnoreCase;
 
@@ -429,24 +430,34 @@ public class LinkServiceImpl implements LinkService {
      * Based on the difficulty level and existing links in the Code
      * set correct display order.
      *
+     * The rule is to use FIRST non-taken number from min to max range
+     * per difficulty level eg if we have 11, 14, 15 position taken position
+     * order will be set to 12.
+     *
      * @param link      a link to set display order for
      * @param codeLinks an list of Link objects from the Code
      */
     private void setLinkDisplayOrder(Link link, Set<Link> codeLinks) {
 
-        int highestOrder = defaultOrder.get(link.getDifficultyLevel());
+        // default to min range for the Difficulty level
+        int firstAvailable = defaultOrder.get(link.getDifficultyLevel());
+
         if (!CollectionUtils.isEmpty(codeLinks)) {
-            for (Link codeLink : codeLinks) {
-                if ((codeLink.getId() != null && !codeLink.getId().equals(link.getId()))
-                        && codeLink.getDifficultyLevel().equals(link.getDifficultyLevel())) {
-                    if (highestOrder < codeLink.getDisplayOrder()) {
-                        highestOrder = codeLink.getDisplayOrder();
-                    }
-                }
+            // extract all position numbers for Difficulty level, and sort
+            Set<Integer> availableNumbers = codeLinks.stream()
+                    .filter(code -> ((code.getId() != null && !code.getId().equals(link.getId()))
+                            && code.getDifficultyLevel().equals(link.getDifficultyLevel())))
+                    .map(code -> code.getDisplayOrder())
+                    .sorted()
+                    .collect(Collectors.toCollection(HashSet::new));
+
+            // find first none taken
+            while (availableNumbers.contains(firstAvailable)) {
+                firstAvailable++;
             }
         }
 
-        link.setDisplayOrder(++highestOrder);
+        link.setDisplayOrder(firstAvailable);
     }
 
 
