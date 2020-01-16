@@ -36,6 +36,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -71,6 +72,8 @@ public class CodeServiceImpl implements CodeService {
     private final LinkRepository linkRepository;
     private final LinkService linkService;
 
+    private final SynonymsService synonymsService;
+
     // Temporary hack to get ids for codes and links.
     private EntityManager entityManager;
 
@@ -81,6 +84,7 @@ public class CodeServiceImpl implements CodeService {
                            ExternalStandardRepository externalStandardRepository,
                            LinkRepository linkRepository,
                            LinkService linkService,
+                           SynonymsService synonymsService,
                            LookupTypeRepository lookupTypeRepository,
                            LookupRepository lookupRepository,
                            EntityManager entityManager) {
@@ -92,6 +96,7 @@ public class CodeServiceImpl implements CodeService {
         this.externalStandardRepository = externalStandardRepository;
         this.linkRepository = linkRepository;
         this.linkService = linkService;
+        this.synonymsService = synonymsService;
         this.lookupTypeRepository = lookupTypeRepository;
         this.lookupRepository = lookupRepository;
         this.entityManager = entityManager;
@@ -151,6 +156,95 @@ public class CodeServiceImpl implements CodeService {
                 .sorted(Comparator.comparing(CodeDto::getFriendlyName,
                         Comparator.nullsFirst(Comparator.naturalOrder())))
                 .collect(toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Cacheable("getAllCodes")
+    public List<CodeDto> getAllActive(Institution institution) {
+
+        return codeRepository
+                .findAllActive()
+                .parallelStream()
+                .map(code -> CodeDto
+                        .builder()
+                        .code(code.getCode())
+                        .links(buildLinkDtos(code, institution))
+                        .categories(buildCategories(code))
+                        .deleted(shouldBeDeleted(code))
+                        .friendlyName(code.getPatientFriendlyName())
+                        .build())
+                .sorted(Comparator.comparing(CodeDto::getFriendlyName,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .collect(toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution) {
+        List<CodeDto> filteredCodes = new ArrayList<>();
+        Set<Code> foundCodes = new HashSet<>();
+        if (StringUtils.isEmpty(searchTerm) || searchTerm.length() < 3) {
+            return filteredCodes;
+        }
+
+        // search DV by synonyms
+        List<Code> dvCodes = codeRepository.findBySynonym("%".concat(searchTerm).concat("%"));
+        if (!CollectionUtils.isEmpty(dvCodes)) {
+            foundCodes.addAll(dvCodes);
+        }
+
+        // search diagnosis by synonyms, and get icd10 codes back
+        Set<String> externalStandardCodes = synonymsService.searchSynonyms(searchTerm);
+
+        for (String code : externalStandardCodes) {
+
+            // extract only first part before dot(.) as DV only stores
+            // first part of the codes eg I25.5 we only need I25 part
+            String[] codeArr = code.split("\\.");
+            String codePrefix = codeArr[0];
+
+            // do wildcard search eg search on I25%
+            List<Code> wildcardCodes = codeRepository.findByExternalStandards(codePrefix.concat("%"));
+
+            if (!CollectionUtils.isEmpty(wildcardCodes)) {
+                // if more then 1 found do exact match search
+                if (wildcardCodes.size() > 1) {
+                    List<Code> fullMatchCodes = codeRepository.findByExternalStandards(code);
+                    // found codes add to main list, otherwise
+                    // default to wildcard search
+                    if (!CollectionUtils.isEmpty(fullMatchCodes)) {
+                        foundCodes.addAll(fullMatchCodes);
+                    } else {
+                        foundCodes.addAll(wildcardCodes);
+                    }
+                } else {
+                    foundCodes.addAll(wildcardCodes);
+                }
+            }
+        }
+
+        // convert Codes to DTO and return
+        if (!CollectionUtils.isEmpty(foundCodes)) {
+            return foundCodes.parallelStream()
+                    .map(code -> CodeDto
+                            .builder()
+                            .code(code.getCode())
+                            .links(buildLinkDtos(code, institution))
+                            .categories(buildCategories(code))
+                            .deleted(shouldBeDeleted(code))
+                            .friendlyName(code.getPatientFriendlyName())
+                            .build())
+                    .sorted(Comparator.comparing(CodeDto::getFriendlyName,
+                            Comparator.nullsFirst(Comparator.naturalOrder())))
+                    .collect(toList());
+        }
+
+
+        return filteredCodes;
     }
 
     /**
@@ -290,6 +384,9 @@ public class CodeServiceImpl implements CodeService {
             code.setId(selectIdFrom(CODE_SEQ));
         }
 
+        // validate Links order for the Code
+        linkService.checkLinksOrder(code.getLinks(), code);
+
         code.setLinks(code
                 .getLinks()
                 .stream()
@@ -353,14 +450,27 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(links
                 .stream()
                 .peek(l -> l.setCode(code))
-                .map(linkService::upsert)
+                .map(l -> linkService.upsert(l, links, false))
                 .collect(toSet()));
 
         return codeRepository.save(code);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public Code updateCode(Code code) {
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
+    public Code updateCodeSynonyms(Code code) throws Exception {
+        Code existingCode = codeRepository.findById(code.getId())
+                .orElseThrow(() -> new BadRequestException("The Code not exist within DiagnosisView."));
+
+        existingCode.setSynonyms(new HashSet<>());
+        existingCode.setSynonyms(code.getSynonyms());
+
+        return codeRepository.save(existingCode);
+    }
+
+    @Override
+    public Code updateCodeFromSync(Code code) {
 
         long start = System.currentTimeMillis();
         log.debug(" processing CODE {}", code.getCode());
@@ -408,7 +518,7 @@ public class CodeServiceImpl implements CodeService {
             code.setLinks(links
                     .stream()
                     .peek(l -> l.setCode(code))
-                    .map(linkService::upsert)
+                    .map(l -> linkService.upsert(l, links, true))
                     .collect(toSet()));
 
             codeRepository.save(code);
@@ -430,7 +540,7 @@ public class CodeServiceImpl implements CodeService {
         Code currentCode = codeRepository.findById(code.getId())
                 .orElse(null);
 
-        //If there is a code, or it has been updated, update
+        // If there is a code, or it has been updated, update
         return !(currentCode == null ||
                 !currentCode.getCode().equals(code.getCode()) ||
                 (!StringUtils.isEmpty(currentCode.getPatientFriendlyName()) &&

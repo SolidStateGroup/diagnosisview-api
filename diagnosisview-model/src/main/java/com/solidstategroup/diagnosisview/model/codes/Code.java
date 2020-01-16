@@ -1,7 +1,15 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.solidstategroup.diagnosisview.model.Synonym;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import lombok.Builder;
 import lombok.Data;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -9,7 +17,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -20,10 +27,12 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "pv_code")
+@TypeDefs({
+        @TypeDef(name = "json", typeClass = JsonStringType.class),
+        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // need this to avoid Serialization issue
 public class Code extends AuditModel {
-
-    @Id
-    private Long id;
 
     @Column(name = "code")
     private String code;
@@ -72,6 +81,11 @@ public class Code extends AuditModel {
     @OneToOne
     @JoinColumn(name = "standard_type_id")
     private Lookup standardType;
+
+    @Type(type = "jsonb")
+    @Column(name = "synonyms", columnDefinition = "jsonb")
+    @Builder.Default
+    private Set<Synonym> synonyms = new HashSet<>();
 
     /**
      * Adds a link to the current code.

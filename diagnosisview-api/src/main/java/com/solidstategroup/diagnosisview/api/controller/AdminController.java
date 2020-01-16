@@ -1,10 +1,12 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LoginRequest;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
+import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -13,6 +15,7 @@ import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -123,13 +126,28 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Upsert Code",
             notes = "Creates code within DV or updates if already exists",
             response = Code.class)
-    @RequestMapping(path = "/code", method = {POST, PUT})
+    @RequestMapping(path = "/code", method = {POST, PUT}, produces = MediaType.APPLICATION_JSON_VALUE)
     public Code upsertCode(@RequestBody final Code code,
                            HttpServletRequest request) throws Exception {
 
         isAdminUser(request);
 
         return codeService.upsert(code);
+    }
+
+    @ApiOperation(value = "Get All Codes",
+            notes = "Admin User endpoint to get all codes within the DiagnosisView",
+            response = CodeDto[].class)
+    @GetMapping("/codes")
+    public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
+
+        User user = getUserFromRequest(request);
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        return codeService.getAll(null);
     }
 
     @ApiOperation(value = "Update Link",
@@ -142,6 +160,18 @@ public class AdminController extends BaseController {
         isAdminUser(request);
 
         return linkService.update(link);
+    }
+
+    @ApiOperation(value = "Update Synonyms for code",
+            notes = "Updates a synonyms for existing Code, overriding old ones with new list.",
+            response = Link.class)
+    @PutMapping(value = "/code/synonyms")
+    public Code updateCodeSynonyms(@RequestBody final Code code,
+                           HttpServletRequest request) throws Exception {
+
+        isAdminUser(request);
+
+        return codeService.updateCodeSynonyms(code);
     }
 
     @ApiOperation(value = "Get External Standards",

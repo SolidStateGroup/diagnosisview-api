@@ -245,11 +245,11 @@ public class CodeSyncServiceImpl implements CodeSyncService {
                 ResponseEntity<Code> response = restTemplate
                         .exchange(PATIENTVIEW_CODE_DETAILS_ENDPOINT + code.getId(), HttpMethod.GET, entity, Code.class);
                 if (response.getStatusCode() == HttpStatus.OK) {
-                    return codeService.updateCode(response.getBody());
+                    return codeService.updateCodeFromSync(response.getBody());
                 }
             }
 
-            return codeService.updateCode(code);
+            return codeService.updateCodeFromSync(code);
         }, taskExecutor).exceptionally(th -> null);
     }
 

@@ -19,9 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
-import static org.springframework.web.bind.annotation.RequestMethod.PUT;
-
 @RestController
 @RequestMapping("/api")
 public class CodeController extends BaseController {
@@ -38,21 +35,6 @@ public class CodeController extends BaseController {
         this.linkService = linkService;
     }
 
-    @ApiOperation(value = "Create Code",
-            notes = "Creates/Updates code within DV",
-            response = Code.class)
-    @RequestMapping(value = "/code", method = {PUT, POST})
-    public Code upsertCode(@RequestBody final Code code) {
-
-        codeService
-                .save(code)
-
-                .getLinks()
-                .forEach(linkService::update);
-
-        return code;
-    }
-
     @ApiOperation(value = "Delete DV code",
             notes = "Pass a code name to be deleted. This endpoint will only delete DV created codes")
     @DeleteMapping("/code")
@@ -64,21 +46,39 @@ public class CodeController extends BaseController {
         codeService.delete(code);
     }
 
-    @ApiOperation(value = "Get All Codes",
-            notes = "Admin User endpoint to get all codes within the DiagnosisView",
+    @ApiOperation(value = "Get All activeCodes",
+            notes = "User endpoint to get all active codes within the DiagnosisView",
             response = CodeDto[].class)
     @GetMapping("/code")
-    public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
+    public List<CodeDto> getAllActiveCodes(HttpServletRequest request) throws Exception {
 
         User user = getUserFromRequest(request);
 
         if (user != null &&
                 "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
 
-            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+            return codeService.getAllActive(Institution.UNIVERSITY_OF_EDINBURGH);
         }
 
-        return codeService.getAll(null);
+        return codeService.getAllActive(null);
+    }
+
+    @ApiOperation(value = "Find Codes by synonyms",
+            notes = "Admin User endpoint to get all codes within the DiagnosisView by synonyms",
+            response = CodeDto[].class)
+    @GetMapping("/code/synonyms/{term}")
+    public List<CodeDto> findCodesBySynonyms(@PathVariable("term") final String term,
+                                             HttpServletRequest request) throws Exception {
+
+        User user = getUserFromRequest(request);
+
+        if (user != null &&
+                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+
+            return codeService.getCodesBySynonyms(term, Institution.UNIVERSITY_OF_EDINBURGH);
+        }
+
+        return codeService.getCodesBySynonyms(term, null);
     }
 
     @ApiOperation(value = "Get All Categories",

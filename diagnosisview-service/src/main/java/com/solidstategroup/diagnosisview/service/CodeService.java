@@ -8,7 +8,7 @@ import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import java.util.List;
 
 /**
- * Interface to interact with dashboard users.
+ * Interface to interact with codes.
  */
 public interface CodeService {
 
@@ -32,6 +32,24 @@ public interface CodeService {
      * @return List code dtos
      */
     List<CodeDto> getAll(Institution institution);
+
+
+    /**
+     * Get All active codes, has not been removed externally and not hidden from patient.
+     * Used for mobile app.
+     *
+     * @return List code dtos
+     */
+    List<CodeDto> getAllActive(Institution institution);
+
+    /**
+     * Search for Codes by synonyms.
+     *
+     * @param searchTerm  a synonym value to search for
+     * @param institution
+     * @return a List code dtos
+     */
+    List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution);
 
     /**
      * Get a code by a given code
@@ -58,18 +76,30 @@ public interface CodeService {
 
     /**
      * Create or update a code, creating all the pre-requestite categories, external standards etc
-     * where required
+     * where required.
      *
-     * @param code     - code to update or create
+     * Used when creating or updating Code from the DV Web.
+     *
+     * @param code - code to update or create
      */
     Code upsert(Code code) throws Exception;
 
     /**
-     * Create or update a Code
+     * Updates synonyms for a Code from DV Web, by overriding old ones with new list.
+     *
+     * @param code - code to update synonyms for
+     */
+    Code updateCodeSynonyms(Code code) throws Exception;
+
+    /**
+     * Create or update a Code from syn job.
+     *
+     * Should be used with sync only as has sync specific logic.
+     * Use upsert(Code) for DV Web code update
      *
      * @param code a code to save
      */
-    Code updateCode(Code code);
+    Code updateCodeFromSync(Code code);
 
     Code getByInstitution(String code, Institution institution);
 }

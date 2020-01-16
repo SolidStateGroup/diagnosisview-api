@@ -70,10 +70,10 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
     @Override
     public void syncBmjLinks() {
 
-
+        long start = System.currentTimeMillis();
         List<Code> codes = codeService.getAll();
 
-        log.info("Processing {} codes.", codes.size());
+        log.info("BMJ Processing {} codes.", codes.size());
 
         codes.forEach(code -> {
 
@@ -98,6 +98,34 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                 );
             }
         });
+        long stop = System.currentTimeMillis();
+        log.info("BMJ DONE Processing codes, timing {}.", (stop - start));
+    }
+
+    @Override
+    public void syncBmjLinks(String codeStr) {
+
+        Code code = codeService.get(codeStr);
+
+        log.info("Processing {} code.", code.getCode());
+
+
+        final Optional<CodeExternalStandard> snomed = getExternalStandard(code, SNOMED_CT);
+
+        boolean foundSnomed = false;
+
+        if (snomed.isPresent()) {
+            foundSnomed = processLink(
+                    buildUrl(SNOMED_CT, snomed.get().getCodeString(), code.getCode()), code, SNOMED_CT);
+        }
+
+        if (!foundSnomed) {
+            getExternalStandard(code, ICD_10)
+                    .ifPresent(icd10 -> processLink(
+                            buildUrl(ICD_10, icd10.getCodeString(), code.getCode()), code, ICD_10)
+                    );
+        }
+
     }
 
     /**
@@ -164,7 +192,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                                 linkToUpdate.setExternalId(id);
                                 linkService.updateExternalLinks(linkToUpdate);
 
-                                log.info("Correlation id: {}. Link updated {}", correlation, linkToUpdate.getId());
+                                log.info("Correlation id: {}. Links updated for ext id {}", correlation, id);
                                 log.debug("Correlation id: {}. Time taken: {}", correlation,
                                         Duration.between(start, Instant.now()));
                                 return true;
@@ -193,9 +221,9 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                 }
             }
         } catch (Exception e) {
-
+            log.error("Exception in Bmj.processLink()", e);
             log.debug("Correlation id: {}. Could not get links for {} using standard {} ", correlation, code.getCode(), standard);
-            log.error("Correlation id: {}. Url: {}, Response status code: {}",
+            log.error("Exception in Bmj.processLink() Correlation id: {}. Url: {}, Response status code: {}",
                     correlation, url, entity != null ? entity.getStatusCode() : "none returned");
         }
 
