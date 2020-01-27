@@ -109,6 +109,33 @@ public class CodeSyncServiceImpl implements CodeSyncService {
         PATIENTVIEW_CODE_DETAILS_ENDPOINT = format("%scode/", patientviewUrl);
     }
 
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
+    @Transactional
+    public void syncCode(String code) {
+
+        long start = System.currentTimeMillis();
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+            headers.set(AUTH_HEADER, getLoginToken());
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
+
+            Code foundCode = codeService.get(code);
+
+            ResponseEntity<Code> response = restTemplate
+                    .exchange(PATIENTVIEW_CODE_DETAILS_ENDPOINT + foundCode.getId(), HttpMethod.GET, entity, Code.class);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                codeService.updateCodeFromSync(response.getBody());
+            }
+        } catch (Exception e) {
+            log.error("Failed to sync PV codes", e);
+        }
+
+        long stop = System.currentTimeMillis();
+        log.info("Finished Code Sync from PatientView, timing {}", (stop - start));
+    }
+
 
     @Override
     @Scheduled(cron = "${cron.job.sync.code}")

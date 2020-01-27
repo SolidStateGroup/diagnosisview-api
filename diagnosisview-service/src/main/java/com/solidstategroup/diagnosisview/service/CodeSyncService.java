@@ -8,6 +8,13 @@ import java.io.IOException;
 public interface CodeSyncService {
 
     /**
+     * Sync single code from PV
+     *
+     * @param code a code to sync
+     * @throws IOException
+     */
+    void syncCode(String code) throws IOException;
+    /**
      * Sync Codes from patientview to diagnosisview
      */
     void syncCodes();
