@@ -469,15 +469,19 @@ public class CodeServiceImpl implements CodeService {
         return codeRepository.save(existingCode);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public Code updateCodeFromSync(Code code) {
 
         long start = System.currentTimeMillis();
-        log.debug(" processing CODE {}", code.getCode());
+        log.info(" processing CODE id {} {} ", code.getId(), code.getCode());
+
+        Code existingCode = codeRepository.findById(code.getId())
+                .orElse(null);
 
         try {
 
-            if (upsertNotRequired(code)) {
+            if (upsertNotRequired(code, existingCode)) {
                 log.info(" Update not required CODE {}", code.getCode());
                 return code;
             }
@@ -489,6 +493,14 @@ public class CodeServiceImpl implements CodeService {
             }
 
             Set<Link> links = code.getLinks();
+            if (existingCode != null) {
+                // add any links that were added to the code via DV
+                if (!CollectionUtils.isEmpty(existingCode.getLinks())) {
+                    links.addAll(existingCode.getLinks());
+                }
+
+                code.setSynonyms(existingCode.getSynonyms());
+            }
             Set<CodeCategory> codeCategories = code.getCodeCategories();
             Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
 
@@ -498,10 +510,7 @@ public class CodeServiceImpl implements CodeService {
             code.setLinks(new HashSet<>());
             code.setCodeCategories(new HashSet<>());
             code.setExternalStandards(new HashSet<>());
-
-            final Code persistedCode = codeRepository.save(code);
-            code.setCreated(persistedCode.getCreated());
-            code.setLastUpdate(persistedCode.getLastUpdate());
+            code.setLastUpdate(new Date());
 
             code.setCodeCategories(codeCategories
                     .stream()
@@ -517,6 +526,7 @@ public class CodeServiceImpl implements CodeService {
 
             code.setLinks(links
                     .stream()
+                    .filter(l -> !StringUtils.isEmpty(l.getLink()))
                     .peek(l -> l.setCode(code))
                     .map(l -> linkService.upsert(l, links, true))
                     .collect(toSet()));
@@ -524,21 +534,19 @@ public class CodeServiceImpl implements CodeService {
             codeRepository.save(code);
 
         } catch (Exception e) {
-            log.error("Update failed for code: " + code.getCode() + " with error: " + e.getMessage());
+            log.error("Update failed for code: {} ", code.getCode(), e);
+
         }
         long stop = System.currentTimeMillis();
         log.debug("  DONE code update {} timing {}", code.getCode(), (stop - start));
         return code;
     }
 
-    private boolean upsertNotRequired(Code code) {
+    private boolean upsertNotRequired(Code code, final Code currentCode) {
 
         if (code.getId() == null) {
             return false;
         }
-
-        Code currentCode = codeRepository.findById(code.getId())
-                .orElse(null);
 
         // If there is a code, or it has been updated, update
         return !(currentCode == null ||

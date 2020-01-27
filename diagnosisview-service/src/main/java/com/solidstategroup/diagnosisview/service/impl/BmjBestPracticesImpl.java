@@ -102,6 +102,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
         log.info("BMJ DONE Processing codes, timing {}.", (stop - start));
     }
 
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     @Override
     public void syncBmjLinks(String codeStr) {
 

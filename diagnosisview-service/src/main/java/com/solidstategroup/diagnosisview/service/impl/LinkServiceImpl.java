@@ -133,8 +133,12 @@ public class LinkServiceImpl implements LinkService {
      */
     @Override
     public Link upsert(Link link, Set<Link> codeLinks, boolean fromSync) {
-        // TODO: check Links transformationsOnly and freeLink are set from sync
 
+        if (StringUtils.isEmpty(link.getLink())) {
+            log.error(" Link url is null {}", link.getId());
+            return null;
+        }
+        
         if (!StringUtils.isEmpty(link.getLink()) && !link.getLink().startsWith("http")) {
             log.error(" Link url not formatted correctly {} {} ", link.getId(), link.getLink());
         }
