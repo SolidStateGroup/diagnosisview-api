@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -17,6 +19,8 @@ import java.util.Map;
 /**
  * Representation of NHSChoices response json model for API v2.
  */
+@Setter
+@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NhsChoicesResponseJson {
@@ -26,11 +30,8 @@ public class NhsChoicesResponseJson {
 
     // extract these from nested objects
     private String organisationId;
-
     private String organisationPhone;
-
     private String organisationUrl;
-
 
     @SuppressWarnings("unchecked")
     @JsonProperty("Organisation")
@@ -73,38 +74,6 @@ public class NhsChoicesResponseJson {
         setOrganisationId(prototype.getOrganisationId());
         setOrganisationPhone(prototype.getOrganisationPhone());
         setOrganisationUrl(prototype.getOrganisationUrl());
-    }
-
-    public List<ConditionLinkJson> getConditionLinks() {
-        return conditionLinks;
-    }
-
-    public void setConditionLinks(List<ConditionLinkJson> conditionLinks) {
-        this.conditionLinks = conditionLinks;
-    }
-
-    public String getOrganisationId() {
-        return organisationId;
-    }
-
-    public void setOrganisationId(String organisationId) {
-        this.organisationId = organisationId;
-    }
-
-    public String getOrganisationPhone() {
-        return organisationPhone;
-    }
-
-    public void setOrganisationPhone(String organisationPhone) {
-        this.organisationPhone = organisationPhone;
-    }
-
-    public String getOrganisationUrl() {
-        return organisationUrl;
-    }
-
-    public void setOrganisationUrl(String organisationUrl) {
-        this.organisationUrl = organisationUrl;
     }
 
     @JsonIgnore

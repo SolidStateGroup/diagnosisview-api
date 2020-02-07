@@ -1,15 +1,9 @@
 package com.solidstategroup.diagnosisview.clients.nhschoices;
 
-import com.solidstategroup.diagnosisview.model.codes.Code;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -18,14 +12,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Api Client implementation for NhsChoices API v2.
@@ -43,14 +33,8 @@ public final class NhsChoicesApiClient {
 
     private static final String BASE_URL = "https://api.nhs.uk/";
     protected static final String CONDITIONS_URI = "conditions/";
-    // https://api.nhs.uk/data/gppractices/odscode/{odscode} get details of GP
-    protected static final String GP_ORGANISATION_URI = "data/gppractices/odscode/";
-    // https://api.nhs.uk/data/gppractices/{id}}/overview
-    protected static final String GP_ORGANISATION_OVERVIEW_URI = "data/gppractices/";
 
     private String apiUrl;
-//    private String contentType;
-//    private CloseableHttpClient client;
     private String apiKey;
 
     // Filters the conditions by A-Z
@@ -147,36 +131,12 @@ public final class NhsChoicesApiClient {
         ResponseEntity<NhsChoicesResponseJson> response = restTemplate
                 .exchange(urlBuilder.build(), HttpMethod.GET, entity, NhsChoicesResponseJson.class);
 
-        NhsChoicesResponseJson responseJson = new NhsChoicesResponseJson();
         // only parse on 200 response
         if (response.getStatusCode() == HttpStatus.OK) {
-            //responseJson.parse(response.getBody());
-            return responseJson;
+            return response.getBody();
         } else {
             return null;
         }
-
-
-//        HttpGet get = new HttpGet(urlBuilder.build());
-//        // set headers
-//        get.setHeader(AUTH_HEADER, apiKey);
-//        get.setHeader(CONTENT_TYPE_HEADER, contentType);
-//
-//        CloseableHttpResponse response = client.execute(get);
-//        String body = getBody(response);
-//        response.close();
-//        log.debug("GET response body {}", body);
-//        int httpCode = response.getStatusLine().getStatusCode();
-//
-//        NhsChoicesResponseJson responseJson = new NhsChoicesResponseJson();
-//
-//        // only parse on 200 response
-//        if (httpCode == HttpServletResponse.SC_OK) {
-//            responseJson.parse(body);
-//        } else {
-//            return null;
-//        }
-//        return responseJson;
     }
 
     /**
@@ -202,8 +162,6 @@ public final class NhsChoicesApiClient {
 
         public NhsChoicesApiClient build() {
             result.apiUrl = BASE_URL;
-//            result.contentType = "application/json";
-//            result.client = HttpClients.custom().build();
             return result;
         }
     }
