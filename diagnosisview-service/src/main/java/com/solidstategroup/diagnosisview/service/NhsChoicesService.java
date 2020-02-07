@@ -1,5 +1,7 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
+
 /**
  * NHS Choices service, for retrieving data from NHS Choices.
  *
@@ -23,6 +25,6 @@ public interface NhsChoicesService {
      *
      * //@throws ResourceNotFoundException
      */
-    void syncConditionsWithCodes();//throws ResourceNotFoundException
+    void syncConditionsWithCodes() throws ResourceNotFoundException;
 
 }

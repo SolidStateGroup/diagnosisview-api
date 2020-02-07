@@ -3,13 +3,17 @@ package com.solidstategroup.diagnosisview.service.impl;
 import com.solidstategroup.diagnosisview.clients.nhschoices.ConditionLinkJson;
 import com.solidstategroup.diagnosisview.clients.nhschoices.NhsChoicesApiClient;
 import com.solidstategroup.diagnosisview.exceptions.ImportResourceException;
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.NhschoicesCondition;
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.LookupTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeStandardTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeTypes;
+import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
+import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.NhschoicesConditionRepository;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
@@ -40,17 +44,19 @@ import java.util.Set;
 public class NhsChoicesServiceImpl implements NhsChoicesService {
 
     private final NhschoicesConditionRepository nhschoicesConditionRepository;
-
     private final LookupRepository lookupRepository;
+    private final CodeRepository codeRepository;
 
     private String nhsChoicesApiKey;
 
     public NhsChoicesServiceImpl(@Value("${nhschoices.conditions.api.key}") String nhsChoicesApiKey,
                                  final NhschoicesConditionRepository nhschoicesConditionRepository,
-                                 final LookupRepository lookupRepository) {
+                                 final LookupRepository lookupRepository,
+                                 final CodeRepository codeRepository) {
         this.nhsChoicesApiKey = nhsChoicesApiKey;
         this.nhschoicesConditionRepository = nhschoicesConditionRepository;
         this.lookupRepository = lookupRepository;
+        this.codeRepository = codeRepository;
     }
 
     /**
@@ -73,7 +79,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
      * //@throws ResourceNotFoundException
      */
     @Override
-    public void syncConditionsWithCodes() {//throws ResourceNotFoundException
+    public void syncConditionsWithCodes() throws ResourceNotFoundException {
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
@@ -105,7 +111,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         Set<Code> codesToSave = new HashSet<>();
         List<String> newOrUpdatedCodes = new ArrayList<>();
 
-        LOG.info("Synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
+        log.info("Synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
                 + " PATIENTVIEW standard type Codes");
 
         // iterate through all NHS Choices conditions
@@ -144,7 +150,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
 
                 // if changed, then save
                 if (saveCurrentCode) {
-                    currentCode.setLastUpdater(currentUser);
+                    currentCode.setLastUpdater(null);
                     currentCode.setLastUpdate(new Date());
                     codesToSave.add(currentCode);
                 }
@@ -162,27 +168,23 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                 code.setDescription(condition.getName());
                 code.setFullDescription(condition.getDescription());
                 code.setPatientFriendlyName(condition.getName());
-                code.setLastUpdate(code.getCreated());
-                code.setLastUpdater(currentUser);
 
                 // add Link to new Code if introduction URL is present on NhschoiceCondition
                 if (StringUtils.isNotEmpty(condition.getIntroductionUrl())) {
-                    org.patientview.persistence.model.Link nhschoicesLink
-                            = new org.patientview.persistence.model.Link();
+                    Link nhschoicesLink = new Link();
 
-                    Lookup linkType = lookupRepository.findOne(LinkTypes.NHS_CHOICES.id());
                     // should have them already configured
-                    if (linkType == null) {
-                        throw new ResourceNotFoundException("Could not find NHS CHOICES link type Lookup");
-                    }
+                    Lookup linkType = lookupRepository.findById(LinkTypes.NHS_CHOICES.id())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException("Could not find NHS CHOICES link type Lookup"));
 
                     nhschoicesLink.setLinkType(linkType);
                     nhschoicesLink.setLink(condition.getIntroductionUrl());
                     nhschoicesLink.setName(linkType.getDescription());
                     nhschoicesLink.setCode(code);
-                    nhschoicesLink.setCreator(currentUser);
+                    nhschoicesLink.setCreator(null);
                     nhschoicesLink.setCreated(code.getCreated());
-                    nhschoicesLink.setLastUpdater(currentUser);
+                    nhschoicesLink.setLastUpdater(null);
                     nhschoicesLink.setLastUpdate(code.getCreated());
                     nhschoicesLink.setDisplayOrder(1);
                     code.getLinks().add(nhschoicesLink);
@@ -190,7 +192,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     /**
                      * Add or Update Medline Plus link as well if needed
                      */
-                    medlinePlusService.setLink(code);
+                    //medlinePlusService.setLink(code);
                 }
 
                 codesToSave.add(code);
@@ -203,16 +205,16 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                 // Code has been removed externally
                 code.setRemovedExternally(true);
                 code.setLastUpdate(new Date());
-                code.setLastUpdater(currentUser);
+                code.setLastUpdater(null);
                 codesToSave.add(code);
             }
         }
 
         if (!codesToSave.isEmpty()) {
-            codeRepository.save(codesToSave);
+            codeRepository.saveAll(codesToSave);
         }
 
-        LOG.info("Finished synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
+        log.info("Finished synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
                 + " PATIENTVIEW standard type Codes.");
     }
 
