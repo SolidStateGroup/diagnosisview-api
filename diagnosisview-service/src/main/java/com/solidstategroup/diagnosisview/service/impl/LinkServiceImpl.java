@@ -193,6 +193,11 @@ public class LinkServiceImpl implements LinkService {
             throw new Exception("link must have an external id set");
         }
 
+        if (link.getDifficultyLevel() == null) {
+
+            throw new Exception("link must have difficulty level set");
+        }
+
         link.setOriginalLink(link.getLink());
 
         logoRulesService
@@ -203,7 +208,7 @@ public class LinkServiceImpl implements LinkService {
 
         link.setCode(code);
         link.setDisplayLink(true);
-        link.setDifficultyLevel(DifficultyLevel.AMBER); // adding new Link, set Difficulty level and display order
+         // adding new Link, set Difficulty level and display order
         setLinkDisplayOrder(link, code.getLinks());
         link.setTransformationsOnly(false);
         link.setFreeLink(false);
