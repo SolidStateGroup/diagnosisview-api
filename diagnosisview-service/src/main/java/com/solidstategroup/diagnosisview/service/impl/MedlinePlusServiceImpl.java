@@ -8,14 +8,15 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
-import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
-import com.solidstategroup.diagnosisview.repository.CodeRepository;
-import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
+import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
+import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.MedlinePlusService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -31,23 +32,22 @@ import java.util.Set;
 @Service
 public class MedlinePlusServiceImpl implements MedlinePlusService {
 
-    private final CodeExternalStandardRepository codeExternalStandardRepository;
+    //private final CodeExternalStandardRepository codeExternalStandardRepository;
     private final LookupRepository lookupRepository;
-    private final CodeRepository codeRepository;
-    private final ExternalStandardRepository externalStandardRepository;
+    private final CodeService codeService;
     private final LinkService linkService;
+    private final LinkRepository linkRepository;
 
 
-    public MedlinePlusServiceImpl(final CodeExternalStandardRepository codeExternalStandardRepository,
-                                  final LookupRepository lookupRepository,
-                                  final CodeRepository codeRepository,
-                                  final ExternalStandardRepository externalStandardRepository,
-                                  final LinkService linkService) {
-        this.codeExternalStandardRepository = codeExternalStandardRepository;
+    @Autowired
+    public MedlinePlusServiceImpl(final LookupRepository lookupRepository,
+                                  final CodeService codeService,
+                                  final LinkService linkService,
+                                  final LinkRepository linkRepository) {
         this.lookupRepository = lookupRepository;
-        this.codeRepository = codeRepository;
-        this.externalStandardRepository = externalStandardRepository;
+        this.codeService = codeService;
         this.linkService = linkService;
+        this.linkRepository = linkRepository;
     }
 
 
@@ -136,35 +136,31 @@ public class MedlinePlusServiceImpl implements MedlinePlusService {
                     medlinePlusLink.setLinkType(linkType);
                     medlinePlusLink.setLink(linkUrl);
                     medlinePlusLink.setName(linkType.getDescription());
+                    medlinePlusLink.setDifficultyLevel(DifficultyLevel.GREEN);
                     medlinePlusLink.setCode(entityCode);
                     medlinePlusLink.setCreator(null);
                     medlinePlusLink.setCreated(now);
                     medlinePlusLink.setLastUpdater(null);
-                    medlinePlusLink.setLastUpdate(medlinePlusLink.getCreated());
+                    medlinePlusLink.setLastUpdate(now);
 
-                    if (entityCode.getLinks().isEmpty()) {
-                        medlinePlusLink.setDisplayOrder(1);
-                    } else {
-                        medlinePlusLink.setDisplayOrder(2);
-                    }
+                    // add new links, sets correct display order and persist it
+                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
+                    entityCode.addLink(saved);
+                    codeService.save(entityCode);
 
-                    entityCode.getLinks().add(medlinePlusLink);
-                    entityCode.setLastUpdater(null);
                 } else {
                     // update existing MedlineLink link
                     existingLink.setLink(linkUrl);
                     existingLink.setLastUpdater(null);
                     existingLink.setLastUpdate(now);
+
+                    linkRepository.save(existingLink);
                 }
+
                 log.info("Done medline plus link for code {}", codeExternalEntity.getCodeString());
             } else {
                 log.error("Could not find medline plus url for {}", codeExternalEntity.getCodeString());
             }
-
-            entityCode.setLastUpdate(now);
-            codeRepository.save(entityCode);
-
-            //linkService.reorderLinks(entityCode.getCode());
 
         } catch (Exception e) {
             log.error("Failed to add MediaPlus link to Code", e);
