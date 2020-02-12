@@ -12,6 +12,7 @@ import com.solidstategroup.diagnosisview.model.codes.LookupTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeStandardTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeTypes;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
@@ -83,7 +84,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
-                LookupTypes.CODE_STANDARD, CodeStandardTypes.PATIENTVIEW.toString());
+                LookupTypes.CODE_STANDARD, CodeStandardTypes.NHS_CHOICES.toString());
         if (standardType == null) {
             throw new ResourceNotFoundException("Could not find PATIENTVIEW code standard type Lookup");
         }
@@ -181,18 +182,26 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     nhschoicesLink.setLinkType(linkType);
                     nhschoicesLink.setLink(condition.getIntroductionUrl());
                     nhschoicesLink.setName(linkType.getDescription());
+                    nhschoicesLink.setDifficultyLevel(DifficultyLevel.GREEN);
                     nhschoicesLink.setCode(code);
                     nhschoicesLink.setCreator(null);
                     nhschoicesLink.setCreated(code.getCreated());
                     nhschoicesLink.setLastUpdater(null);
                     nhschoicesLink.setLastUpdate(code.getCreated());
                     nhschoicesLink.setDisplayOrder(1);
-                    code.getLinks().add(nhschoicesLink);
+
+
+                    //code.getLinks().add(nhschoicesLink);
+
+                    // add new links, sets correct display order and persist it
+                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
+                    code.addLink(saved);
+                    codeService.save(code);
 
                     /**
                      * Add or Update Medline Plus link as well if needed
                      */
-                    //medlinePlusService.setLink(code);
+                    medlinePlusService.setLink(code);
                 }
 
                 codesToSave.add(code);
