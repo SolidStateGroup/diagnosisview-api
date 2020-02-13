@@ -15,3 +15,4 @@ CREATE TABLE dv_nhschoices_condition
   last_updated_by                 BIGINT REFERENCES dv_user (id),
   PRIMARY KEY (id)
 );
+CREATE SEQUENCE IF NOT EXISTS nhschoices_conditioncode_seq START 1;
