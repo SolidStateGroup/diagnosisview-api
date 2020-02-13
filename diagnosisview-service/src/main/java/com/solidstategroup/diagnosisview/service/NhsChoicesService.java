@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.exceptions.ImportResourceException;
 import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 
 /**
@@ -11,19 +12,19 @@ import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 public interface NhsChoicesService {
 
     /**
-     * Step 1 of update PV Codes from NHS Choices.
+     * Step 1 of update DV Condition from NHS Choices.
      * Reads data from API and stores each condition as NhschoicesCondition.
      * Will create new NhschoicesConditions and delete from PV if no longer found in API.
      *
-     * //@throws ImportResourceException
+     * @throws ImportResourceException
      */
-    void updateConditionsFromJob();
+    void updateConditionsFromNhsChoices() throws ImportResourceException;
 
     /**
      * Step 2 of update PV Codes, synchronises NhschoicesConditions with Codes.
      * If an NhschoicesCondition has been deleted, marks Code as externallyRemoved = true.
      *
-     * //@throws ResourceNotFoundException
+     * @throws ResourceNotFoundException
      */
     void syncConditionsWithCodes() throws ResourceNotFoundException;
 
