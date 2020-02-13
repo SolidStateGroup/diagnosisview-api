@@ -308,13 +308,7 @@ public class CodeServiceImpl implements CodeService {
         Code currentCode = codeRepository.findOneByCode(code.getCode());
 
         if (currentCode == null) {
-
             throw new BadRequestException("code not found");
-        }
-
-        if (currentCode.getSourceType() != CodeSourceTypes.DIAGNOSISVIEW) {
-
-            throw new BadRequestException("can only delete diagnosis view created codes");
         }
 
         linkRepository.deleteByCode(currentCode);
