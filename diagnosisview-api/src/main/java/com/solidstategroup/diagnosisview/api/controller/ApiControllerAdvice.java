@@ -3,6 +3,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.exceptions.ImageIOException;
 import com.solidstategroup.diagnosisview.exceptions.ImageNotFoundException;
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,12 @@ public class ApiControllerAdvice {
     @ExceptionHandler(BadRequestException.class)
     public ErrorMessage badRequestException(BadRequestException bre) {
         return new ErrorMessage(bre.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ErrorMessage notFoundException(ResourceNotFoundException e) {
+        return new ErrorMessage(e.getMessage());
     }
 
 
