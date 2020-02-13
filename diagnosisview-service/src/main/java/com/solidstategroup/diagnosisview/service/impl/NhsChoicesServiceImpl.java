@@ -17,13 +17,17 @@ import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.NhschoicesConditionRepository;
+import com.solidstategroup.diagnosisview.service.MedlinePlusService;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -44,20 +48,29 @@ import java.util.Set;
 @Service
 public class NhsChoicesServiceImpl implements NhsChoicesService {
 
+    private static final String NHSCHOICES_CONDITION_SEQ = "nhschoices_conditioncode_seq";
     private final NhschoicesConditionRepository nhschoicesConditionRepository;
     private final LookupRepository lookupRepository;
     private final CodeRepository codeRepository;
+    private final MedlinePlusService medlinePlusService;
+//    private final LinkService linkService;
 
+    private EntityManager entityManager;
     private String nhsChoicesApiKey;
 
+    @Autowired
     public NhsChoicesServiceImpl(@Value("${nhschoices.conditions.api.key}") String nhsChoicesApiKey,
                                  final NhschoicesConditionRepository nhschoicesConditionRepository,
                                  final LookupRepository lookupRepository,
-                                 final CodeRepository codeRepository) {
+                                 final CodeRepository codeRepository,
+                                 final MedlinePlusService medlinePlusService,
+                                 EntityManager entityManager) {
         this.nhsChoicesApiKey = nhsChoicesApiKey;
         this.nhschoicesConditionRepository = nhschoicesConditionRepository;
         this.lookupRepository = lookupRepository;
         this.codeRepository = codeRepository;
+        this.medlinePlusService = medlinePlusService;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -69,8 +82,104 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
      */
     @Transactional
     @Override
-    public void updateConditionsFromJob() {
+    public void updateConditionsFromNhsChoices() throws ImportResourceException {
+        log.info("START sync NhschoicesCondition process");
+        long start = System.currentTimeMillis();
 
+        // contact NHSChoices Conditions API to get all the conditions
+        // and transform them into local NhschoicesCondition object
+        // we should have enough information to build full object
+        NhsChoicesApiClient apiClient = NhsChoicesApiClient.newBuilder()
+                .setApiKey(nhsChoicesApiKey)
+                .build();
+
+        List<ConditionLinkJson> allConditions = apiClient.getAllConditions();
+        // can be null if we have communication issue
+        if (allConditions == null || allConditions.isEmpty()) {
+            throw new ImportResourceException("Error reading alphabetical listing of NHS Choices conditions");
+        }
+
+        log.info("Found NhschoicesConditions api: " + allConditions.size());
+
+        // compare to existing using uri, adding if required with correct details
+        List<NhschoicesCondition> currentConditions = nhschoicesConditionRepository.findAll();
+        List<String> currentConditionCodes = new ArrayList<>();
+        Map<String, NhschoicesCondition> currentCodeMap = new HashMap<>();
+
+        for (NhschoicesCondition currentCondition : currentConditions) {
+            currentConditionCodes.add(currentCondition.getCode());
+            currentCodeMap.put(currentCondition.getCode(), currentCondition);
+        }
+
+        List<String> newConditionCodes = new ArrayList<>();
+        Date now = new Date();
+        for (ConditionLinkJson condition : allConditions) {
+            String conditionCode = getConditionCodeFromUri(condition.getApiUrl());
+            newConditionCodes.add(conditionCode);
+            // build condition public url from api url
+            String conditionUrl = buildUrlFromApiUrl(condition.getApiUrl());
+
+            if (!currentCodeMap.keySet().contains(conditionCode)) {
+                // found new condition, populate all the details
+                NhschoicesCondition newCondition = new NhschoicesCondition();
+                newCondition.setId(selectIdFrom(NHSCHOICES_CONDITION_SEQ));
+                newCondition.setCode(conditionCode);
+                newCondition.setName(condition.getName());
+                newCondition.setDescription(condition.getDescription());
+                newCondition.setDescriptionLastUpdateDate(now);
+
+                // check if public url accessible accessible
+                Integer status = getUrlStatus(conditionUrl);
+                if (status != null && status.equals(200)) {
+                    newCondition.setIntroductionUrl(conditionUrl);
+                } else {
+                    // 404, 403 or otherwise, remove introduction url
+                    newCondition.setIntroductionUrl(null);
+                }
+                newCondition.setIntroductionUrlStatus(status);
+                newCondition.setIntroductionUrlLastUpdateDate(now);
+
+                newCondition.setUri(condition.getApiUrl());
+                newCondition.setCreator(null);
+                newCondition.setCreated(now);
+                newCondition.setLastUpdate(newCondition.getCreated());
+                newCondition.setLastUpdater(null);
+
+                nhschoicesConditionRepository.save(newCondition);
+            } else {
+                // existing entry, update dates for introduction url and description
+                NhschoicesCondition existingCondition = currentCodeMap.get(conditionCode);
+                if (existingCondition != null) {
+                    existingCondition.setName(condition.getName());
+                    existingCondition.setIntroductionUrl(conditionUrl);
+                    existingCondition.setIntroductionUrlLastUpdateDate(now);
+                    existingCondition.setIntroductionUrlStatus(200);
+                    existingCondition.setDescription(condition.getDescription());
+                    existingCondition.setDescriptionLastUpdateDate(now);
+                    existingCondition.setUri(condition.getApiUrl());
+                    existingCondition.setLastUpdate(now);
+                    existingCondition.setLastUpdater(null);
+                    nhschoicesConditionRepository.save(existingCondition);
+                }
+            }
+
+            // sleep for 1 seconds to avoid too many calls to nhs website
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                throw new ImportResourceException("Thread interrupted");
+            }
+        }
+
+        // delete old NhschoiceCondition, no longer on NHS Choices
+        currentConditionCodes.removeAll(newConditionCodes);
+
+        if (!currentConditionCodes.isEmpty()) {
+            nhschoicesConditionRepository.deleteByCode(currentConditionCodes);
+        }
+
+        long stop = System.currentTimeMillis();
+        log.info("TIMING Update NhschoicesCondition " + (stop - start) + " process ");
     }
 
     /**
@@ -86,20 +195,14 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         Lookup standardType = lookupRepository.findByTypeAndValue(
                 LookupTypes.CODE_STANDARD, CodeStandardTypes.NHS_CHOICES.toString());
         if (standardType == null) {
-            throw new ResourceNotFoundException("Could not find PATIENTVIEW code standard type Lookup");
+            throw new ResourceNotFoundException("Could not find NHS_CHOICES code standard type Lookup");
         }
         Lookup codeType = lookupRepository.findByTypeAndValue(LookupTypes.CODE_TYPE, CodeTypes.DIAGNOSIS.toString());
         if (codeType == null) {
             throw new ResourceNotFoundException("Could not find DIAGNOSIS code type Lookup");
         }
 
-        // set creator to importer if not called by a user from endpoint (e.g. run as task)
-//        User currentUser = getCurrentUser();
-//        if (currentUser == null) {
-//            currentUser = userRepository.findByUsernameCaseInsensitive("importer");
-//        }
-
-        // get codes and conditions to synchronise, finding all PATIENTVIEW Codes and all NhschoicesCondition
+        // get codes and conditions to synchronise, finding all NHS_CHOICES Codes and all NhschoicesCondition
         List<Code> currentCodes = codeRepository.findAllByStandardType(standardType);
         List<NhschoicesCondition> conditions = nhschoicesConditionRepository.findAll();
 
@@ -194,9 +297,9 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     //code.getLinks().add(nhschoicesLink);
 
                     // add new links, sets correct display order and persist it
-                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
-                    code.addLink(saved);
-                    codeService.save(code);
+//                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
+//                    code.addLink(saved);
+//                    codeService.save(code);
 
                     /**
                      * Add or Update Medline Plus link as well if needed
@@ -208,7 +311,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
             }
         }
 
-        // handle PATIENTVIEW codes that are no longer in NHS Choices Condition list, mark as removed externally
+        // handle Codes that are no longer in NHS Choices Condition list, mark as removed externally
         for (Code code : currentCodes) {
             if (!newOrUpdatedCodes.contains(code.getCode())) {
                 // Code has been removed externally
@@ -225,110 +328,6 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
 
         log.info("Finished synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
                 + " PATIENTVIEW standard type Codes.");
-    }
-
-
-    private void updateConditionsWorker() throws ImportResourceException {
-        log.info("START Update NhschoicesCondition process");
-        long start = System.currentTimeMillis();
-
-        // need to use different api key for each service
-//        String apiKey = properties.getProperty("nhschoices.conditions.api.key");
-
-        // contact NHSChoices Conditions API to get all the conditions
-        // and transform them into local NhschoicesCondition object
-        // we should have enough information to build full object
-        NhsChoicesApiClient apiClient = NhsChoicesApiClient.newBuilder()
-                .setApiKey(nhsChoicesApiKey)
-                .build();
-
-        List<ConditionLinkJson> allConditions = apiClient.getAllConditions();
-        // can be null if we have communication issue
-        if (allConditions == null || allConditions.isEmpty()) {
-            throw new ImportResourceException("Error reading alphabetical listing of NHS Choices conditions");
-        }
-
-        log.info("Found NhschoicesConditions api: " + allConditions.size());
-
-        // compare to existing using uri, adding if required with correct details
-        List<NhschoicesCondition> currentConditions = nhschoicesConditionRepository.findAll();
-        List<String> currentConditionCodes = new ArrayList<>();
-        Map<String, NhschoicesCondition> currentCodeMap = new HashMap<>();
-
-        for (NhschoicesCondition currentCondition : currentConditions) {
-            currentConditionCodes.add(currentCondition.getCode());
-            currentCodeMap.put(currentCondition.getCode(), currentCondition);
-        }
-
-        List<String> newConditionCodes = new ArrayList<>();
-        Date now = new Date();
-        for (ConditionLinkJson condition : allConditions) {
-            String conditionCode = getConditionCodeFromUri(condition.getApiUrl());
-            newConditionCodes.add(conditionCode);
-            // build condition public url from api url
-            String conditionUrl = buildUrlFromApiUrl(condition.getApiUrl());
-
-            if (!currentCodeMap.keySet().contains(conditionCode)) {
-                // found new condition, populate all the details
-                // TODO: need to set next id
-                NhschoicesCondition newCondition = new NhschoicesCondition();
-                newCondition.setCode(conditionCode);
-                newCondition.setName(condition.getName());
-                newCondition.setDescription(condition.getDescription());
-                newCondition.setDescriptionLastUpdateDate(now);
-
-                // check if public url accessible accessible
-                Integer status = getUrlStatus(conditionUrl);
-                if (status != null && status.equals(200)) {
-                    newCondition.setIntroductionUrl(conditionUrl);
-                } else {
-                    // 404, 403 or otherwise, remove introduction url
-                    newCondition.setIntroductionUrl(null);
-                }
-                newCondition.setIntroductionUrlStatus(status);
-                newCondition.setIntroductionUrlLastUpdateDate(now);
-
-                newCondition.setUri(condition.getApiUrl());
-                newCondition.setCreator(null);
-                newCondition.setCreated(now);
-                newCondition.setLastUpdate(newCondition.getCreated());
-                newCondition.setLastUpdater(null);
-
-                nhschoicesConditionRepository.save(newCondition);
-            } else {
-                // existing entry, update dates for introduction url and description
-                NhschoicesCondition existingCondition = currentCodeMap.get(conditionCode);
-                if (existingCondition != null) {
-                    existingCondition.setName(condition.getName());
-                    existingCondition.setIntroductionUrl(conditionUrl);
-                    existingCondition.setIntroductionUrlLastUpdateDate(now);
-                    existingCondition.setIntroductionUrlStatus(200);
-                    existingCondition.setDescription(condition.getDescription());
-                    existingCondition.setDescriptionLastUpdateDate(now);
-                    existingCondition.setUri(condition.getApiUrl());
-                    existingCondition.setLastUpdate(now);
-                    existingCondition.setLastUpdater(null);
-                    nhschoicesConditionRepository.save(existingCondition);
-                }
-            }
-
-            // sleep for 1 seconds to avoid too many calls to nhs website
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-                throw new ImportResourceException("Thread interrupted");
-            }
-        }
-
-        // delete old NhschoiceCondition, no longer on NHS Choices
-        currentConditionCodes.removeAll(newConditionCodes);
-
-        if (!currentConditionCodes.isEmpty()) {
-            nhschoicesConditionRepository.deleteByCode(currentConditionCodes);
-        }
-
-        long stop = System.currentTimeMillis();
-        log.info("TIMING Update NhschoicesCondition " + (stop - start) + " process ");
     }
 
     private String getConditionCodeFromUri(String uri) {
@@ -367,4 +366,8 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         return apiUrl.replace("api.nhs.uk", "www.nhs.uk");
     }
 
+    private long selectIdFrom(String sequence) {
+        String sql = "SELECT nextval('" + sequence + "')";
+        return ((BigInteger) entityManager.createNativeQuery(sql).getSingleResult()).longValue();
+    }
 }
