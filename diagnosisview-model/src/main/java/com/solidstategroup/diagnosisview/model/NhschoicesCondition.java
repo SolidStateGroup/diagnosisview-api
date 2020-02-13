@@ -17,7 +17,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "pv_nhschoices_condition")
+@Table(name = "dv_nhschoices_condition")
 public class NhschoicesCondition extends AuditModel {
 
     @Column(name = "code", nullable = false)

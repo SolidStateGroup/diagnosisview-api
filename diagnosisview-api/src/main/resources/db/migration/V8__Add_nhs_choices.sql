@@ -1,4 +1,4 @@
-CREATE TABLE pv_nhschoices_condition
+CREATE TABLE dv_nhschoices_condition
 (
   id                              BIGINT NOT NULL,
   name                            TEXT NOT NULL,
