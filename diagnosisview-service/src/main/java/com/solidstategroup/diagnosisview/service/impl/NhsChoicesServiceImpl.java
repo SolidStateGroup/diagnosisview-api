@@ -17,6 +17,8 @@ import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.NhschoicesConditionRepository;
+import com.solidstategroup.diagnosisview.service.CodeService;
+import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.MedlinePlusService;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import lombok.extern.slf4j.Slf4j;
@@ -49,11 +51,13 @@ import java.util.Set;
 public class NhsChoicesServiceImpl implements NhsChoicesService {
 
     private static final String NHSCHOICES_CONDITION_SEQ = "nhschoices_conditioncode_seq";
+    private static final String CODE_SEQ = "code_seq";
     private final NhschoicesConditionRepository nhschoicesConditionRepository;
     private final LookupRepository lookupRepository;
     private final CodeRepository codeRepository;
+    private final CodeService codeService;
     private final MedlinePlusService medlinePlusService;
-//    private final LinkService linkService;
+    private final LinkService linkService;
 
     private EntityManager entityManager;
     private String nhsChoicesApiKey;
@@ -63,13 +67,17 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                                  final NhschoicesConditionRepository nhschoicesConditionRepository,
                                  final LookupRepository lookupRepository,
                                  final CodeRepository codeRepository,
+                                 final CodeService codeService,
                                  final MedlinePlusService medlinePlusService,
+                                 final LinkService linkService,
                                  EntityManager entityManager) {
         this.nhsChoicesApiKey = nhsChoicesApiKey;
         this.nhschoicesConditionRepository = nhschoicesConditionRepository;
         this.lookupRepository = lookupRepository;
         this.codeRepository = codeRepository;
+        this.codeService = codeService;
         this.medlinePlusService = medlinePlusService;
+        this.linkService = linkService;
         this.entityManager = entityManager;
     }
 
@@ -186,7 +194,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
      * Step 2 of update PV Codes, synchronises NhschoicesConditions with Codes in DV.
      * If an NhschoicesCondition has been deleted, marks Code as externallyRemoved = true.
      *
-     * //@throws ResourceNotFoundException
+     * @throws ResourceNotFoundException
      */
     @Override
     public void syncConditionsWithCodes() throws ResourceNotFoundException {
@@ -261,6 +269,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
             } else {
                 // NhschoicesCondition is new, create and save new Code
                 Code code = new Code();
+                code.setId(selectIdFrom(CODE_SEQ));
                 code.setCreator(null);
                 code.setCreated(new Date());
                 code.setLastUpdater(null);
