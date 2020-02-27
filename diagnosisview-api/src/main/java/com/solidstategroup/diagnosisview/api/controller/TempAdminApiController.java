@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
+import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import com.solidstategroup.diagnosisview.service.SubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ public class TempAdminApiController extends BaseController {
     private final BmjBestPractices bmjBestPractices;
     private final CodeSyncService codeSyncService;
     private final SubscriptionService subscriptionService;
+    private final NhsChoicesService nhsChoicesService;
 
     /**
      * Instantiate API controller, includes required services.
@@ -30,11 +32,13 @@ public class TempAdminApiController extends BaseController {
     @Autowired
     public TempAdminApiController(final BmjBestPractices bmjBestPractices,
                                   final CodeSyncService codeSyncService,
-                                  final SubscriptionService subscriptionService) {
+                                  final SubscriptionService subscriptionService,
+                                  final NhsChoicesService nhsChoicesService) {
 
         this.bmjBestPractices = bmjBestPractices;
         this.codeSyncService = codeSyncService;
         this.subscriptionService = subscriptionService;
+        this.nhsChoicesService = nhsChoicesService;
     }
 
     /**
@@ -65,6 +69,12 @@ public class TempAdminApiController extends BaseController {
                                     HttpServletRequest request) throws Exception {
         isAdminUser(request);
         bmjBestPractices.syncBmjLinks(code);
+    }
+
+    @GetMapping(value = "/nhs_choices")
+    public void syncNhsChoicesConditions(HttpServletRequest request) throws Exception {
+        //isAdminUser(request);
+        nhsChoicesService.updateConditionsFromNhsChoices();
     }
 
 
