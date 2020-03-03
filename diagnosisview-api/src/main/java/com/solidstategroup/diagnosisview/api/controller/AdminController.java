@@ -209,4 +209,15 @@ public class AdminController extends BaseController {
 
         return codeService.get(code);
     }
+
+    @ApiOperation(value = "Delete DV code",
+            notes = "Admin endpoint to delete Code from the system")
+    @DeleteMapping("/code")
+    public void deleteCode(@RequestBody final Code code, HttpServletRequest request)
+            throws Exception {
+
+        isAdminUser(request);
+
+        codeService.delete(code);
+    }
 }
