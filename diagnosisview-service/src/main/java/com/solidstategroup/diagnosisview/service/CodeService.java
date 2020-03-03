@@ -75,14 +75,24 @@ public interface CodeService {
     Code save(Code code);
 
     /**
-     * Create or update a code, creating all the pre-requestite categories, external standards etc
+     * Creates a code, creating all the pre-requisite categories, external standards etc
      * where required.
      *
-     * Used when creating or updating Code from the DV Web.
+     * Used when creating Code from the DV Web, will prefix code with dv_
      *
-     * @param code - code to update or create
+     * @param code - code to create
      */
-    Code upsert(Code code) throws Exception;
+    Code add(Code code) throws Exception;
+
+    /**
+     * Update a code, updating/creating all the pre-requisite categories, external standards etc
+     * where required.
+     *
+     * Used when updating Code from the DV Web. Both DV and Other code types can be updated.
+     *
+     * @param code - code to update
+     */
+    Code update(Code code) throws Exception;
 
     /**
      * Updates synonyms for a Code from DV Web, by overriding old ones with new list.

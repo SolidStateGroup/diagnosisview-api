@@ -6,6 +6,7 @@ import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -208,6 +209,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                             newLink.setExternalId(id);
                             newLink.setLinkType(BMJ);
                             newLink.setDisplayOrder(DEFAULT_BMJ_ORDER);
+                            newLink.setDifficultyLevel(DifficultyLevel.AMBER);
 
                             Link saved = linkService.addExternalLink(newLink, code);
                             code.addLink(saved);

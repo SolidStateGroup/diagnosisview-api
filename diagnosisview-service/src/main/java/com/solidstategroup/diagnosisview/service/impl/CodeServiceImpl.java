@@ -308,13 +308,7 @@ public class CodeServiceImpl implements CodeService {
         Code currentCode = codeRepository.findOneByCode(code.getCode());
 
         if (currentCode == null) {
-
             throw new BadRequestException("code not found");
-        }
-
-        if (currentCode.getSourceType() != CodeSourceTypes.DIAGNOSISVIEW) {
-
-            throw new BadRequestException("can only delete diagnosis view created codes");
         }
 
         linkRepository.deleteByCode(currentCode);
@@ -336,13 +330,14 @@ public class CodeServiceImpl implements CodeService {
         return ((BigInteger) entityManager.createNativeQuery(sql).getSingleResult()).longValue();
     }
 
+
     /**
      * {@inheritDoc}
      */
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
-    public Code upsert(Code code) throws Exception {
+    public Code add(Code code) throws Exception {
 
         if (code == null) {
             throw new Exception("Missing code object");
@@ -351,6 +346,11 @@ public class CodeServiceImpl implements CodeService {
         if (StringUtils.isEmpty(code.getCode())) {
             throw new Exception("Missing code for Diagnosis Code");
         }
+
+        if (code.getId() != null) {
+            throw new Exception("Code id present, did you mean to update?");
+        }
+
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
 
@@ -380,8 +380,120 @@ public class CodeServiceImpl implements CodeService {
         }
 
         if (code.getId() == null) {
-
             code.setId(selectIdFrom(CODE_SEQ));
+        }
+
+        // validate Links order for the Code
+        linkService.checkLinksOrder(code.getLinks(), code);
+
+        code.setLinks(code
+                .getLinks()
+                .stream()
+                .peek(l -> {
+                    if (l.getId() == null) {
+                        l.setId(selectIdFrom(LINK_SEQ));
+                    }
+                })
+                .collect(toSet()));
+
+        if (code.getExternalStandards() != null) {
+
+            code.setExternalStandards(code
+                    .getExternalStandards()
+                    .stream()
+                    .peek(es -> {
+                        if (es.getId() == null) {
+                            es.setId(selectIdFrom(CODE_EXTERNAL_STANDARD));
+                        }
+                    })
+                    .collect(toSet()));
+        }
+
+        if (code.getCodeCategories() != null) {
+
+            code.setCodeCategories(code
+                    .getCodeCategories()
+                    .stream()
+                    .peek(cc -> {
+                        if (cc.getId() == null) {
+                            cc.setId(selectIdFrom(CODE_CATEGORY_SEQ));
+                        }
+                    })
+                    .collect(toSet()));
+        }
+
+        Set<Link> links = code.getLinks();
+        Set<CodeCategory> codeCategories = code.getCodeCategories();
+        Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+
+        // Remove code related fields, as PV already provides ids if the
+        // objects have not already been saved to the repository jpa will thrown
+        // an exception because it can't the the non-existent ids in the db.
+        code.setLinks(new HashSet<>());
+        code.setCodeCategories(new HashSet<>());
+        code.setExternalStandards(new HashSet<>());
+        code.setLastUpdate(new Date());
+
+        code.setCodeCategories(codeCategories
+                .stream()
+                .peek(cc -> cc.setCode(code))
+                .map(codeCategoryRepository::save)
+                .collect(toSet()));
+
+        code.setExternalStandards(externalStandards
+                .stream()
+                .peek(es -> es.setCode(code))
+                .map(codeExternalStandardRepository::save)
+                .collect(toSet()));
+
+        code.setLinks(links
+                .stream()
+                .peek(l -> l.setCode(code))
+                .map(l -> linkService.upsert(l, links, false))
+                .collect(toSet()));
+
+        return codeRepository.save(code);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
+    public Code update(Code code) throws Exception {
+
+        if (code == null) {
+            throw new Exception("Missing code object");
+        }
+
+        if (StringUtils.isEmpty(code.getCode())) {
+            throw new Exception("Missing code for Diagnosis Code");
+        }
+
+        if (StringUtils.isEmpty(code.getId())) {
+            throw new Exception("Missing id for Diagnosis Code");
+        }
+
+        // validate unique if changed
+        List<Code> existing = codeRepository.findByCode(code.getCode());
+        if (!CollectionUtils.isEmpty(existing)) {
+            if (code.getId() == null) {
+                throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                        "Please amend and try again");
+            } else {
+                existing.forEach(c -> {
+                    if (!(code.getId().equals(c.getId()))) {
+                        throw new EntityExistsException("A duplicate diagnosis code exists in the database. " +
+                                "Please amend and try again");
+                    }
+                });
+            }
+        }
+
+        // TODO:  check if source type is sent
+        if (code.getSourceType() == null) {
+            code.setSourceType(CodeSourceTypes.DIAGNOSISVIEW);
         }
 
         // validate Links order for the Code
@@ -488,9 +600,9 @@ public class CodeServiceImpl implements CodeService {
 
             saveAdditionalSyncObjects(code);
 
-            if (code.getSourceType() == null) {
-                code.setSourceType(CodeSourceTypes.PATIENTVIEW);
-            }
+//            if (code.getSourceType() == null) {
+//                code.setSourceType(CodeSourceTypes.PATIENTVIEW);
+//            }
 
             Set<Link> links = code.getLinks();
             if (existingCode != null) {
@@ -511,6 +623,13 @@ public class CodeServiceImpl implements CodeService {
             code.setCodeCategories(new HashSet<>());
             code.setExternalStandards(new HashSet<>());
             code.setLastUpdate(new Date());
+
+            // if new code we need to persist if first
+            if (existingCode == null) {
+                log.info(" no existing code, creating {} {} ", code.getId(), code.getCode());
+                final Code persistedCode = codeRepository.save(code);
+                code.setCreated(new Date());
+            }
 
             code.setCodeCategories(codeCategories
                     .stream()
@@ -538,7 +657,7 @@ public class CodeServiceImpl implements CodeService {
 
         }
         long stop = System.currentTimeMillis();
-        log.debug("  DONE code update {} timing {}", code.getCode(), (stop - start));
+        log.info("  DONE code update {} timing {}", code.getCode(), (stop - start));
         return code;
     }
 

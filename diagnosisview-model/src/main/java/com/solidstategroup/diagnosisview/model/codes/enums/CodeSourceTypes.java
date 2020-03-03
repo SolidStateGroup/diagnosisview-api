@@ -2,17 +2,24 @@ package com.solidstategroup.diagnosisview.model.codes.enums;
 
 
 /**
- * Source of Code, PATIENTVIEW by default, NHS_CHOICES if from NHS Choices API.
- * Created by jamesr@solidstategroup.com
- * Created on 08/06/2016
+ * Source of Code, NHS_CHOICES if from NHS Choices API or DIAGNOSISVIEW when added via
+ * DV web.
  */
 public enum CodeSourceTypes {
     DIAGNOSISVIEW("DiagnosisView"),
-    PATIENTVIEW("PatientView"),
     NHS_CHOICES("NHS Choices");
 
     private String name;
-    CodeSourceTypes(String name) { this.name = name; }
-    public String getName() { return this.name; }
-    public String getId() { return this.name(); }
+
+    CodeSourceTypes(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getId() {
+        return this.name();
+    }
 }

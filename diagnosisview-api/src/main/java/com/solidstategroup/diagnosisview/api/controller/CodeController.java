@@ -35,17 +35,6 @@ public class CodeController extends BaseController {
         this.linkService = linkService;
     }
 
-    @ApiOperation(value = "Delete DV code",
-            notes = "Pass a code name to be deleted. This endpoint will only delete DV created codes")
-    @DeleteMapping("/code")
-    public void deleteCode(@RequestBody final Code code, HttpServletRequest request)
-            throws Exception {
-
-        isAdminUser(request);
-
-        codeService.delete(code);
-    }
-
     @ApiOperation(value = "Get All activeCodes",
             notes = "User endpoint to get all active codes within the DiagnosisView",
             response = CodeDto[].class)

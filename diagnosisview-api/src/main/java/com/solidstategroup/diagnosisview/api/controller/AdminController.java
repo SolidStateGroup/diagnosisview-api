@@ -123,16 +123,28 @@ public class AdminController extends BaseController {
         return userService.createOrUpdateUser(user, true);
     }
 
-    @ApiOperation(value = "Upsert Code",
-            notes = "Creates code within DV or updates if already exists",
+    @ApiOperation(value = "Create Code",
+            notes = "Creates new code within DV",
             response = Code.class)
-    @RequestMapping(path = "/code", method = {POST, PUT}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Code upsertCode(@RequestBody final Code code,
-                           HttpServletRequest request) throws Exception {
+    @RequestMapping(path = "/code", method = POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Code addCode(@RequestBody final Code code,
+                        HttpServletRequest request) throws Exception {
 
         isAdminUser(request);
 
-        return codeService.upsert(code);
+        return codeService.add(code);
+    }
+
+    @ApiOperation(value = "Update Code",
+            notes = "Updates code within DV",
+            response = Code.class)
+    @RequestMapping(path = "/code", method = PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Code updatetCode(@RequestBody final Code code,
+                            HttpServletRequest request) throws Exception {
+
+        isAdminUser(request);
+
+        return codeService.update(code);
     }
 
     @ApiOperation(value = "Get All Codes",
@@ -141,11 +153,13 @@ public class AdminController extends BaseController {
     @GetMapping("/codes")
     public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
 
-        User user = getUserFromRequest(request);
-        if (user != null &&
-                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
-            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
-        }
+//        User user = getUserFromRequest(request);
+//        if (user != null &&
+//                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+//            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+//        }
+
+        isAdminUser(request);
 
         return codeService.getAll(null);
     }
@@ -196,5 +210,16 @@ public class AdminController extends BaseController {
         isAdminUser(request);
 
         return codeService.get(code);
+    }
+
+    @ApiOperation(value = "Delete DV code",
+            notes = "Admin endpoint to delete Code from the system")
+    @DeleteMapping("/code")
+    public void deleteCode(@RequestBody final Code code, HttpServletRequest request)
+            throws Exception {
+
+        isAdminUser(request);
+
+        codeService.delete(code);
     }
 }

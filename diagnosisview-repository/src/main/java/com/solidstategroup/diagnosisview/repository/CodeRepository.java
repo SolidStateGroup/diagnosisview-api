@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.repository;
 
 import com.solidstategroup.diagnosisview.model.codes.Code;
+import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,4 +49,8 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
     @Query("SELECT c FROM Code c  " +
             " WHERE c.removedExternally = false AND c.hideFromPatients = false ")
     List<Code> findAllActive();
+
+    @Query("SELECT c FROM Code c " +
+            "WHERE c.standardType = :standardType")
+    List<Code> findAllByStandardType(@Param("standardType") Lookup standardType);
 }
