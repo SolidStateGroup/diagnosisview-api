@@ -626,9 +626,9 @@ public class CodeServiceImpl implements CodeService {
 
             // if new code we need to persist if first
             if (existingCode == null) {
+                log.info(" no existing code, creating {} {} ", code.getId(), code.getCode());
                 final Code persistedCode = codeRepository.save(code);
-                code.setCreated(persistedCode.getCreated());
-                code.setLastUpdate(persistedCode.getLastUpdate());
+                code.setCreated(new Date());
             }
 
             code.setCodeCategories(codeCategories
@@ -657,7 +657,7 @@ public class CodeServiceImpl implements CodeService {
 
         }
         long stop = System.currentTimeMillis();
-        log.debug("  DONE code update {} timing {}", code.getCode(), (stop - start));
+        log.info("  DONE code update {} timing {}", code.getCode(), (stop - start));
         return code;
     }
 
