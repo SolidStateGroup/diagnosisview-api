@@ -583,6 +583,7 @@ public class CodeServiceImpl implements CodeService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code updateCodeFromSync(Code code) {
 
         long start = System.currentTimeMillis();
