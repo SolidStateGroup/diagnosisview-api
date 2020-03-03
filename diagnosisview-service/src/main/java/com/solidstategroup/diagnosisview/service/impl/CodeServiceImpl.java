@@ -334,7 +334,7 @@ public class CodeServiceImpl implements CodeService {
     /**
      * {@inheritDoc}
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code add(Code code) throws Exception {
