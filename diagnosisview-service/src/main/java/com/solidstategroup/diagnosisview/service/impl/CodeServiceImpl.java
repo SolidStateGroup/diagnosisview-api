@@ -624,6 +624,13 @@ public class CodeServiceImpl implements CodeService {
             code.setExternalStandards(new HashSet<>());
             code.setLastUpdate(new Date());
 
+            // if new code we need to persist if first
+            if (existingCode == null) {
+                final Code persistedCode = codeRepository.save(code);
+                code.setCreated(persistedCode.getCreated());
+                code.setLastUpdate(persistedCode.getLastUpdate());
+            }
+
             code.setCodeCategories(codeCategories
                     .stream()
                     .peek(cc -> cc.setCode(code))
