@@ -334,7 +334,7 @@ public class CodeServiceImpl implements CodeService {
     /**
      * {@inheritDoc}
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code add(Code code) throws Exception {
@@ -583,6 +583,7 @@ public class CodeServiceImpl implements CodeService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public Code updateCodeFromSync(Code code) {
 
         long start = System.currentTimeMillis();
@@ -624,6 +625,13 @@ public class CodeServiceImpl implements CodeService {
             code.setExternalStandards(new HashSet<>());
             code.setLastUpdate(new Date());
 
+            // if new code we need to persist if first
+            if (existingCode == null) {
+                log.info(" no existing code, creating {} {} ", code.getId(), code.getCode());
+                final Code persistedCode = codeRepository.save(code);
+                code.setCreated(new Date());
+            }
+
             code.setCodeCategories(codeCategories
                     .stream()
                     .peek(cc -> cc.setCode(code))
@@ -650,7 +658,7 @@ public class CodeServiceImpl implements CodeService {
 
         }
         long stop = System.currentTimeMillis();
-        log.debug("  DONE code update {} timing {}", code.getCode(), (stop - start));
+        log.info("  DONE code update {} timing {}", code.getCode(), (stop - start));
         return code;
     }
 

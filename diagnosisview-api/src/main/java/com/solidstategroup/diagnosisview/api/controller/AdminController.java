@@ -153,11 +153,13 @@ public class AdminController extends BaseController {
     @GetMapping("/codes")
     public List<CodeDto> getAllCodes(HttpServletRequest request) throws Exception {
 
-        User user = getUserFromRequest(request);
-        if (user != null &&
-                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
-            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
-        }
+//        User user = getUserFromRequest(request);
+//        if (user != null &&
+//                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
+//            return codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH);
+//        }
+
+        isAdminUser(request);
 
         return codeService.getAll(null);
     }
@@ -208,5 +210,16 @@ public class AdminController extends BaseController {
         isAdminUser(request);
 
         return codeService.get(code);
+    }
+
+    @ApiOperation(value = "Delete DV code",
+            notes = "Admin endpoint to delete Code from the system")
+    @DeleteMapping("/code")
+    public void deleteCode(@RequestBody final Code code, HttpServletRequest request)
+            throws Exception {
+
+        isAdminUser(request);
+
+        codeService.delete(code);
     }
 }
