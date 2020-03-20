@@ -6,6 +6,7 @@ import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
+import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
@@ -188,7 +189,8 @@ public class LinkServiceImpl implements LinkService {
             throw new Exception("link must have name set");
         }
 
-        if (link.getExternalId() == null) {
+        if (link.getLinkType().getValue().equals(LinkTypes.BMJ.name())
+                && link.getExternalId() == null) {
 
             throw new Exception("link must have an external id set");
         }
