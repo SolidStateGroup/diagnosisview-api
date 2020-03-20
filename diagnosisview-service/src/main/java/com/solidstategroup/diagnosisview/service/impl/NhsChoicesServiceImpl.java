@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -187,7 +188,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         }
 
         long stop = System.currentTimeMillis();
-        log.info("TIMING Update NhschoicesCondition " + (stop - start) + " process ");
+        log.info("TIMING Update NhschoicesCondition took {}", (stop - start));
     }
 
     /**
@@ -197,7 +198,10 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
      * @throws ResourceNotFoundException
      */
     @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public void syncConditionsWithCodes() throws ResourceNotFoundException {
+        log.info("START sync NhschoicesConditions with Codes process");
+        long start = System.currentTimeMillis();
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
@@ -224,13 +228,13 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         List<String> newOrUpdatedCodes = new ArrayList<>();
 
         log.info("Synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
-                + " PATIENTVIEW standard type Codes");
+                + " DV standard type Codes");
 
         // iterate through all NHS Choices conditions
         for (NhschoicesCondition condition : conditions) {
             newOrUpdatedCodes.add(condition.getCode());
 
-            // check if Code with same code as NhschoicesCondition exists in PV already
+            // check if Code with same code as NhschoicesCondition exists in DV already
             if (currentCodesMap.keySet().contains(condition.getCode())) {
 
                 Code currentCode = currentCodesMap.get(condition.getCode());
@@ -297,23 +301,24 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     nhschoicesLink.setDifficultyLevel(DifficultyLevel.GREEN);
                     nhschoicesLink.setCode(code);
                     nhschoicesLink.setCreator(null);
-                    nhschoicesLink.setCreated(code.getCreated());
+                    nhschoicesLink.setCreated(new Date());
                     nhschoicesLink.setLastUpdater(null);
-                    nhschoicesLink.setLastUpdate(code.getCreated());
+                    nhschoicesLink.setLastUpdate(new Date());
                     nhschoicesLink.setDisplayOrder(1);
 
-
-                    //code.getLinks().add(nhschoicesLink);
-
-                    // add new links, sets correct display order and persist it
-//                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
-//                    code.addLink(saved);
-//                    codeService.save(code);
+                    try {
+                        // add new links, sets correct display order and persist it
+                        Link saved = linkService.addExternalLink(nhschoicesLink, code);
+                        code.addLink(saved);
+                        codeService.save(code);
+                    } catch (Exception e) {
+                        log.error("Failed to save nhs choices Link", e);
+                    }
 
                     /**
-                     * Add or Update Medline Plus link as well if needed
+                     * New Codes wont have any external standards set hence no need to
+                     * sync Medline Plus links here. Handled by Links sync job
                      */
-                    medlinePlusService.setLink(code);
                 }
 
                 codesToSave.add(code);
@@ -335,8 +340,9 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
             codeRepository.saveAll(codesToSave);
         }
 
-        log.info("Finished synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
-                + " PATIENTVIEW standard type Codes.");
+        long stop = System.currentTimeMillis();
+        log.info("TIMING synchronising NhschoicesCondition {} with Codes {} took {}",
+                conditions.size(), currentCodes.size(), (stop - start));
     }
 
     private String getConditionCodeFromUri(String uri) {
