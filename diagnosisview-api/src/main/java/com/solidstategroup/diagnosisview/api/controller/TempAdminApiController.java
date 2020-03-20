@@ -41,16 +41,6 @@ public class TempAdminApiController extends BaseController {
         this.nhsChoicesService = nhsChoicesService;
     }
 
-    /**
-     * Sync the content from PV
-     *
-     * @throws Exception
-     */
-    @GetMapping(value = "/sync-codes")
-    public void syncContent() {
-
-        codeSyncService.syncCodes();
-    }
 
     @GetMapping(value = "/sync-codes/{code}")
     public void syncPvCode(@PathVariable("code") final String code, HttpServletRequest request) throws Exception {
@@ -59,8 +49,8 @@ public class TempAdminApiController extends BaseController {
     }
 
     @GetMapping(value = "/sync-bmj")
-    public void syncBmjLinks() {
-
+    public void syncBmjLinks(HttpServletRequest request) throws Exception {
+        isAdminUser(request);
         bmjBestPractices.syncBmjLinks();
     }
 
@@ -71,10 +61,27 @@ public class TempAdminApiController extends BaseController {
         bmjBestPractices.syncBmjLinks(code);
     }
 
-    @GetMapping(value = "/nhs_choices")
+    /**
+     * Step 1: sync NHS choices conditions
+     *
+     * @param request
+     * @throws Exception
+     */
+    @GetMapping(value = "/sync/nhs_choices")
     public void syncNhsChoicesConditions(HttpServletRequest request) throws Exception {
-        //isAdminUser(request);
+        isAdminUser(request);
         nhsChoicesService.updateConditionsFromNhsChoices();
+    }
+
+    /**
+     * Step 2: Sync the nhs choices conditions with codes
+     *
+     * @throws Exception
+     */
+    @GetMapping(value = "/sync/codes")
+    public void syncCodes(HttpServletRequest request) throws Exception {
+        isAdminUser(request);
+        nhsChoicesService.syncConditionsWithCodes();
     }
 
 
