@@ -72,8 +72,7 @@ public class TempAdminApiController extends BaseController {
     @GetMapping(value = "/sync/nhs_choices")
     public void syncNhsChoicesConditions(HttpServletRequest request) throws Exception {
         isAdminUser(request);
-        System.out.println("ALL GOOD");
-        //nhsChoicesService.updateConditionsFromNhsChoices();
+        nhsChoicesService.updateConditionsFromNhsChoices();
     }
 
     /**
