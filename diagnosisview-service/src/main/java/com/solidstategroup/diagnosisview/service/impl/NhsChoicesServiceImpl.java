@@ -17,12 +17,15 @@ import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.NhschoicesConditionRepository;
+import com.solidstategroup.diagnosisview.service.CodeService;
+import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.MedlinePlusService;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,11 +52,13 @@ import java.util.Set;
 public class NhsChoicesServiceImpl implements NhsChoicesService {
 
     private static final String NHSCHOICES_CONDITION_SEQ = "nhschoices_conditioncode_seq";
+    private static final String CODE_SEQ = "code_seq";
     private final NhschoicesConditionRepository nhschoicesConditionRepository;
     private final LookupRepository lookupRepository;
     private final CodeRepository codeRepository;
+    private final CodeService codeService;
     private final MedlinePlusService medlinePlusService;
-//    private final LinkService linkService;
+    private final LinkService linkService;
 
     private EntityManager entityManager;
     private String nhsChoicesApiKey;
@@ -63,13 +68,17 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                                  final NhschoicesConditionRepository nhschoicesConditionRepository,
                                  final LookupRepository lookupRepository,
                                  final CodeRepository codeRepository,
+                                 final CodeService codeService,
                                  final MedlinePlusService medlinePlusService,
+                                 final LinkService linkService,
                                  EntityManager entityManager) {
         this.nhsChoicesApiKey = nhsChoicesApiKey;
         this.nhschoicesConditionRepository = nhschoicesConditionRepository;
         this.lookupRepository = lookupRepository;
         this.codeRepository = codeRepository;
+        this.codeService = codeService;
         this.medlinePlusService = medlinePlusService;
+        this.linkService = linkService;
         this.entityManager = entityManager;
     }
 
@@ -179,17 +188,20 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         }
 
         long stop = System.currentTimeMillis();
-        log.info("TIMING Update NhschoicesCondition " + (stop - start) + " process ");
+        log.info("TIMING Update NhschoicesCondition took {}", (stop - start));
     }
 
     /**
      * Step 2 of update PV Codes, synchronises NhschoicesConditions with Codes in DV.
      * If an NhschoicesCondition has been deleted, marks Code as externallyRemoved = true.
      *
-     * //@throws ResourceNotFoundException
+     * @throws ResourceNotFoundException
      */
     @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public void syncConditionsWithCodes() throws ResourceNotFoundException {
+        log.info("START sync NhschoicesConditions with Codes process");
+        long start = System.currentTimeMillis();
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
@@ -216,13 +228,13 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         List<String> newOrUpdatedCodes = new ArrayList<>();
 
         log.info("Synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
-                + " PATIENTVIEW standard type Codes");
+                + " DV standard type Codes");
 
         // iterate through all NHS Choices conditions
         for (NhschoicesCondition condition : conditions) {
             newOrUpdatedCodes.add(condition.getCode());
 
-            // check if Code with same code as NhschoicesCondition exists in PV already
+            // check if Code with same code as NhschoicesCondition exists in DV already
             if (currentCodesMap.keySet().contains(condition.getCode())) {
 
                 Code currentCode = currentCodesMap.get(condition.getCode());
@@ -261,6 +273,7 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
             } else {
                 // NhschoicesCondition is new, create and save new Code
                 Code code = new Code();
+                code.setId(selectIdFrom(CODE_SEQ));
                 code.setCreator(null);
                 code.setCreated(new Date());
                 code.setLastUpdater(null);
@@ -288,23 +301,24 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     nhschoicesLink.setDifficultyLevel(DifficultyLevel.GREEN);
                     nhschoicesLink.setCode(code);
                     nhschoicesLink.setCreator(null);
-                    nhschoicesLink.setCreated(code.getCreated());
+                    nhschoicesLink.setCreated(new Date());
                     nhschoicesLink.setLastUpdater(null);
-                    nhschoicesLink.setLastUpdate(code.getCreated());
+                    nhschoicesLink.setLastUpdate(new Date());
                     nhschoicesLink.setDisplayOrder(1);
 
-
-                    //code.getLinks().add(nhschoicesLink);
-
-                    // add new links, sets correct display order and persist it
-//                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
-//                    code.addLink(saved);
-//                    codeService.save(code);
+                    try {
+                        // add new links, sets correct display order and persist it
+                        Link saved = linkService.addExternalLink(nhschoicesLink, code);
+                        code.addLink(saved);
+                        codeService.save(code);
+                    } catch (Exception e) {
+                        log.error("Failed to save nhs choices Link", e);
+                    }
 
                     /**
-                     * Add or Update Medline Plus link as well if needed
+                     * New Codes wont have any external standards set hence no need to
+                     * sync Medline Plus links here. Handled by Links sync job
                      */
-                    medlinePlusService.setLink(code);
                 }
 
                 codesToSave.add(code);
@@ -326,8 +340,9 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
             codeRepository.saveAll(codesToSave);
         }
 
-        log.info("Finished synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
-                + " PATIENTVIEW standard type Codes.");
+        long stop = System.currentTimeMillis();
+        log.info("TIMING synchronising NhschoicesCondition {} with Codes {} took {}",
+                conditions.size(), currentCodes.size(), (stop - start));
     }
 
     private String getConditionCodeFromUri(String uri) {

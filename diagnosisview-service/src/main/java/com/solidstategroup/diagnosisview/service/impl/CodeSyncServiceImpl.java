@@ -138,7 +138,7 @@ public class CodeSyncServiceImpl implements CodeSyncService {
 
 
     @Override
-    @Scheduled(cron = "${cron.job.sync.code}")
+    // @Scheduled(cron = "${cron.job.sync.code}")
     public void syncCodes() {
         try {
 
