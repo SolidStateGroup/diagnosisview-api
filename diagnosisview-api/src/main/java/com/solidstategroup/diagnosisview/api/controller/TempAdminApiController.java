@@ -4,6 +4,7 @@ import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import com.solidstategroup.diagnosisview.service.SubscriptionService;
+import com.solidstategroup.diagnosisview.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,11 +31,12 @@ public class TempAdminApiController extends BaseController {
      * @param subscriptionService Subscription service
      */
     @Autowired
-    public TempAdminApiController(final BmjBestPractices bmjBestPractices,
+    public TempAdminApiController(final UserService userService,
+                                  final BmjBestPractices bmjBestPractices,
                                   final CodeSyncService codeSyncService,
                                   final SubscriptionService subscriptionService,
                                   final NhsChoicesService nhsChoicesService) {
-
+        super(userService);
         this.bmjBestPractices = bmjBestPractices;
         this.codeSyncService = codeSyncService;
         this.subscriptionService = subscriptionService;
@@ -70,7 +72,8 @@ public class TempAdminApiController extends BaseController {
     @GetMapping(value = "/sync/nhs_choices")
     public void syncNhsChoicesConditions(HttpServletRequest request) throws Exception {
         isAdminUser(request);
-        nhsChoicesService.updateConditionsFromNhsChoices();
+        System.out.println("ALL GOOD");
+        //nhsChoicesService.updateConditionsFromNhsChoices();
     }
 
     /**
