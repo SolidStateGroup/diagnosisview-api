@@ -32,7 +32,6 @@ import java.util.Set;
 @Service
 public class MedlinePlusServiceImpl implements MedlinePlusService {
 
-    //private final CodeExternalStandardRepository codeExternalStandardRepository;
     private final LookupRepository lookupRepository;
     private final CodeService codeService;
     private final LinkService linkService;

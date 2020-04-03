@@ -15,10 +15,10 @@ public interface MedlinePlusService {
     void setLink(Code entityCode);
 
     /**
-     * Sets a Link for CodeExternalStandard
+     * Sets a MedlinPlus Link for CodeExternalStandard
      *
      * @param entityCode
      * @param codeExternalEntity
      */
-    void setCodeExternalStandardLink(Code entityCode, CodeExternalStandard codeExternalEntity);
+    boolean processLink(Code entityCode, CodeExternalStandard codeExternalEntity);
 }
