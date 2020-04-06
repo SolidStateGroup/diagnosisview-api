@@ -154,6 +154,12 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                 newCondition.setLastUpdate(newCondition.getCreated());
                 newCondition.setLastUpdater(null);
 
+                // NHS choices dates to record for audit
+                if(condition.getPageDetails() != null){
+                    newCondition.setPublishedDate(condition.getPageDetails().getDatePublished());
+                    newCondition.setModifiedDate(condition.getPageDetails().getDateModified());
+                }
+
                 nhschoicesConditionRepository.save(newCondition);
             } else {
                 // existing entry, update dates for introduction url and description
@@ -168,6 +174,13 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     existingCondition.setUri(condition.getApiUrl());
                     existingCondition.setLastUpdate(now);
                     existingCondition.setLastUpdater(null);
+
+                    // NHS choices dates to record for audit
+                    if(condition.getPageDetails() != null){
+                        existingCondition.setPublishedDate(condition.getPageDetails().getDatePublished());
+                        existingCondition.setModifiedDate(condition.getPageDetails().getDateModified());
+                    }
+
                     nhschoicesConditionRepository.save(existingCondition);
                 }
             }
