@@ -161,7 +161,7 @@ public final class MedlineplusApiClient {
 
             // default to ICD-10-CM code system if nothing provided
             if (result.codeSystem == null) {
-                result.codeSystem = CodeSystem.ICD_10_CM;
+                result.codeSystem = CodeSystem.SNOMED_CT;
             }
             result.apiUrl = BASE_URL;
             return result;

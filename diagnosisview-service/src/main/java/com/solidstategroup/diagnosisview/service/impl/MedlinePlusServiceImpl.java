@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
 import java.util.Date;
@@ -32,7 +33,6 @@ import java.util.Set;
 @Service
 public class MedlinePlusServiceImpl implements MedlinePlusService {
 
-    //private final CodeExternalStandardRepository codeExternalStandardRepository;
     private final LookupRepository lookupRepository;
     private final CodeService codeService;
     private final LinkService linkService;
@@ -69,7 +69,7 @@ public class MedlinePlusServiceImpl implements MedlinePlusService {
             for (CodeExternalStandard codeExternalStandard : codeExternalStandards) {
                 codeExternalStandard.setCode(entityCode);
 
-                setCodeExternalStandardLink(entityCode, codeExternalStandard);
+                processLink(entityCode, codeExternalStandard);
             }
         } catch (Exception e) {
             log.error("Failed to add MediaPlus link to Code", e);
@@ -78,12 +78,12 @@ public class MedlinePlusServiceImpl implements MedlinePlusService {
 
     @Override
     @Transactional
-    public void setCodeExternalStandardLink(Code entityCode, CodeExternalStandard codeExternalEntity) {
+    public boolean processLink(Code entityCode, CodeExternalStandard codeExternalEntity) {
         try {
 
             if (codeExternalEntity == null || entityCode == null) {
                 log.error("Missing CodeExternalStandard or Code, cannot add Medline Plus link");
-                return;
+                return false;
             }
 
             Date now = new Date();
@@ -124,6 +124,11 @@ public class MedlinePlusServiceImpl implements MedlinePlusService {
 
                 linkUrl = json.getFeed().getEntry()[0].getLink()[0].getHref();
 
+                if(!StringUtils.isEmpty(linkUrl) && linkUrl.endsWith("%20")){
+                    // some links apparently have empty spaces
+                    linkUrl = linkUrl.replace("%20", "");
+                }
+
                 // should have them already configured
                 if (existingLink == null) {
                     Lookup linkType = lookupRepository.findById(LinkTypes.MEDLINE_PLUS.id())
@@ -157,14 +162,19 @@ public class MedlinePlusServiceImpl implements MedlinePlusService {
                     linkRepository.save(existingLink);
                 }
 
-                log.info("Done medline plus link for code {}", codeExternalEntity.getCodeString());
+                log.info("Done medline plus link for code {}, external standard {}",
+                        entityCode.getCode(), codeExternalEntity.getCodeString());
+
+                return true;
             } else {
                 log.error("Could not find medline plus url for {}", codeExternalEntity.getCodeString());
+                return false;
             }
 
         } catch (Exception e) {
             log.error("Failed to add MediaPlus link to Code", e);
         }
+        return false;
     }
 
 }

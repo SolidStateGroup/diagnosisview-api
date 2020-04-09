@@ -9,7 +9,6 @@ import com.google.gson.LongSerializationPolicy;
 import com.solidstategroup.diagnosisview.model.RestPage;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
 import com.solidstategroup.diagnosisview.service.DatetimeParser;
@@ -34,7 +33,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -47,7 +45,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -79,7 +76,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             .registerTypeAdapter(ImmutableMap.class, new ImmutableMapDeserializer())
             .create();
 
-    private final BmjBestPractices bmjBestPractices;
     private final CodeService codeService;
     private final String patientviewUser;
     private final String patientviewPassword;
@@ -89,15 +85,13 @@ public class CodeSyncServiceImpl implements CodeSyncService {
     private final String PATIENTVIEW_CODE_DETAILS_ENDPOINT;
     private final Executor taskExecutor;
 
-    public CodeSyncServiceImpl(BmjBestPractices bmjBestPractices,
-                               final CodeService codeService,
+    public CodeSyncServiceImpl(final CodeService codeService,
                                @Qualifier("asyncExecutor") final Executor taskExecutor,
                                @Value("${PATIENTVIEW_USER:NONE}") String patientviewUser,
                                @Value("${PATIENTVIEW_PASSWORD:NONE}") String patientviewPassword,
                                @Value("${PATIENTVIEW_APIKEY:NONE}") String patientviewApiKey,
                                @Value("${PATIENTVIEW_URL:https://test.patientview.org/api/}") String patientviewUrl) {
 
-        this.bmjBestPractices = bmjBestPractices;
         this.codeService = codeService;
         this.taskExecutor = taskExecutor;
         this.patientviewUser = patientviewUser;
@@ -187,26 +181,6 @@ public class CodeSyncServiceImpl implements CodeSyncService {
             log.error("Failed to sync PV codes", e);
         }
     }
-
-    @Scheduled(cron = "${cron.job.sync.bmj.links}")
-    @Override
-    public void syncBmjLinks() {
-
-        final UUID correlation = UUID.randomUUID();
-        log.info("Correlation id: {}. Starting BMJ link job", correlation);
-        long start = System.currentTimeMillis();
-        try {
-
-            bmjBestPractices.syncBmjLinks();
-
-        } catch (Exception e) {
-            log.error("Correlation id: {}. BMJ link job threw an exception: {}", correlation, e);
-        }
-
-        long stop = System.currentTimeMillis();
-        log.info("Finished BMJ link job, timing {}", (stop - start));
-    }
-
 
     /**
      * Update a list of Codes.

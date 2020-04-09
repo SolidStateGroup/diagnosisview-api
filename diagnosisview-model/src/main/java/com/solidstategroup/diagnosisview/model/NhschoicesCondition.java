@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import java.util.Date;
 
 /**
@@ -44,16 +46,12 @@ public class NhschoicesCondition extends AuditModel {
     @Column(name = "uri", nullable = false)
     private String uri;
 
-//    public NhschoicesCondition() {}
-//
-//    public NhschoicesCondition(String name, String uri) {
-//        this.name = name;
-//        this.uri = uri;
-//    }
-//
-//    public NhschoicesCondition(String code, String name, String uri) {
-//        this.code = code;
-//        this.name = name;
-//        this.uri = uri;
-//    }
+    // NHS Choices dates
+    @Column(name = "published_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date publishedDate;
+
+    @Column(name = "modified_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date modifiedDate;
 }

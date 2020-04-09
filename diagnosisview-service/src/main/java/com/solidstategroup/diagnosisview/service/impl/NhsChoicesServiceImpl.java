@@ -19,7 +19,6 @@ import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.NhschoicesConditionRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
-import com.solidstategroup.diagnosisview.service.MedlinePlusService;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +32,7 @@ import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -57,11 +57,16 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
     private final LookupRepository lookupRepository;
     private final CodeRepository codeRepository;
     private final CodeService codeService;
-    private final MedlinePlusService medlinePlusService;
     private final LinkService linkService;
 
     private EntityManager entityManager;
     private String nhsChoicesApiKey;
+    /**
+     * This date was selected as the DV Live DB was already operational
+     * via the original PV sync method and all irrelevant NHS Choices codes
+     * had already been deleted by this stage
+     */
+    private static final String CUTOFF_DATE = ("2020-04-01");
 
     @Autowired
     public NhsChoicesServiceImpl(@Value("${nhschoices.conditions.api.key}") String nhsChoicesApiKey,
@@ -69,7 +74,6 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                                  final LookupRepository lookupRepository,
                                  final CodeRepository codeRepository,
                                  final CodeService codeService,
-                                 final MedlinePlusService medlinePlusService,
                                  final LinkService linkService,
                                  EntityManager entityManager) {
         this.nhsChoicesApiKey = nhsChoicesApiKey;
@@ -77,7 +81,6 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         this.lookupRepository = lookupRepository;
         this.codeRepository = codeRepository;
         this.codeService = codeService;
-        this.medlinePlusService = medlinePlusService;
         this.linkService = linkService;
         this.entityManager = entityManager;
     }
@@ -154,6 +157,12 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                 newCondition.setLastUpdate(newCondition.getCreated());
                 newCondition.setLastUpdater(null);
 
+                // NHS choices dates to record for audit
+                if (condition.getPageDetails() != null) {
+                    newCondition.setPublishedDate(condition.getPageDetails().getDatePublished());
+                    newCondition.setModifiedDate(condition.getPageDetails().getDateModified());
+                }
+
                 nhschoicesConditionRepository.save(newCondition);
             } else {
                 // existing entry, update dates for introduction url and description
@@ -168,6 +177,13 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     existingCondition.setUri(condition.getApiUrl());
                     existingCondition.setLastUpdate(now);
                     existingCondition.setLastUpdater(null);
+
+                    // NHS choices dates to record for audit
+                    if (condition.getPageDetails() != null) {
+                        existingCondition.setPublishedDate(condition.getPageDetails().getDatePublished());
+                        existingCondition.setModifiedDate(condition.getPageDetails().getDateModified());
+                    }
+
                     nhschoicesConditionRepository.save(existingCondition);
                 }
             }
@@ -202,6 +218,14 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
     public void syncConditionsWithCodes() throws ResourceNotFoundException {
         log.info("START sync NhschoicesConditions with Codes process");
         long start = System.currentTimeMillis();
+
+        Date cutOffDate = null;
+
+        try {
+            cutOffDate = new SimpleDateFormat("yyyy-MM-dd").parse(CUTOFF_DATE);
+        } catch (Exception e) {
+            log.error("Failed tp parse cut off date");
+        }
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
@@ -271,6 +295,21 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     codesToSave.add(currentCode);
                 }
             } else {
+
+                /*
+                    Extra check here for new Codes
+
+                    Some of the Codes fully deleted manually by admin from DV, we need to make sure they are not
+                    re appearing on next syn. We are using cut off date, where anything added before
+                    this date will be ignored. This only applies to new Codes
+                 */
+                if (condition.getPublishedDate() != null && cutOffDate != null &&
+                        condition.getPublishedDate().before(cutOffDate)) {
+                    log.info("NHS Choices Condition published date {} before cut off date, " +
+                            "ignoring code {} ", condition.getPublishedDate(), condition.getCode());
+                    continue;
+                }
+
                 // NhschoicesCondition is new, create and save new Code
                 Code code = new Code();
                 code.setId(selectIdFrom(CODE_SEQ));
