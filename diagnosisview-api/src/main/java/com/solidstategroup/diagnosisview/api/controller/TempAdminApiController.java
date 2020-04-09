@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/api/admin")
 public class TempAdminApiController extends BaseController {
 
-    private final LinksSyncService bmjBestPractices;
+    private final LinksSyncService linksSyncService;
     private final CodeSyncService codeSyncService;
     private final SubscriptionService subscriptionService;
     private final NhsChoicesService nhsChoicesService;
@@ -32,12 +32,12 @@ public class TempAdminApiController extends BaseController {
      */
     @Autowired
     public TempAdminApiController(final UserService userService,
-                                  final LinksSyncService bmjBestPractices,
+                                  final LinksSyncService linksSyncService,
                                   final CodeSyncService codeSyncService,
                                   final SubscriptionService subscriptionService,
                                   final NhsChoicesService nhsChoicesService) {
         super(userService);
-        this.bmjBestPractices = bmjBestPractices;
+        this.linksSyncService = linksSyncService;
         this.codeSyncService = codeSyncService;
         this.subscriptionService = subscriptionService;
         this.nhsChoicesService = nhsChoicesService;
@@ -53,14 +53,14 @@ public class TempAdminApiController extends BaseController {
     @GetMapping(value = "/sync-links")
     public void syncLinks(HttpServletRequest request) throws Exception {
         isAdminUser(request);
-        bmjBestPractices.syncLinks();
+        linksSyncService.syncLinks();
     }
 
     @GetMapping(value = "/sync-links/{code}")
-    public void syncBmjLinksForCode(@PathVariable("code") final String code,
+    public void syncLinksForCode(@PathVariable("code") final String code,
                                     HttpServletRequest request) throws Exception {
         isAdminUser(request);
-        bmjBestPractices.syncLinks(code);
+        linksSyncService.syncLinks(code);
     }
 
     /**
