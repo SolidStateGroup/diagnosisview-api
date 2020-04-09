@@ -23,7 +23,7 @@ public class LinksSyncTask {
         this.linksSyncService = linksSyncService;
     }
 
-    @Scheduled(cron = "${cron.job.sync.bmj.links}")
+    @Scheduled(cron = "${cron.job.sync.links}")
     public void syncAndUpdateCodes() {
         long start = System.currentTimeMillis();
         final UUID correlation = UUID.randomUUID();
