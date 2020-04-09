@@ -305,7 +305,6 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     continue;
                 }
 
-
                 // NhschoicesCondition is new, create and save new Code
                 Code code = new Code();
                 code.setId(selectIdFrom(CODE_SEQ));
