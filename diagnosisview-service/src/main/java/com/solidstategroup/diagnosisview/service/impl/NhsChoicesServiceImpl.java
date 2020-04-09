@@ -61,6 +61,11 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
 
     private EntityManager entityManager;
     private String nhsChoicesApiKey;
+    /**
+     * This date was selected as the DV Live DB was already operational
+     * via the original PV sync method and all irrelevant NHS Choices codes
+     * had already been deleted by this stage
+     */
     private static final String CUTOFF_DATE = ("2020-04-01");
 
     @Autowired
