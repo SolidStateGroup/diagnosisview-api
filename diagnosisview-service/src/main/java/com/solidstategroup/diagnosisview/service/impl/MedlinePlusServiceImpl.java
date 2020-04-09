@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
 import java.util.Date;
@@ -122,6 +123,11 @@ public class MedlinePlusServiceImpl implements MedlinePlusService {
                     && json.getFeed().getEntry()[0].getLink().length > 0) {
 
                 linkUrl = json.getFeed().getEntry()[0].getLink()[0].getHref();
+
+                if(!StringUtils.isEmpty(linkUrl) && linkUrl.endsWith("%20")){
+                    // some links apparently have empty spaces
+                    linkUrl = linkUrl.replace("%20", "");
+                }
 
                 // should have them already configured
                 if (existingLink == null) {
