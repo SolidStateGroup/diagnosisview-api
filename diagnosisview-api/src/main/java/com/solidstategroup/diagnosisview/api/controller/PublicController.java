@@ -1,6 +1,6 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.solidstategroup.diagnosisview.InstitutionDto;
+import com.solidstategroup.diagnosisview.model.InstitutionDto;
 import com.solidstategroup.diagnosisview.model.DifficultyLevelDto;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
