@@ -1,9 +1,9 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.solidstategroup.diagnosisview.model.InstitutionDto;
 import com.solidstategroup.diagnosisview.model.DifficultyLevelDto;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
+import com.solidstategroup.diagnosisview.service.impl.InstitutionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +21,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/public")
 public class PublicController {
+
+    private final InstitutionService institutionService;
+    @Autowired
+    public PublicController(final InstitutionService institutionService){
+        this.institutionService = institutionService;
+    }
 
     /**
      * Get status of API, used as health check by monitoring applications.
@@ -44,11 +50,7 @@ public class PublicController {
     @GetMapping(value = "/settings", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, List<?>> settings() {
         return new HashMap<String, List<?>>() {{
-            put("institutions", Arrays.asList(new InstitutionDto(Institution.UNIVERSITY_OF_EDINBURGH),
-                    new InstitutionDto(Institution.NHS_SCOTLAND_KNOWLEDGE_NETWORK),
-                    new InstitutionDto(Institution.UNIVERSITY_OF_MALAWI),
-                    new InstitutionDto(Institution.OTHER),
-                    new InstitutionDto(Institution.NONE)));
+            put("institutions", institutionService.getInstitutionsConfigs());
             put("difficultyLevels", Arrays.asList(new DifficultyLevelDto(DifficultyLevel.DO_NOT_OVERRIDE),
                     new DifficultyLevelDto(DifficultyLevel.GREEN),
                     new DifficultyLevelDto(DifficultyLevel.AMBER),

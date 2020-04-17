@@ -1,11 +1,14 @@
 package com.solidstategroup.diagnosisview.repository;
 
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
-import com.solidstategroup.diagnosisview.model.codes.LookupTypes;
+import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * JPA repository for Lookup objects.
@@ -19,11 +22,14 @@ public interface LookupRepository extends JpaRepository<Lookup, Long> {
      * @param value - the lookup value
      * @return the found Lookup
      */
-    Lookup findOneByValue(final String value);
+    Optional<Lookup> findOneByValue(final String value);
 
     @Query("SELECT loo FROM Lookup loo " +
             " WHERE loo.lookupType.type = :lookupType AND loo.value = :lookupValue")
-    Lookup findByTypeAndValue(@Param("lookupType") LookupTypes lookupType,
-                              @Param("lookupValue") String lookupValue);
+    Optional<Lookup> findByTypeAndValue(@Param("lookupType") LookupTypes lookupType,
+                                        @Param("lookupValue") String lookupValue);
+
+    @Query("SELECT l FROM Lookup l WHERE l.lookupType.type = :lookupType")
+    List<Lookup> findByType(@Param("lookupType") LookupTypes lookupType);
 
 }

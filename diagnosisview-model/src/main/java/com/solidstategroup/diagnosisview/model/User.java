@@ -3,7 +3,6 @@ package com.solidstategroup.diagnosisview.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -58,8 +57,7 @@ public class User implements Serializable {
     private String occupation;
 
     @Column
-    @Enumerated(EnumType.STRING)
-    private Institution institution;
+    private String institution;
 
     @Column
     private String firstName;

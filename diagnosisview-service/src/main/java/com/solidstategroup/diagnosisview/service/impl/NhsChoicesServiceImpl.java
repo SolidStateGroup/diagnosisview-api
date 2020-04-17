@@ -8,7 +8,7 @@ import com.solidstategroup.diagnosisview.model.NhschoicesCondition;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
-import com.solidstategroup.diagnosisview.model.codes.LookupTypes;
+import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeStandardTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeTypes;
@@ -229,14 +229,12 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
-                LookupTypes.CODE_STANDARD, CodeStandardTypes.NHS_CHOICES.toString());
-        if (standardType == null) {
-            throw new ResourceNotFoundException("Could not find NHS_CHOICES code standard type Lookup");
-        }
-        Lookup codeType = lookupRepository.findByTypeAndValue(LookupTypes.CODE_TYPE, CodeTypes.DIAGNOSIS.toString());
-        if (codeType == null) {
-            throw new ResourceNotFoundException("Could not find DIAGNOSIS code type Lookup");
-        }
+                LookupTypes.CODE_STANDARD, CodeStandardTypes.NHS_CHOICES.toString())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Could not find NHS_CHOICES code standard type Lookup"));
+
+        Lookup codeType = lookupRepository.findByTypeAndValue(LookupTypes.CODE_TYPE, CodeTypes.DIAGNOSIS.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Could not find DIAGNOSIS code type Lookup"));
 
         // get codes and conditions to synchronise, finding all NHS_CHOICES Codes and all NhschoicesCondition
         List<Code> currentCodes = codeRepository.findAllByStandardType(standardType);

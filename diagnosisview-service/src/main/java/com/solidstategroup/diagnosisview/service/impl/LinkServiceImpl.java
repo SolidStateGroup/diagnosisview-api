@@ -363,11 +363,11 @@ public class LinkServiceImpl implements LinkService {
     private void populatDVLookups() {
 
         if (niceLinksLookup == null) {
-            niceLinksLookup = lookupRepository.findOneByValue("NICE_CKS");
+            niceLinksLookup = lookupRepository.findOneByValue("NICE_CKS").orElse(null);
         }
 
         if (userLink == null) {
-            userLink = lookupRepository.findOneByValue("CUSTOM");
+            userLink = lookupRepository.findOneByValue("CUSTOM").orElse(null);
         }
     }
 

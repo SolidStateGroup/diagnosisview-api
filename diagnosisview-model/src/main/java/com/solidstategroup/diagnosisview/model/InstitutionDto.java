@@ -1,24 +1,25 @@
 package com.solidstategroup.diagnosisview.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
-import lombok.Builder;
-import lombok.Data;
+import com.solidstategroup.diagnosisview.model.codes.Lookup;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
 
 /**
- * POJO used to map Institution enum
- * for FE
+ * POJO used to map Institution Lookup for FE.
  */
-@Data
+@Getter
+@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class InstitutionDto {
+public class InstitutionDto implements Serializable {
     private String id;
     private String name;
 
-    public InstitutionDto(Institution institution){
-        this.id = institution.getId();
-        this.name = institution.getName();
+    public InstitutionDto(Lookup lookup){
+        this.id = lookup.getValue();
+        this.name = lookup.getDescription();
     }
 }
 

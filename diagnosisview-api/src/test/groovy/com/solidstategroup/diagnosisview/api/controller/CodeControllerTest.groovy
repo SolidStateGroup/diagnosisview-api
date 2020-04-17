@@ -4,7 +4,7 @@ import com.solidstategroup.diagnosisview.model.User
 import com.solidstategroup.diagnosisview.model.codes.Category
 import com.solidstategroup.diagnosisview.model.codes.Code
 import com.solidstategroup.diagnosisview.model.codes.Link
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution
+import com.solidstategroup.diagnosisview.model.codes.enums.InstitutionEnum
 import com.solidstategroup.diagnosisview.model.enums.RoleType
 import com.solidstategroup.diagnosisview.service.CodeService
 import com.solidstategroup.diagnosisview.service.LinkService
@@ -124,7 +124,7 @@ class CodeControllerTest extends AbstractMvcSpec {
 
         then: "correct codes are returned"
 
-        1 * codeService.getAll(Institution.UNIVERSITY_OF_EDINBURGH) >>
+        1 * codeService.getAll(InstitutionEnum.UNIVERSITY_OF_EDINBURGH) >>
                 [new Code()]
 
         and: "user is presented with the appropriate codes"
