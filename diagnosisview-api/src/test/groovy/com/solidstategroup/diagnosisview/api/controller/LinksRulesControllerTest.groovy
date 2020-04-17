@@ -5,7 +5,7 @@ import com.solidstategroup.diagnosisview.model.LinkRuleDto
 import com.solidstategroup.diagnosisview.model.User
 import com.solidstategroup.diagnosisview.model.codes.LinkRule
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution
+import com.solidstategroup.diagnosisview.model.codes.enums.InstitutionEnum
 import com.solidstategroup.diagnosisview.service.LinkRuleService
 
 import static com.solidstategroup.diagnosisview.model.enums.RoleType.ADMIN
@@ -32,7 +32,7 @@ class LinksRulesControllerTest extends AbstractMvcSpec {
                         link: "test",
                         transformation: "transformation",
                         criteriaType: CriteriaType.INSTITUTION,
-                        criteria: Institution.UNIVERSITY_OF_EDINBURGH.toString())
+                        criteria: InstitutionEnum.UNIVERSITY_OF_EDINBURGH.toString())
 
         when: "endpoint is called"
 

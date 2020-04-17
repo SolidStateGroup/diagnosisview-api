@@ -9,7 +9,7 @@ import com.solidstategroup.diagnosisview.model.codes.ExternalStandard
 import com.solidstategroup.diagnosisview.model.codes.Link
 import com.solidstategroup.diagnosisview.model.codes.Lookup
 import com.solidstategroup.diagnosisview.model.codes.LookupType
-import com.solidstategroup.diagnosisview.model.codes.LookupTypes
+import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes
 import com.solidstategroup.diagnosisview.repository.CategoryRepository
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository
