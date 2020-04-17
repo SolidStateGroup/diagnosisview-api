@@ -291,10 +291,8 @@ public class CodeServiceImpl implements CodeService {
             return null;
         }
 
-        Institution institution = null;
-        if (!StringUtils.isEmpty(institutionCode)) {
-            institutionService.getInstitution(institutionCode);
-        }
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
 
         result.getLinks().forEach(l -> {
             String originalLink = l.getLink();
