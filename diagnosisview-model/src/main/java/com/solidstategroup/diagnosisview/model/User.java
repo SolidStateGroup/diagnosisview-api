@@ -57,7 +57,6 @@ public class User implements Serializable {
     private String occupation;
 
     @Column
-    @Enumerated(EnumType.STRING)
     private String institution;
 
     @Column
