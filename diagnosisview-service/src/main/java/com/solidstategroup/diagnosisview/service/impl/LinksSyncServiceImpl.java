@@ -72,7 +72,7 @@ public class LinksSyncServiceImpl implements LinksSyncService {
         this.linkService = linkService;
         this.medlinePlusService = medlinePlusService;
 
-        BMJ = lookupRepository.findOneByValue("BMJ");
+        BMJ = lookupRepository.findOneByValue("BMJ").orElse(null);
     }
 
     /**
