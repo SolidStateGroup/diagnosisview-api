@@ -1,9 +1,9 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 
 import java.util.List;
 
@@ -27,29 +27,30 @@ public interface CodeService {
     List<Code> getAll();
 
     /**
-     * Get All codes
+     * Get All codes for given Institution code
      *
+     * @param institutionCode a code for Institution
      * @return List code dtos
      */
-    List<CodeDto> getAll(Institution institution);
+    List<CodeDto> getAll(String institutionCode) throws ResourceNotFoundException;
 
 
     /**
-     * Get All active codes, has not been removed externally and not hidden from patient.
-     * Used for mobile app.
+     * Get All active codes, has not been removed externally and not hidden from user. Used for mobile app.
      *
+     * @param institutionCode a code for Institution
      * @return List code dtos
      */
-    List<CodeDto> getAllActive(Institution institution);
+    List<CodeDto> getAllActive(String institutionCode) throws ResourceNotFoundException;
 
     /**
      * Search for Codes by synonyms.
      *
-     * @param searchTerm  a synonym value to search for
-     * @param institution
+     * @param searchTerm      a synonym value to search for
+     * @param institutionCode a code for Institution
      * @return a List code dtos
      */
-    List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution);
+    List<CodeDto> getCodesBySynonyms(String searchTerm, String institutionCode) throws ResourceNotFoundException;
 
     /**
      * Get a code by a given code
@@ -75,9 +76,8 @@ public interface CodeService {
     Code save(Code code);
 
     /**
-     * Creates a code, creating all the pre-requisite categories, external standards etc
-     * where required.
-     *
+     * Creates a code, creating all the pre-requisite categories, external standards etc where required.
+     * <p>
      * Used when creating Code from the DV Web, will prefix code with dv_
      *
      * @param code - code to create
@@ -85,9 +85,8 @@ public interface CodeService {
     Code add(Code code) throws Exception;
 
     /**
-     * Update a code, updating/creating all the pre-requisite categories, external standards etc
-     * where required.
-     *
+     * Update a code, updating/creating all the pre-requisite categories, external standards etc where required.
+     * <p>
      * Used when updating Code from the DV Web. Both DV and Other code types can be updated.
      *
      * @param code - code to update
@@ -103,13 +102,12 @@ public interface CodeService {
 
     /**
      * Create or update a Code from syn job.
-     *
-     * Should be used with sync only as has sync specific logic.
-     * Use upsert(Code) for DV Web code update
+     * <p>
+     * Should be used with sync only as has sync specific logic. Use upsert(Code) for DV Web code update
      *
      * @param code a code to save
      */
     Code updateCodeFromSync(Code code);
 
-    Code getByInstitution(String code, Institution institution);
+    Code getByInstitution(String code, String institutionCode) throws ResourceNotFoundException;
 }
