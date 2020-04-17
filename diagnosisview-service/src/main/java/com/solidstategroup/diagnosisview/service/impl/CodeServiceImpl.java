@@ -147,10 +147,8 @@ public class CodeServiceImpl implements CodeService {
     @Cacheable("getAllCodes")
     public List<CodeDto> getAll(String institutionCode) throws ResourceNotFoundException {
 
-        Institution institution = null;
-        if (!StringUtils.isEmpty(institutionCode)) {
-            institutionService.getInstitution(institutionCode);
-        }
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
 
         return codeRepository
                 .findAll()
@@ -175,10 +173,9 @@ public class CodeServiceImpl implements CodeService {
     @Cacheable("getAllCodes")
     public List<CodeDto> getAllActive(String institutionCode) throws ResourceNotFoundException {
 
-        Institution institution = null;
-        if (!StringUtils.isEmpty(institutionCode)) {
-            institutionService.getInstitution(institutionCode);
-        }
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
+
         return codeRepository
                 .findAllActive()
                 .parallelStream()
@@ -242,10 +239,9 @@ public class CodeServiceImpl implements CodeService {
             }
         }
 
-        Institution institution = null;
-        if (!StringUtils.isEmpty(institutionCode)) {
-            institutionService.getInstitution(institutionCode);
-        }
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
+
         // convert Codes to DTO and return
         if (!CollectionUtils.isEmpty(foundCodes)) {
             return foundCodes.parallelStream()
@@ -296,7 +292,7 @@ public class CodeServiceImpl implements CodeService {
         }
 
         Institution institution = null;
-        if(!StringUtils.isEmpty(institutionCode)){
+        if (!StringUtils.isEmpty(institutionCode)) {
             institutionService.getInstitution(institutionCode);
         }
 
