@@ -1,4 +1,4 @@
-package com.solidstategroup.diagnosisview.model.codes;
+package com.solidstategroup.diagnosisview.model.codes.enums;
 
 /**
  * Created by james@solidstategroup.com
@@ -7,5 +7,6 @@ package com.solidstategroup.diagnosisview.model.codes;
 public enum LookupTypes {
     CODE_STANDARD,
     CODE_TYPE,
-    LINK_TYPE
+    LINK_TYPE,
+    INSTITUTION_TYPE
 }
