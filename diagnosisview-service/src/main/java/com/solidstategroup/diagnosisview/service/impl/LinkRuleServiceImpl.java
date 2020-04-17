@@ -1,12 +1,13 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
+import com.solidstategroup.diagnosisview.model.codes.Institution;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleRepository;
@@ -28,19 +29,22 @@ public class LinkRuleServiceImpl implements LinkRuleService {
     private final LinkRuleRepository linkRuleRepository;
     private final LinkRuleMappingRepository linkRuleMappingRepository;
     private final LinkRepository linkRepository;
+    private final InstitutionService institutionService;
 
     public LinkRuleServiceImpl(LinkRuleRepository linkRuleRepository,
                                LinkRuleMappingRepository linkRuleMappingRepository,
-                               LinkRepository linkRepository) {
+                               LinkRepository linkRepository,
+                               final InstitutionService institutionService) {
 
         this.linkRuleRepository = linkRuleRepository;
         this.linkRuleMappingRepository = linkRuleMappingRepository;
         this.linkRepository = linkRepository;
+        this.institutionService = institutionService;
     }
 
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
-    public LinkRule add(LinkRuleDto linkRuleDto) {
+    public LinkRule add(LinkRuleDto linkRuleDto) throws ResourceNotFoundException {
 
         // For now we are only handling institution.
         // This could change in the future.
@@ -48,14 +52,15 @@ public class LinkRuleServiceImpl implements LinkRuleService {
             throw new BadRequestException(UNKNOWN_CRITERIA_TYPE);
         }
 
-        Institution institution = Institution.valueOf(linkRuleDto.getCriteria());
+        // Criteria is a code (Lookup value) we store against LinkRule
+        Institution institution = institutionService.getInstitution(linkRuleDto.getCriteria());
 
         LinkRule linkRule = linkRuleRepository.save(LinkRule
                 .builder()
                 .transform(linkRuleDto.getTransformation())
                 .link(linkRuleDto.getLink())
                 .criteriaType(CriteriaType.INSTITUTION)
-                .criteria(institution.toString())
+                .criteria(institution.getCode())
                 .build());
 
         Set<LinkRuleMapping> linkRuleMappings =
@@ -68,7 +73,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
                                         .link(link)
                                         .rule(linkRule)
                                         .criteriaType(CriteriaType.INSTITUTION)
-                                        .criteria(institution.toString())
+                                        .criteria(institution.getCode())
                                         .replacementLink(transformLink(
                                                 link.getLink(), linkRule.getTransform(), linkRule.getLink()))
                                         .build())
@@ -81,12 +86,13 @@ public class LinkRuleServiceImpl implements LinkRuleService {
 
     @Override
     @CacheEvict(value = "getAllCodes", allEntries = true)
-    public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto) {
+    public LinkRule updateLinkRule(String id, LinkRuleDto linkRuleDto) throws ResourceNotFoundException {
 
         LinkRule current = linkRuleRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException(LINK_NOT_FOUND));
 
-        Institution institution = Institution.valueOf(linkRuleDto.getCriteria());
+        // Criteria is a code (Lookup value) we store against LinkRule
+        Institution institution = institutionService.getInstitution(linkRuleDto.getCriteria());
 
         current.setTransform(linkRuleDto.getTransformation());
         current.setCriteria(linkRuleDto.getCriteria());
@@ -108,7 +114,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
                                         .link(link)
                                         .rule(current)
                                         .criteriaType(CriteriaType.INSTITUTION)
-                                        .criteria(institution.toString())
+                                        .criteria(institution.getCode())
                                         .replacementLink(transformLink(
                                                 link.getLink(), linkRuleDto.getTransformation(), linkRuleDto.getLink()))
                                         .build())
