@@ -170,7 +170,7 @@ public class CodeServiceImpl implements CodeService {
      * {@inheritDoc}
      */
     @Override
-    //@Cacheable("getAllCodes")
+    @Cacheable("getAllCodes")
     public List<CodeDto> getAllActive(String institutionCode) throws ResourceNotFoundException {
 
         final Institution institution =
