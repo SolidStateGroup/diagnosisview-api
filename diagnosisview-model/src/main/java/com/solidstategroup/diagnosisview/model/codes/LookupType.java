@@ -1,6 +1,7 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

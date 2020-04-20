@@ -11,7 +11,16 @@ public enum DifficultyLevel {
     RED("Red");
 
     private String name;
-    DifficultyLevel(String name) { this.name = name; }
-    public String getName() { return this.name; }
-    public String getId() { return this.name(); }
+
+    DifficultyLevel(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getId() {
+        return this.name();
+    }
 }

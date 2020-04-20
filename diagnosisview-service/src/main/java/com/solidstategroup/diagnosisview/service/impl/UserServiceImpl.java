@@ -18,6 +18,7 @@ import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
+import com.solidstategroup.diagnosisview.model.codes.Institution;
 import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
@@ -34,6 +35,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,9 +56,10 @@ import java.util.UUID;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
-    private AppleReceiptValidation appleReceiptValidation;
-    private EmailService emailService;
+    private final UserRepository userRepository;
+    private final AppleReceiptValidation appleReceiptValidation;
+    private final EmailService emailService;
+    private final InstitutionService institutionService;
 
     @Value("${IOS_SANDBOX:true}")
     private boolean isIosSandbox;
@@ -72,10 +75,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     public UserServiceImpl(final UserRepository userRepository,
                            final AppleReceiptValidation appleReceiptValidation,
-                           final EmailService emailService) {
+                           final EmailService emailService,
+                           final InstitutionService institutionService) {
         this.userRepository = userRepository;
         this.appleReceiptValidation = appleReceiptValidation;
         this.emailService = emailService;
+        this.institutionService = institutionService;
     }
 
     /**
@@ -197,6 +202,12 @@ public class UserServiceImpl implements UserService {
             user.setToken(UUID.randomUUID().toString());
             user.setRoleType(RoleType.USER);
 
+            // check make sure we have correct selected institution
+            if(!StringUtils.isEmpty(user.getInstitution())){
+                Institution institution = institutionService.getInstitution(user.getInstitution());
+                user.setInstitution(institution.getCode());
+            }
+
             return userRepository.save(user);
 
         } else {
@@ -222,7 +233,8 @@ public class UserServiceImpl implements UserService {
                 savedUser.setOccupation(user.getOccupation());
             }
             if (user.getInstitution() != null) {
-                savedUser.setInstitution(user.getInstitution());
+                Institution institution = institutionService.getInstitution(user.getInstitution());
+                savedUser.setInstitution(institution.getCode());
             }
 
             if (user.getEmailAddress() != null) {
@@ -280,11 +292,9 @@ public class UserServiceImpl implements UserService {
             savedCodesMap.put(savedUserCode.getLinkId() + savedCode.getCode() + savedCode.getType(), savedCode);
         });
 
-
         if (savedCodesMap.containsKey(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType())) {
             savedCodesMap.remove(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType());
         }
-
 
         savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
         userRepository.save(savedUser);
@@ -501,7 +511,6 @@ public class UserServiceImpl implements UserService {
      */
     public User verifyAndroidToken(User user, String receipt) throws Exception {
         User savedUser = this.getUser(user.getUsername());
-
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
         Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);

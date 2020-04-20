@@ -302,7 +302,8 @@ public class NhsChoicesResponseTest {
         for (ConditionLinkJson link : json.getConditionLinks()) {
             Assert.assertNotNull("Should get condition name", link.getName());
             Assert.assertNotNull("Should get condition url", link.getApiUrl());
-            Assert.assertNotNull("Should get condition description", link.getDescription());
+            Assert.assertNotNull("Should get condition page details", link.getPageDetails());
+            Assert.assertNotNull("Should get condition date published", link.getPageDetails().getDatePublished());
         }
     }
 

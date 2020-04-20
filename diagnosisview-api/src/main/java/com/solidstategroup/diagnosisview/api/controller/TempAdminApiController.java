@@ -1,8 +1,10 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.solidstategroup.diagnosisview.service.BmjBestPractices;
+import com.solidstategroup.diagnosisview.service.LinksSyncService;
 import com.solidstategroup.diagnosisview.service.CodeSyncService;
+import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import com.solidstategroup.diagnosisview.service.SubscriptionService;
+import com.solidstategroup.diagnosisview.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +19,10 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/api/admin")
 public class TempAdminApiController extends BaseController {
 
-    private final BmjBestPractices bmjBestPractices;
+    private final LinksSyncService linksSyncService;
     private final CodeSyncService codeSyncService;
     private final SubscriptionService subscriptionService;
+    private final NhsChoicesService nhsChoicesService;
 
     /**
      * Instantiate API controller, includes required services.
@@ -28,25 +31,18 @@ public class TempAdminApiController extends BaseController {
      * @param subscriptionService Subscription service
      */
     @Autowired
-    public TempAdminApiController(final BmjBestPractices bmjBestPractices,
+    public TempAdminApiController(final UserService userService,
+                                  final LinksSyncService linksSyncService,
                                   final CodeSyncService codeSyncService,
-                                  final SubscriptionService subscriptionService) {
-
-        this.bmjBestPractices = bmjBestPractices;
+                                  final SubscriptionService subscriptionService,
+                                  final NhsChoicesService nhsChoicesService) {
+        super(userService);
+        this.linksSyncService = linksSyncService;
         this.codeSyncService = codeSyncService;
         this.subscriptionService = subscriptionService;
+        this.nhsChoicesService = nhsChoicesService;
     }
 
-    /**
-     * Sync the content from PV
-     *
-     * @throws Exception
-     */
-    @GetMapping(value = "/sync-codes")
-    public void syncContent() {
-
-        codeSyncService.syncCodes();
-    }
 
     @GetMapping(value = "/sync-codes/{code}")
     public void syncPvCode(@PathVariable("code") final String code, HttpServletRequest request) throws Exception {
@@ -54,17 +50,40 @@ public class TempAdminApiController extends BaseController {
         codeSyncService.syncCode(code);
     }
 
-    @GetMapping(value = "/sync-bmj")
-    public void syncBmjLinks() {
-
-        bmjBestPractices.syncBmjLinks();
+    @GetMapping(value = "/sync-links")
+    public void syncLinks(HttpServletRequest request) throws Exception {
+        isAdminUser(request);
+        linksSyncService.syncLinks();
     }
 
-    @GetMapping(value = "/sync-bmj/{code}")
-    public void syncBmjLinksForCode(@PathVariable("code") final String code,
+    @GetMapping(value = "/sync-links/{code}")
+    public void syncLinksForCode(@PathVariable("code") final String code,
                                     HttpServletRequest request) throws Exception {
         isAdminUser(request);
-        bmjBestPractices.syncBmjLinks(code);
+        linksSyncService.syncLinks(code);
+    }
+
+    /**
+     * Step 1: sync NHS choices conditions
+     *
+     * @param request
+     * @throws Exception
+     */
+    @GetMapping(value = "/sync/nhs_choices")
+    public void syncNhsChoicesConditions(HttpServletRequest request) throws Exception {
+        isAdminUser(request);
+        nhsChoicesService.updateConditionsFromNhsChoices();
+    }
+
+    /**
+     * Step 2: Sync the nhs choices conditions with codes
+     *
+     * @throws Exception
+     */
+    @GetMapping(value = "/sync/codes")
+    public void syncCodes(HttpServletRequest request) throws Exception {
+        isAdminUser(request);
+        nhsChoicesService.syncConditionsWithCodes();
     }
 
 

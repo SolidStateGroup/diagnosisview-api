@@ -8,9 +8,10 @@ import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
-import com.solidstategroup.diagnosisview.service.BmjBestPractices;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
+import com.solidstategroup.diagnosisview.service.LinksSyncService;
+import com.solidstategroup.diagnosisview.service.MedlinePlusService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
@@ -28,9 +29,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Service to handle sync for different types of links from external systems.
+ *
+ * Currently supporting BMJ and MedlinePlus links. NHS Choice links are created
+ * during NhsChoices code sync.
+ */
 @Slf4j
 @Service
-public class BmjBestPracticesImpl implements BmjBestPractices {
+public class LinksSyncServiceImpl implements LinksSyncService {
 
     private static final String BMJ_BP_ENDPOINT_TEMPLATE = "https://bestpractice.bmj.com/infobutton?" +
             "knowledgeResponseType=application/json&" +
@@ -52,16 +59,20 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
 
     private final CodeService codeService;
     private final LinkService linkService;
+    private final MedlinePlusService medlinePlusService;
+
     private final Lookup BMJ;
 
-    public BmjBestPracticesImpl(CodeService codeService,
-                                LinkService linkService,
-                                LookupRepository lookupRepository) {
+    public LinksSyncServiceImpl(final CodeService codeService,
+                                final LinkService linkService,
+                                final LookupRepository lookupRepository,
+                                final MedlinePlusService medlinePlusService) {
 
         this.codeService = codeService;
         this.linkService = linkService;
+        this.medlinePlusService = medlinePlusService;
 
-        BMJ = lookupRepository.findOneByValue("BMJ");
+        BMJ = lookupRepository.findOneByValue("BMJ").orElse(null);
     }
 
     /**
@@ -69,65 +80,79 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
      */
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     @Override
-    public void syncBmjLinks() {
+    public void syncLinks() {
 
         long start = System.currentTimeMillis();
         List<Code> codes = codeService.getAll();
 
-        log.info("BMJ Processing {} codes.", codes.size());
+        log.info("Links Sync Processing {} codes.", codes.size());
 
         codes.forEach(code -> {
 
             final Optional<CodeExternalStandard> snomed = getExternalStandard(code, SNOMED_CT);
 
-            boolean foundSnomed = false;
+            boolean foundBmjSnomed = false;
+            boolean foundMedlineSnomed = false;
 
             if (snomed.isPresent()) {
 
-                foundSnomed = processLink(buildUrl(SNOMED_CT, snomed.get().getCodeString(), code.getCode()),
+                foundBmjSnomed = processBMJLink(buildUrl(SNOMED_CT, snomed.get().getCodeString(), code.getCode()),
                         code,
                         SNOMED_CT);
+
+                foundMedlineSnomed = medlinePlusService.processLink(code, snomed.get());
             }
 
-            if (!foundSnomed) {
+            // no links found for SNOMED code, try ICD_10
+            if (!foundBmjSnomed) {
+                getExternalStandard(code, ICD_10)
+                        .ifPresent(icd10 ->
+                                processBMJLink(buildUrl(ICD_10, icd10.getCodeString(), code.getCode()), code, ICD_10)
+                        );
+            }
 
-                getExternalStandard(code, ICD_10).ifPresent(icd10 ->
-
-                        processLink(buildUrl(ICD_10, icd10.getCodeString(), code.getCode()),
-                                code,
-                                ICD_10)
-                );
+            if (!foundMedlineSnomed) {
+                getExternalStandard(code, ICD_10)
+                        .ifPresent(icd10 -> medlinePlusService.processLink(code, icd10));
             }
         });
+
         long stop = System.currentTimeMillis();
-        log.info("BMJ DONE Processing codes, timing {}.", (stop - start));
+        log.info("Links Sync DONE Processing codes, timing {}.", (stop - start));
     }
 
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     @Override
-    public void syncBmjLinks(String codeStr) {
+    public void syncLinks(String codeStr) {
 
         Code code = codeService.get(codeStr);
 
         log.info("Processing {} code.", code.getCode());
 
-
         final Optional<CodeExternalStandard> snomed = getExternalStandard(code, SNOMED_CT);
 
         boolean foundSnomed = false;
+        boolean foundMedlineSnomed = false;
 
         if (snomed.isPresent()) {
-            foundSnomed = processLink(
+            // process BMJ link
+            foundSnomed = processBMJLink(
                     buildUrl(SNOMED_CT, snomed.get().getCodeString(), code.getCode()), code, SNOMED_CT);
+
+            foundMedlineSnomed = medlinePlusService.processLink(code, snomed.get());
         }
 
         if (!foundSnomed) {
             getExternalStandard(code, ICD_10)
-                    .ifPresent(icd10 -> processLink(
+                    .ifPresent(icd10 -> processBMJLink(
                             buildUrl(ICD_10, icd10.getCodeString(), code.getCode()), code, ICD_10)
                     );
         }
 
+        if (!foundMedlineSnomed) {
+            getExternalStandard(code, ICD_10)
+                    .ifPresent(icd10 -> medlinePlusService.processLink(code, icd10));
+        }
     }
 
     /**
@@ -145,7 +170,7 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
      * setup to handle this so will throw an exception. All we are doing here is to capturing that exception and moving
      * on.
      */
-    private boolean processLink(String url, Code code, String standard) {
+    private boolean processBMJLink(String url, Code code, String standard) {
 
         final UUID correlation = UUID.randomUUID();
         Instant start = Instant.now();
@@ -194,8 +219,8 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                                 linkToUpdate.setExternalId(id);
                                 linkService.updateExternalLinks(linkToUpdate);
 
-                                log.info("Correlation id: {}. Links updated for ext id {}", correlation, id);
-                                log.debug("Correlation id: {}. Time taken: {}", correlation,
+                                log.info("BMJ Correlation id: {}. Links updated for ext id {}", correlation, id);
+                                log.debug("BMJ Correlation id: {}. Time taken: {}", correlation,
                                         Duration.between(start, Instant.now()));
                                 return true;
                             }
@@ -215,8 +240,8 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
                             code.addLink(saved);
                             codeService.save(code);
 
-                            log.info("Correlation id: {}. New link saved {}", correlation, newLink.getId());
-                            log.debug("Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
+                            log.info("BMJ Correlation id: {}. New link saved {}", correlation, newLink.getId());
+                            log.debug("BMJ Correlation id: {}. Time taken: {}", correlation, Duration.between(start, Instant.now()));
 
                             return true;
                         }
@@ -239,7 +264,6 @@ public class BmjBestPracticesImpl implements BmjBestPractices {
      * Pulls an external standard from a {@link Code}
      */
     private Optional<CodeExternalStandard> getExternalStandard(Code code, String externalStandard) {
-
         return code.getExternalStandards()
                 .stream()
                 .filter(es -> es.getExternalStandard().getName().equals(externalStandard))

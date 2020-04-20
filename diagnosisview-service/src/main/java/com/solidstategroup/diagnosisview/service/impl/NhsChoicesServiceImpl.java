@@ -8,7 +8,7 @@ import com.solidstategroup.diagnosisview.model.NhschoicesCondition;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.Lookup;
-import com.solidstategroup.diagnosisview.model.codes.LookupTypes;
+import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeStandardTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeTypes;
@@ -17,12 +17,14 @@ import com.solidstategroup.diagnosisview.model.enums.LinkTypes;
 import com.solidstategroup.diagnosisview.repository.CodeRepository;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.repository.NhschoicesConditionRepository;
-import com.solidstategroup.diagnosisview.service.MedlinePlusService;
+import com.solidstategroup.diagnosisview.service.CodeService;
+import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.NhsChoicesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -49,27 +52,36 @@ import java.util.Set;
 public class NhsChoicesServiceImpl implements NhsChoicesService {
 
     private static final String NHSCHOICES_CONDITION_SEQ = "nhschoices_conditioncode_seq";
+    private static final String CODE_SEQ = "code_seq";
     private final NhschoicesConditionRepository nhschoicesConditionRepository;
     private final LookupRepository lookupRepository;
     private final CodeRepository codeRepository;
-    private final MedlinePlusService medlinePlusService;
-//    private final LinkService linkService;
+    private final CodeService codeService;
+    private final LinkService linkService;
 
     private EntityManager entityManager;
     private String nhsChoicesApiKey;
+    /**
+     * This date was selected as the DV Live DB was already operational
+     * via the original PV sync method and all irrelevant NHS Choices codes
+     * had already been deleted by this stage
+     */
+    private static final String CUTOFF_DATE = ("2020-04-01");
 
     @Autowired
     public NhsChoicesServiceImpl(@Value("${nhschoices.conditions.api.key}") String nhsChoicesApiKey,
                                  final NhschoicesConditionRepository nhschoicesConditionRepository,
                                  final LookupRepository lookupRepository,
                                  final CodeRepository codeRepository,
-                                 final MedlinePlusService medlinePlusService,
+                                 final CodeService codeService,
+                                 final LinkService linkService,
                                  EntityManager entityManager) {
         this.nhsChoicesApiKey = nhsChoicesApiKey;
         this.nhschoicesConditionRepository = nhschoicesConditionRepository;
         this.lookupRepository = lookupRepository;
         this.codeRepository = codeRepository;
-        this.medlinePlusService = medlinePlusService;
+        this.codeService = codeService;
+        this.linkService = linkService;
         this.entityManager = entityManager;
     }
 
@@ -145,6 +157,12 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                 newCondition.setLastUpdate(newCondition.getCreated());
                 newCondition.setLastUpdater(null);
 
+                // NHS choices dates to record for audit
+                if (condition.getPageDetails() != null) {
+                    newCondition.setPublishedDate(condition.getPageDetails().getDatePublished());
+                    newCondition.setModifiedDate(condition.getPageDetails().getDateModified());
+                }
+
                 nhschoicesConditionRepository.save(newCondition);
             } else {
                 // existing entry, update dates for introduction url and description
@@ -159,6 +177,13 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     existingCondition.setUri(condition.getApiUrl());
                     existingCondition.setLastUpdate(now);
                     existingCondition.setLastUpdater(null);
+
+                    // NHS choices dates to record for audit
+                    if (condition.getPageDetails() != null) {
+                        existingCondition.setPublishedDate(condition.getPageDetails().getDatePublished());
+                        existingCondition.setModifiedDate(condition.getPageDetails().getDateModified());
+                    }
+
                     nhschoicesConditionRepository.save(existingCondition);
                 }
             }
@@ -179,28 +204,37 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         }
 
         long stop = System.currentTimeMillis();
-        log.info("TIMING Update NhschoicesCondition " + (stop - start) + " process ");
+        log.info("TIMING Update NhschoicesCondition took {}", (stop - start));
     }
 
     /**
      * Step 2 of update PV Codes, synchronises NhschoicesConditions with Codes in DV.
      * If an NhschoicesCondition has been deleted, marks Code as externallyRemoved = true.
      *
-     * //@throws ResourceNotFoundException
+     * @throws ResourceNotFoundException
      */
     @Override
+    @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
     public void syncConditionsWithCodes() throws ResourceNotFoundException {
+        log.info("START sync NhschoicesConditions with Codes process");
+        long start = System.currentTimeMillis();
+
+        Date cutOffDate = null;
+
+        try {
+            cutOffDate = new SimpleDateFormat("yyyy-MM-dd").parse(CUTOFF_DATE);
+        } catch (Exception e) {
+            log.error("Failed tp parse cut off date");
+        }
 
         // synchronise conditions previously retrieved from nhs choices, may be consolidated into once function call
         Lookup standardType = lookupRepository.findByTypeAndValue(
-                LookupTypes.CODE_STANDARD, CodeStandardTypes.NHS_CHOICES.toString());
-        if (standardType == null) {
-            throw new ResourceNotFoundException("Could not find NHS_CHOICES code standard type Lookup");
-        }
-        Lookup codeType = lookupRepository.findByTypeAndValue(LookupTypes.CODE_TYPE, CodeTypes.DIAGNOSIS.toString());
-        if (codeType == null) {
-            throw new ResourceNotFoundException("Could not find DIAGNOSIS code type Lookup");
-        }
+                LookupTypes.CODE_STANDARD, CodeStandardTypes.NHS_CHOICES.toString())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Could not find NHS_CHOICES code standard type Lookup"));
+
+        Lookup codeType = lookupRepository.findByTypeAndValue(LookupTypes.CODE_TYPE, CodeTypes.DIAGNOSIS.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Could not find DIAGNOSIS code type Lookup"));
 
         // get codes and conditions to synchronise, finding all NHS_CHOICES Codes and all NhschoicesCondition
         List<Code> currentCodes = codeRepository.findAllByStandardType(standardType);
@@ -216,13 +250,13 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
         List<String> newOrUpdatedCodes = new ArrayList<>();
 
         log.info("Synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
-                + " PATIENTVIEW standard type Codes");
+                + " DV standard type Codes");
 
         // iterate through all NHS Choices conditions
         for (NhschoicesCondition condition : conditions) {
             newOrUpdatedCodes.add(condition.getCode());
 
-            // check if Code with same code as NhschoicesCondition exists in PV already
+            // check if Code with same code as NhschoicesCondition exists in DV already
             if (currentCodesMap.keySet().contains(condition.getCode())) {
 
                 Code currentCode = currentCodesMap.get(condition.getCode());
@@ -259,8 +293,24 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     codesToSave.add(currentCode);
                 }
             } else {
+
+                /*
+                    Extra check here for new Codes
+
+                    Some of the Codes fully deleted manually by admin from DV, we need to make sure they are not
+                    re appearing on next syn. We are using cut off date, where anything added before
+                    this date will be ignored. This only applies to new Codes
+                 */
+                if (condition.getPublishedDate() != null && cutOffDate != null &&
+                        condition.getPublishedDate().before(cutOffDate)) {
+                    log.info("NHS Choices Condition published date {} before cut off date, " +
+                            "ignoring code {} ", condition.getPublishedDate(), condition.getCode());
+                    continue;
+                }
+
                 // NhschoicesCondition is new, create and save new Code
                 Code code = new Code();
+                code.setId(selectIdFrom(CODE_SEQ));
                 code.setCreator(null);
                 code.setCreated(new Date());
                 code.setLastUpdater(null);
@@ -288,23 +338,24 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
                     nhschoicesLink.setDifficultyLevel(DifficultyLevel.GREEN);
                     nhschoicesLink.setCode(code);
                     nhschoicesLink.setCreator(null);
-                    nhschoicesLink.setCreated(code.getCreated());
+                    nhschoicesLink.setCreated(new Date());
                     nhschoicesLink.setLastUpdater(null);
-                    nhschoicesLink.setLastUpdate(code.getCreated());
+                    nhschoicesLink.setLastUpdate(new Date());
                     nhschoicesLink.setDisplayOrder(1);
 
-
-                    //code.getLinks().add(nhschoicesLink);
-
-                    // add new links, sets correct display order and persist it
-//                    Link saved = linkService.addExternalLink(medlinePlusLink, entityCode);
-//                    code.addLink(saved);
-//                    codeService.save(code);
+                    try {
+                        // add new links, sets correct display order and persist it
+                        Link saved = linkService.addExternalLink(nhschoicesLink, code);
+                        code.addLink(saved);
+                        codeService.save(code);
+                    } catch (Exception e) {
+                        log.error("Failed to save nhs choices Link", e);
+                    }
 
                     /**
-                     * Add or Update Medline Plus link as well if needed
+                     * New Codes wont have any external standards set hence no need to
+                     * sync Medline Plus links here. Handled by Links sync job
                      */
-                    medlinePlusService.setLink(code);
                 }
 
                 codesToSave.add(code);
@@ -326,8 +377,9 @@ public class NhsChoicesServiceImpl implements NhsChoicesService {
             codeRepository.saveAll(codesToSave);
         }
 
-        log.info("Finished synchronising " + conditions.size() + " NhschoicesConditions with " + currentCodes.size()
-                + " PATIENTVIEW standard type Codes.");
+        long stop = System.currentTimeMillis();
+        log.info("TIMING synchronising NhschoicesCondition {} with Codes {} took {}",
+                conditions.size(), currentCodes.size(), (stop - start));
     }
 
     private String getConditionCodeFromUri(String uri) {

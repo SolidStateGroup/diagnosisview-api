@@ -1,19 +1,20 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
+import com.solidstategroup.diagnosisview.model.codes.Institution;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRuleMapping;
 import com.solidstategroup.diagnosisview.model.codes.LogoRule;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.solidstategroup.diagnosisview.model.codes.enums.CriteriaType;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.repository.CategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeCategoryRepository;
 import com.solidstategroup.diagnosisview.repository.CodeExternalStandardRepository;
@@ -74,6 +75,8 @@ public class CodeServiceImpl implements CodeService {
 
     private final SynonymsService synonymsService;
 
+    private final InstitutionService institutionService;
+
     // Temporary hack to get ids for codes and links.
     private EntityManager entityManager;
 
@@ -87,6 +90,7 @@ public class CodeServiceImpl implements CodeService {
                            SynonymsService synonymsService,
                            LookupTypeRepository lookupTypeRepository,
                            LookupRepository lookupRepository,
+                           InstitutionService institutionService,
                            EntityManager entityManager) {
 
         this.codeRepository = codeRepository;
@@ -99,6 +103,7 @@ public class CodeServiceImpl implements CodeService {
         this.synonymsService = synonymsService;
         this.lookupTypeRepository = lookupTypeRepository;
         this.lookupRepository = lookupRepository;
+        this.institutionService = institutionService;
         this.entityManager = entityManager;
     }
 
@@ -140,7 +145,10 @@ public class CodeServiceImpl implements CodeService {
      */
     @Override
     @Cacheable("getAllCodes")
-    public List<CodeDto> getAll(Institution institution) {
+    public List<CodeDto> getAll(String institutionCode) throws ResourceNotFoundException {
+
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
 
         return codeRepository
                 .findAll()
@@ -163,7 +171,10 @@ public class CodeServiceImpl implements CodeService {
      */
     @Override
     @Cacheable("getAllCodes")
-    public List<CodeDto> getAllActive(Institution institution) {
+    public List<CodeDto> getAllActive(String institutionCode) throws ResourceNotFoundException {
+
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
 
         return codeRepository
                 .findAllActive()
@@ -184,7 +195,8 @@ public class CodeServiceImpl implements CodeService {
     /**
      * {@inheritDoc}
      */
-    public List<CodeDto> getCodesBySynonyms(String searchTerm, Institution institution) {
+    @Override
+    public List<CodeDto> getCodesBySynonyms(String searchTerm, String institutionCode) throws ResourceNotFoundException {
         List<CodeDto> filteredCodes = new ArrayList<>();
         Set<Code> foundCodes = new HashSet<>();
         if (StringUtils.isEmpty(searchTerm) || searchTerm.length() < 3) {
@@ -227,6 +239,9 @@ public class CodeServiceImpl implements CodeService {
             }
         }
 
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
+
         // convert Codes to DTO and return
         if (!CollectionUtils.isEmpty(foundCodes)) {
             return foundCodes.parallelStream()
@@ -242,7 +257,6 @@ public class CodeServiceImpl implements CodeService {
                             Comparator.nullsFirst(Comparator.naturalOrder())))
                     .collect(toList());
         }
-
 
         return filteredCodes;
     }
@@ -268,26 +282,27 @@ public class CodeServiceImpl implements CodeService {
         return result;
     }
 
-    public Code getByInstitution(String code, Institution institution) {
+    @Override
+    public Code getByInstitution(String code, String institutionCode) throws ResourceNotFoundException {
 
         Code result = codeRepository.findOneByCode(code);
 
         if (result == null) {
-
             return null;
         }
 
-        result
-                .getLinks()
-                .forEach(l -> {
-                    String originalLink = l.getLink();
-                    Optional<String> transformed = buildLink(l.getMappingLinks(), institution);
-                    l.setDisplayLink(shouldDisplayLink(transformed, l));
-                    l.setLink(transformed.orElse(l.getLink()));
-                    l.setOriginalLink(originalLink);
-                    l.setLogoRule(null);
-                    l.setMappingLinks(null);
-                });
+        final Institution institution =
+                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
+
+        result.getLinks().forEach(l -> {
+            String originalLink = l.getLink();
+            Optional<String> transformed = buildLink(l.getMappingLinks(), institution);
+            l.setDisplayLink(shouldDisplayLink(transformed, l));
+            l.setLink(transformed.orElse(l.getLink()));
+            l.setOriginalLink(originalLink);
+            l.setLogoRule(null);
+            l.setMappingLinks(null);
+        });
 
         return result;
     }
@@ -301,7 +316,6 @@ public class CodeServiceImpl implements CodeService {
     public void delete(Code code) {
 
         if (code.getCode() == null) {
-
             throw new BadRequestException("code not set");
         }
 
@@ -350,7 +364,6 @@ public class CodeServiceImpl implements CodeService {
         if (code.getId() != null) {
             throw new Exception("Code id present, did you mean to update?");
         }
-
 
         // If the code is from dv web, then we append dv_ to the code so its unique.
 
@@ -738,14 +751,12 @@ public class CodeServiceImpl implements CodeService {
         return override;
     }
 
-    private Optional<String> buildLink(
-            Set<LinkRuleMapping> linkRuleMapping,
-            Institution institution) {
+    private Optional<String> buildLink(Set<LinkRuleMapping> linkRuleMapping, Institution institution) {
 
         return linkRuleMapping
                 .stream()
                 .filter(r -> r.getCriteriaType() == CriteriaType.INSTITUTION)
-                .filter(r -> Institution.valueOf(r.getCriteria()) == institution)
+                .filter(r -> institution != null && r.getCriteria().equals(institution.getCode()))
                 .findFirst()
                 .map(LinkRuleMapping::getReplacementLink);
     }

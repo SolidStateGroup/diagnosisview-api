@@ -4,15 +4,12 @@ import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,10 +40,8 @@ public class CodeController extends BaseController {
 
         User user = getUserFromRequest(request);
 
-        if (user != null &&
-                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
-
-            return codeService.getAllActive(Institution.UNIVERSITY_OF_EDINBURGH);
+        if (user != null && user.getInstitution() != null) {
+            return codeService.getAllActive(user.getInstitution());
         }
 
         return codeService.getAllActive(null);
@@ -61,10 +56,8 @@ public class CodeController extends BaseController {
 
         User user = getUserFromRequest(request);
 
-        if (user != null &&
-                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
-
-            return codeService.getCodesBySynonyms(term, Institution.UNIVERSITY_OF_EDINBURGH);
+        if (user != null && user.getInstitution() != null) {
+            return codeService.getCodesBySynonyms(term, user.getInstitution());
         }
 
         return codeService.getCodesBySynonyms(term, null);
@@ -86,21 +79,8 @@ public class CodeController extends BaseController {
             throws Exception {
 
         User user = getUserFromRequest(request);
-
-        if (user != null &&
-                "University of Edinburgh".equalsIgnoreCase(user.getInstitution())) {
-
-            return codeService.getByInstitution(code, Institution.UNIVERSITY_OF_EDINBURGH);
-        }
-
-        if (user != null && "Other".equalsIgnoreCase(user.getInstitution())) {
-
-            return codeService.getByInstitution(code, Institution.OTHER);
-        }
-
-        if (user != null && "None".equalsIgnoreCase(user.getInstitution())) {
-
-            return codeService.getByInstitution(code, Institution.NONE);
+        if (user != null && user.getInstitution() != null) {
+            return codeService.getByInstitution(code, user.getInstitution());
         }
 
         return codeService.get(code);

@@ -6,7 +6,6 @@ import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.ExternalStandard;
 import com.solidstategroup.diagnosisview.model.codes.Link;
-import com.solidstategroup.diagnosisview.model.codes.enums.Institution;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.ExternalStandardRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
@@ -181,7 +180,7 @@ public class AdminController extends BaseController {
             response = Link.class)
     @PutMapping(value = "/code/synonyms")
     public Code updateCodeSynonyms(@RequestBody final Code code,
-                           HttpServletRequest request) throws Exception {
+                                   HttpServletRequest request) throws Exception {
 
         isAdminUser(request);
 

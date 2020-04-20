@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service;
 
+
 import java.io.IOException;
 
 /**
@@ -14,13 +15,12 @@ public interface CodeSyncService {
      * @throws IOException
      */
     void syncCode(String code) throws IOException;
+
     /**
-     * Sync Codes from patientview to diagnosisview
+     * Sync Codes from patientview to diagnosisview.
+     *
+     * @deprecated not syncing from PV anymore, use NhsChoicesTask.syncAndUpdateCodes()
      */
     void syncCodes();
 
-    /**
-     * Sync Links from BMJ Best Practice.
-     */
-    void syncBmjLinks();
 }

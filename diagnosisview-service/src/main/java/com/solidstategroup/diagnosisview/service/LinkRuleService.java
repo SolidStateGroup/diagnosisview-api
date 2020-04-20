@@ -1,5 +1,6 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.LinkRuleDto;
 import com.solidstategroup.diagnosisview.model.codes.Link;
 import com.solidstategroup.diagnosisview.model.codes.LinkRule;
@@ -20,7 +21,7 @@ public interface LinkRuleService {
      * @param linkRuleDto Request to add a link rule
      * @return Saved link rule
      */
-    LinkRule add(LinkRuleDto linkRuleDto);
+    LinkRule add(LinkRuleDto linkRuleDto) throws ResourceNotFoundException;
 
 
     /**
