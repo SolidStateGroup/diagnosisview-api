@@ -38,6 +38,7 @@ import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -262,6 +263,78 @@ public class CodeServiceImpl implements CodeService {
         }
 
         return filteredCodes;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<CodeDto> searchCodes(String searchTerm, String institutionCode) {
+
+        Set<Code> foundCodes = new HashSet<>();
+        if (StringUtils.isEmpty(searchTerm) || searchTerm.length() < 3) {
+            log.warn("Search term is empty returning empty result");
+            return Collections.EMPTY_LIST;
+        }
+
+        // search diagnosis by name, code or synonym
+        List<Code> dvCodes = codeRepository.searchAllCodes("%".concat(searchTerm).concat("%"));
+        if (!CollectionUtils.isEmpty(dvCodes)) {
+            foundCodes.addAll(dvCodes);
+        }
+
+        // search diagnosis by synonyms, and get icd10 codes back
+        Set<String> externalStandardCodes = synonymsService.searchSynonyms(searchTerm);
+
+        for (String code : externalStandardCodes) {
+
+            // extract only first part before dot(.) as DV only stores
+            // first part of the codes eg I25.5 we only need I25 part
+            String[] codeArr = code.split("\\.");
+            String codePrefix = codeArr[0];
+
+            // do wildcard search eg search on I25%
+            List<Code> wildcardCodes = codeRepository.findByExternalStandards(codePrefix.concat("%"));
+
+            if (!CollectionUtils.isEmpty(wildcardCodes)) {
+                // if more then 1 found do exact match search
+                if (wildcardCodes.size() > 1) {
+                    List<Code> fullMatchCodes = codeRepository.findByExternalStandards(code);
+                    // found codes add to main list, otherwise
+                    // default to wildcard search
+                    if (!CollectionUtils.isEmpty(fullMatchCodes)) {
+                        foundCodes.addAll(fullMatchCodes);
+                    } else {
+                        foundCodes.addAll(wildcardCodes);
+                    }
+                } else {
+                    foundCodes.addAll(wildcardCodes);
+                }
+            }
+        }
+
+        // TODO: do we need to filter on institution using for admins only
+//        final Institution institution =
+//                StringUtils.isEmpty(institutionCode) ? null : institutionService.getInstitution(institutionCode);
+
+        // convert Codes to DTO and return
+        if (!CollectionUtils.isEmpty(foundCodes)) {
+            return foundCodes.parallelStream()
+                    .map(code -> CodeDto
+                            .builder()
+                            .code(code.getCode())
+                            .deleted(shouldBeDeleted(code))
+                            .removedExternally(code.isRemovedExternally())
+                            .hideFromPatients(code.isHideFromPatients())
+                            .friendlyName(code.getPatientFriendlyName())
+                            .created(code.getCreated())
+                            .build())
+                    .sorted(Comparator.comparing(CodeDto::getFriendlyName,
+                            Comparator.nullsFirst(Comparator.naturalOrder())))
+                    .collect(toList());
+        }
+
+        return Collections.EMPTY_LIST;
     }
 
     /**

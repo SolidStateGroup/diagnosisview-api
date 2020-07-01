@@ -53,4 +53,12 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
     @Query("SELECT c FROM Code c " +
             "WHERE c.standardType = :standardType")
     List<Code> findAllByStandardType(@Param("standardType") Lookup standardType);
+
+    @Query(value = "SELECT DISTINCT ON (id) * FROM pv_code, " +
+            " jsonb_array_elements(synonyms) " +
+            " WHERE UPPER(code) LIKE UPPER(:searchTerm) " +
+            " OR UPPER(patient_friendly_name) LIKE UPPER(:searchTerm)" +
+            " OR UPPER(value->>'name') LIKE UPPER(:searchTerm)",
+            nativeQuery = true)
+    List<Code> searchAllCodes(@Param("searchTerm") String searchTerm);
 }
