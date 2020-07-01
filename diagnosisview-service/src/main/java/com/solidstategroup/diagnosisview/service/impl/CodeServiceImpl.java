@@ -158,8 +158,11 @@ public class CodeServiceImpl implements CodeService {
                         .code(code.getCode())
                         .links(buildLinkDtos(code, institution))
                         .categories(buildCategories(code))
+                        .removedExternally(code.isRemovedExternally())
+                        .hideFromPatients(code.isHideFromPatients())
                         .deleted(shouldBeDeleted(code))
                         .friendlyName(code.getPatientFriendlyName())
+                        .created(code.getCreated())
                         .build())
                 .sorted(Comparator.comparing(CodeDto::getFriendlyName,
                         Comparator.nullsFirst(Comparator.naturalOrder())))
