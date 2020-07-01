@@ -53,6 +53,21 @@ public interface CodeService {
     List<CodeDto> getCodesBySynonyms(String searchTerm, String institutionCode) throws ResourceNotFoundException;
 
     /**
+     * <p>
+     * Search diagnosis codes by given search terms. Should be used by Admins only as returns all (hidden and removed
+     * externally) code.
+     * </p>
+     * <p>
+     * Search done against diagnosis name and code as well as synonyms.
+     * </p>
+     *
+     * @param searchTerm      a search value to find matching codes
+     * @param institutionCode a code for Institution
+     * @return a List ode dtos
+     */
+    List<CodeDto> searchCodes(String searchTerm, String institutionCode);
+
+    /**
      * Get a code by a given code
      *
      * @param code the code to lookup

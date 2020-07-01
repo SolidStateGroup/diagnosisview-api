@@ -163,6 +163,18 @@ public class AdminController extends BaseController {
         return codeService.getAll(null);
     }
 
+    @ApiOperation(value = "Get All Codes",
+            notes = "Admin User endpoint to search for all codes within the DiagnosisView by given search term",
+            response = CodeDto[].class)
+    @GetMapping("/codes/search/{term}")
+    public List<CodeDto> searchCodes(@PathVariable("term") final String term, HttpServletRequest request)
+            throws Exception {
+
+        isAdminUser(request);
+
+        return codeService.searchCodes(term, null);
+    }
+
     @ApiOperation(value = "Update Link",
             notes = "Updates a link with DV editable fields.",
             response = Link.class)
