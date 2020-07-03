@@ -69,6 +69,10 @@ public class Link extends AuditModel {
     @Column(name = "external_id")
     private String externalId;
 
+
+    @Transient
+    private String paywalled;
+
     public Lookup getLinkType() {
         return linkType;
     }
@@ -192,5 +196,13 @@ public class Link extends AuditModel {
 
     public void setExternalId(String externalId) {
         this.externalId = externalId;
+    }
+
+    public String getPaywalled() {
+        return paywalled;
+    }
+
+    public void setPaywalled(String paywalled) {
+        this.paywalled = paywalled;
     }
 }
