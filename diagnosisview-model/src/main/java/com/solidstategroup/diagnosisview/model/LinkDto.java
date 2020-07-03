@@ -20,4 +20,9 @@ public class LinkDto {
     private String name;
     private Boolean freeLink;
     private Boolean transformationsOnly;
+    private PaywalledType paywalled;
+
+    public enum PaywalledType{
+        LOCKED, UNLOCKED
+    }
 }
