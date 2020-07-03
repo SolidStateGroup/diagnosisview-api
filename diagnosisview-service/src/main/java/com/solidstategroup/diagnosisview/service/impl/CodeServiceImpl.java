@@ -41,9 +41,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 
 import static java.lang.String.format;
@@ -63,6 +64,11 @@ public class CodeServiceImpl implements CodeService {
     private static final String LINK_SEQ = "link_seq";
     private static final String CODE_CATEGORY_SEQ = "code_category_seq";
     private static final String CODE_EXTERNAL_STANDARD = "code_external_standard_seq";
+
+    private static final String PAYWALLED_KEY = "paywalled";
+
+    private static final String LINK_KEY = "link";
+
 
     private final CodeRepository codeRepository;
     private final CategoryRepository categoryRepository;
@@ -106,15 +112,6 @@ public class CodeServiceImpl implements CodeService {
         this.lookupRepository = lookupRepository;
         this.institutionService = institutionService;
         this.entityManager = entityManager;
-    }
-
-    private static boolean shouldDisplayLink(Optional<String> linkMapping, Link link) {
-
-        return linkMapping.isPresent() | !link.getTransformationsOnly();
-    }
-
-    private static boolean shouldBeDeleted(Code code) {
-        return code.isRemovedExternally() || code.isHideFromPatients();
     }
 
     /**
@@ -372,9 +369,9 @@ public class CodeServiceImpl implements CodeService {
 
         result.getLinks().forEach(l -> {
             String originalLink = l.getLink();
-            Optional<String> transformed = buildLink(l.getMappingLinks(), institution);
-            l.setDisplayLink(shouldDisplayLink(transformed, l));
-            l.setLink(transformed.orElse(l.getLink()));
+            Map<String, String> linkMapping = buildLink(l.getMappingLinks(), institution);
+            l.setDisplayLink(shouldDisplayLink(linkMapping.get(LINK_KEY), l));
+            l.setLink(linkMapping.get(LINK_KEY) != null ? linkMapping.get(LINK_KEY) : originalLink);
             l.setOriginalLink(originalLink);
             l.setLogoRule(null);
             l.setMappingLinks(null);
@@ -787,6 +784,15 @@ public class CodeServiceImpl implements CodeService {
                 .forEach(es -> externalStandardRepository.save(es.getExternalStandard()));
     }
 
+    /**
+     * Build links based on the given Institution.
+     * <p>
+     * Institution is used to transform url for subscribed users.
+     *
+     * @param code
+     * @param institution
+     * @return
+     */
     private Set<LinkDto> buildLinkDtos(Code code, Institution institution) {
 
         return code
@@ -794,18 +800,22 @@ public class CodeServiceImpl implements CodeService {
                 .stream()
                 .map(link -> {
                     String originalLink = link.getLink();
-                    Optional<String> linkMapping = buildLink(link.getMappingLinks(), institution);
+                    // check if we have link rules for transformation for
+                    // given institution also if it's paywalled link
+                    Map<String, String> linkMapping = buildLink(link.getMappingLinks(), institution);
 
                     return new LinkDto(
                             link.getId(),
                             link.getLinkType(),
                             link.getDifficultyLevel(),
-                            linkMapping.orElse(link.getLink()),
+                            linkMapping.get(LINK_KEY) != null ? linkMapping.get(LINK_KEY) : null,
                             originalLink,
                             link.getDisplayOrder(),
-                            shouldDisplayLink(linkMapping, link),
+                            shouldDisplayLink(linkMapping.get(LINK_KEY), link),
                             link.getName(), link.getFreeLink(),
-                            link.getTransformationsOnly());
+                            link.getTransformationsOnly(),
+                            linkMapping.get(PAYWALLED_KEY) != null ?
+                                    LinkDto.PaywalledType.valueOf(linkMapping.get(PAYWALLED_KEY)) : null);
                 })
                 .collect(toSet());
     }
@@ -827,15 +837,45 @@ public class CodeServiceImpl implements CodeService {
         return override;
     }
 
-    private Optional<String> buildLink(Set<LinkRuleMapping> linkRuleMapping, Institution institution) {
+    /**
+     * From given set of link mapping find the one that matches given Institution criteria
+     *
+     * @param linkRuleMapping
+     * @param institution
+     * @return a transformed link url
+     */
+    private Map<String, String> buildLink(Set<LinkRuleMapping> linkRuleMapping, Institution institution) {
 
-        return linkRuleMapping
-                .stream()
-                .filter(r -> r.getCriteriaType() == CriteriaType.INSTITUTION)
-                .filter(r -> institution != null && r.getCriteria().equals(institution.getCode()))
-                .findFirst()
-                .map(LinkRuleMapping::getReplacementLink);
+        Map<String, String> data = new HashMap<>();
+
+        for (LinkRuleMapping r : linkRuleMapping) {
+            if (r.getCriteriaType() != null && r.getCriteriaType() == CriteriaType.INSTITUTION) {
+                // if we have at institution against rule means its
+                // link is Paywalled eg transformable
+                data.put(PAYWALLED_KEY, LinkDto.PaywalledType.LOCKED.name());
+
+                // now check for transformation based on Institution
+                if (institution != null && r.getCriteria().equals(institution.getCode())) {
+                    // matches given institution set to unlocked
+                    data.put(PAYWALLED_KEY, LinkDto.PaywalledType.UNLOCKED.name());
+                    data.put(LINK_KEY, r.getReplacementLink());
+                    break;
+                }
+            }
+        }
+        return data;
     }
+
+
+    private static boolean shouldDisplayLink(String linkMapping, Link link) {
+
+        return !StringUtils.isEmpty(linkMapping) | !link.getTransformationsOnly();
+    }
+
+    private static boolean shouldBeDeleted(Code code) {
+        return code.isRemovedExternally() || code.isHideFromPatients();
+    }
+
 
     private Set<CategoryDto> buildCategories(Code code) {
 
