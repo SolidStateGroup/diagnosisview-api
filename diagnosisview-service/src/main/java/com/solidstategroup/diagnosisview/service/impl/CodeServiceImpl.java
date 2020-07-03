@@ -64,9 +64,7 @@ public class CodeServiceImpl implements CodeService {
     private static final String LINK_SEQ = "link_seq";
     private static final String CODE_CATEGORY_SEQ = "code_category_seq";
     private static final String CODE_EXTERNAL_STANDARD = "code_external_standard_seq";
-
     private static final String PAYWALLED_KEY = "paywalled";
-
     private static final String LINK_KEY = "link";
 
 
