@@ -370,6 +370,7 @@ public class CodeServiceImpl implements CodeService {
             Map<String, String> linkMapping = buildLink(l.getMappingLinks(), institution);
             l.setDisplayLink(shouldDisplayLink(linkMapping.get(LINK_KEY), l));
             l.setLink(linkMapping.get(LINK_KEY) != null ? linkMapping.get(LINK_KEY) : originalLink);
+            l.setPaywalled(linkMapping.get(PAYWALLED_KEY) != null ? linkMapping.get(PAYWALLED_KEY) : null);
             l.setOriginalLink(originalLink);
             l.setLogoRule(null);
             l.setMappingLinks(null);
