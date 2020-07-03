@@ -2,7 +2,7 @@ package com.solidstategroup.diagnosisview.service.impl;
 
 import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.TagDto;
-import com.solidstategroup.diagnosisview.model.codes.Tag;
+import com.solidstategroup.diagnosisview.model.Tag;
 import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
