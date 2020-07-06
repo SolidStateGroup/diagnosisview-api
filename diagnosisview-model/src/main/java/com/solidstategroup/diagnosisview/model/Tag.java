@@ -11,6 +11,10 @@ import com.solidstategroup.diagnosisview.model.codes.LookupWrapper;
  * Created by Pavlo Maksymchuk.
  */
 public class Tag extends LookupWrapper {
+    public Tag() {
+        super();
+    }
+
     public Tag(Lookup lookup) {
         super(lookup);
     }
