@@ -5,6 +5,7 @@ import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.CategoryDto;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.LinkDto;
+import com.solidstategroup.diagnosisview.model.Tag;
 import com.solidstategroup.diagnosisview.model.codes.Code;
 import com.solidstategroup.diagnosisview.model.codes.CodeCategory;
 import com.solidstategroup.diagnosisview.model.codes.CodeExternalStandard;
@@ -82,6 +83,8 @@ public class CodeServiceImpl implements CodeService {
 
     private final InstitutionService institutionService;
 
+    private final TagsService tagsService;
+
     // Temporary hack to get ids for codes and links.
     private EntityManager entityManager;
 
@@ -96,6 +99,7 @@ public class CodeServiceImpl implements CodeService {
                            LookupTypeRepository lookupTypeRepository,
                            LookupRepository lookupRepository,
                            InstitutionService institutionService,
+                           TagsService tagsService,
                            EntityManager entityManager) {
 
         this.codeRepository = codeRepository;
@@ -109,6 +113,7 @@ public class CodeServiceImpl implements CodeService {
         this.lookupTypeRepository = lookupTypeRepository;
         this.lookupRepository = lookupRepository;
         this.institutionService = institutionService;
+        this.tagsService = tagsService;
         this.entityManager = entityManager;
     }
 
@@ -185,6 +190,7 @@ public class CodeServiceImpl implements CodeService {
                         .categories(buildCategories(code))
                         .deleted(shouldBeDeleted(code))
                         .friendlyName(code.getPatientFriendlyName())
+                        .tags(code.getTags())
                         .build())
                 .sorted(Comparator.comparing(CodeDto::getFriendlyName,
                         Comparator.nullsFirst(Comparator.naturalOrder())))
@@ -251,6 +257,7 @@ public class CodeServiceImpl implements CodeService {
                             .categories(buildCategories(code))
                             .deleted(shouldBeDeleted(code))
                             .friendlyName(code.getPatientFriendlyName())
+                            .tags(code.getTags())
                             .build())
                     .sorted(Comparator.comparing(CodeDto::getFriendlyName,
                             Comparator.nullsFirst(Comparator.naturalOrder())))
@@ -322,6 +329,7 @@ public class CodeServiceImpl implements CodeService {
                             .removedExternally(code.isRemovedExternally())
                             .hideFromPatients(code.isHideFromPatients())
                             .friendlyName(code.getPatientFriendlyName())
+                            .tags(code.getTags())
                             .created(code.getCreated())
                             .build())
                     .sorted(Comparator.comparing(CodeDto::getFriendlyName,
@@ -510,6 +518,7 @@ public class CodeServiceImpl implements CodeService {
         Set<Link> links = code.getLinks();
         Set<CodeCategory> codeCategories = code.getCodeCategories();
         Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+        Set<Tag> tags = code.getTags();
 
         // Remove code related fields, as PV already provides ids if the
         // objects have not already been saved to the repository jpa will thrown
@@ -517,6 +526,7 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(new HashSet<>());
         code.setCodeCategories(new HashSet<>());
         code.setExternalStandards(new HashSet<>());
+        code.setTags(new HashSet<>());
         code.setLastUpdate(new Date());
 
         code.setCodeCategories(codeCategories
@@ -536,6 +546,8 @@ public class CodeServiceImpl implements CodeService {
                 .peek(l -> l.setCode(code))
                 .map(l -> linkService.upsert(l, links, false))
                 .collect(toSet()));
+
+        code.setTags(buildTags(tags));
 
         return codeRepository.save(code);
     }
@@ -623,6 +635,7 @@ public class CodeServiceImpl implements CodeService {
         Set<Link> links = code.getLinks();
         Set<CodeCategory> codeCategories = code.getCodeCategories();
         Set<CodeExternalStandard> externalStandards = code.getExternalStandards();
+        Set<Tag> tags = code.getTags();
 
         // Remove code related fields, as PV already provides ids if the
         // objects have not already been saved to the repository jpa will thrown
@@ -630,6 +643,7 @@ public class CodeServiceImpl implements CodeService {
         code.setLinks(new HashSet<>());
         code.setCodeCategories(new HashSet<>());
         code.setExternalStandards(new HashSet<>());
+        code.setTags(new HashSet<>());
         code.setLastUpdate(new Date());
 
         code.setCodeCategories(codeCategories
@@ -649,6 +663,8 @@ public class CodeServiceImpl implements CodeService {
                 .peek(l -> l.setCode(code))
                 .map(l -> linkService.upsert(l, links, false))
                 .collect(toSet()));
+
+        code.setTags(buildTags(tags));
 
         return codeRepository.save(code);
     }
@@ -889,5 +905,25 @@ public class CodeServiceImpl implements CodeService {
                                 cc.getCategory().getFriendlyDescription(),
                                 cc.getCategory().isHidden()))
                 .collect(toSet());
+    }
+
+    /**
+     * From given set of Tag values find Tag lookup and build set.
+     *
+     * @param tags a set of Tag codes
+     * @return a set of Tag
+     */
+    private Set<Tag> buildTags(Set<Tag> tags) {
+        Set<Tag> tagSet = new HashSet<>();
+        if (!CollectionUtils.isEmpty(tags)) {
+            for (Tag t : tags) {
+                try {
+                    tagSet.add(tagsService.getTag(t.getCode()));
+                } catch (ResourceNotFoundException e) {
+                    log.error("Could not find Tag for value {}", t.getCode());
+                }
+            }
+        }
+        return tagSet;
     }
 }
