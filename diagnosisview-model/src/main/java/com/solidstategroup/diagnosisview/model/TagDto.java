@@ -14,12 +14,12 @@ import java.io.Serializable;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TagDto implements Serializable {
-    private String id;
-    private String name;
+    private String code;
+    private String description;
 
     public TagDto(Lookup lookup){
-        this.id = lookup.getValue();
-        this.name = lookup.getDescription();
+        this.code = lookup.getValue();
+        this.description = lookup.getDescription();
     }
 }
 
