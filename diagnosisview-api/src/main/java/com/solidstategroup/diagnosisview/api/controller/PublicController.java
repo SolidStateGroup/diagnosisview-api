@@ -3,6 +3,7 @@ package com.solidstategroup.diagnosisview.api.controller;
 import com.solidstategroup.diagnosisview.model.DifficultyLevelDto;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.service.impl.InstitutionService;
+import com.solidstategroup.diagnosisview.service.impl.TagsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +24,12 @@ import java.util.Map;
 public class PublicController {
 
     private final InstitutionService institutionService;
+    private final TagsService tagsService;
     @Autowired
-    public PublicController(final InstitutionService institutionService){
+    public PublicController(final InstitutionService institutionService,
+                            final TagsService tagsService){
         this.institutionService = institutionService;
+        this.tagsService = tagsService;
     }
 
     /**
@@ -51,6 +55,7 @@ public class PublicController {
     public Map<String, List<?>> settings() {
         return new HashMap<String, List<?>>() {{
             put("institutions", institutionService.getInstitutionsConfigs());
+            put("tags", tagsService.getTagConfigs());
             put("difficultyLevels", Arrays.asList(new DifficultyLevelDto(DifficultyLevel.DO_NOT_OVERRIDE),
                     new DifficultyLevelDto(DifficultyLevel.GREEN),
                     new DifficultyLevelDto(DifficultyLevel.AMBER),
