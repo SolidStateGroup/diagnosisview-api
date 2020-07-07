@@ -163,6 +163,7 @@ public class CodeServiceImpl implements CodeService {
                         .hideFromPatients(code.isHideFromPatients())
                         .deleted(shouldBeDeleted(code))
                         .friendlyName(code.getPatientFriendlyName())
+                        .tags(code.getTags())
                         .created(code.getCreated())
                         .build())
                 .sorted(Comparator.comparing(CodeDto::getFriendlyName,
