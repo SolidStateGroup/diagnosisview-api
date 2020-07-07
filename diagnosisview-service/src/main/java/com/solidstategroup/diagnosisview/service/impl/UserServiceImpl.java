@@ -287,16 +287,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public User deleteFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
-        HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
-        savedUser.getFavourites().stream().forEach(savedCode -> {
-            savedCodesMap.put(savedUserCode.getLinkId() + savedCode.getCode() + savedCode.getType(), savedCode);
-        });
+        savedUser.getFavourites().removeIf(f ->
+                f.getLinkId().equals(savedUserCode.getLinkId())
+                        && f.getCode().equalsIgnoreCase(savedUserCode.getCode())
+                        && f.getType().equalsIgnoreCase(savedUserCode.getType()));
 
-        if (savedCodesMap.containsKey(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType())) {
-            savedCodesMap.remove(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType());
-        }
-
-        savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
         userRepository.save(savedUser);
         return savedUser;
     }
