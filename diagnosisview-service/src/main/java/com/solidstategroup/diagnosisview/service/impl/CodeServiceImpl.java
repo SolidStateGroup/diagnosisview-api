@@ -848,10 +848,13 @@ public class CodeServiceImpl implements CodeService {
         Map<String, String> data = new HashMap<>();
 
         for (LinkRuleMapping r : linkRuleMapping) {
+            // if we have an institution against rule means its
+            // link is Paywalled eg transformable
             if (r.getCriteriaType() != null && r.getCriteriaType() == CriteriaType.INSTITUTION) {
-                // if we have at institution against rule means its
-                // link is Paywalled eg transformable
+
+                // default to locked and original url
                 data.put(PAYWALLED_KEY, LinkDto.PaywalledType.LOCKED.name());
+                data.put(LINK_KEY, r.getLink().getLink());
 
                 // now check for transformation based on Institution
                 if (institution != null && r.getCriteria().equals(institution.getCode())) {
