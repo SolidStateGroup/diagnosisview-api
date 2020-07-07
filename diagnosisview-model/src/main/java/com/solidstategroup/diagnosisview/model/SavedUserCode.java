@@ -25,11 +25,4 @@ public class SavedUserCode implements Serializable {
     @ApiModelProperty(example = "MEDLINE_PLUS")
     private String type;
     private Date dateAdded;
-
-    public Long getLinkId() {
-        if (linkId == null) {
-            return 0L;
-        }
-        return linkId;
-    }
 }
