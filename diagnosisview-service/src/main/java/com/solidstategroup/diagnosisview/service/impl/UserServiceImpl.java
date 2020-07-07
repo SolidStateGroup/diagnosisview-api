@@ -25,7 +25,7 @@ import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
@@ -52,7 +52,7 @@ import java.util.UUID;
 /**
  * {@inheritDoc}.
  */
-@Log
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -96,14 +96,15 @@ public class UserServiceImpl implements UserService {
             });
         }
 
-        savedUserCodes.stream().forEach(savedUserCode -> {
+        for (SavedUserCode savedUserCode : savedUserCodes) {
+            validateFavourite(savedUserCode);
             if (!savedCodesMap
                     .containsKey(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType())) {
                 savedCodesMap
                         .put(savedUserCode.getLinkId() + savedUserCode.getCode() +
                                 savedUserCode.getType(), savedUserCode);
             }
-        });
+        }
 
         savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
         userRepository.save(savedUser);
@@ -116,6 +117,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public User addFavouriteToUser(User user, SavedUserCode savedUserCode) throws Exception {
         User savedUser = this.getUser(user.getUsername());
+
+        validateFavourite(savedUserCode);
+
         HashMap<String, SavedUserCode> savedCodesMap = new HashMap<>();
         if (savedUser.getFavourites() != null) {
             savedUser.getFavourites().stream().forEach(savedCode -> {
@@ -128,7 +132,6 @@ public class UserServiceImpl implements UserService {
             savedCodesMap
                     .put(savedUserCode.getLinkId() + savedUserCode.getCode() + savedUserCode.getType(), savedUserCode);
         }
-
 
         savedUser.setFavourites(new ArrayList<>(savedCodesMap.values()));
         return userRepository.save(savedUser);
@@ -203,7 +206,7 @@ public class UserServiceImpl implements UserService {
             user.setRoleType(RoleType.USER);
 
             // check make sure we have correct selected institution
-            if(!StringUtils.isEmpty(user.getInstitution())){
+            if (!StringUtils.isEmpty(user.getInstitution())) {
                 Institution institution = institutionService.getInstitution(user.getInstitution());
                 user.setInstitution(institution.getCode());
             }
@@ -552,6 +555,25 @@ public class UserServiceImpl implements UserService {
         userRepository.save(savedUser);
 
         return savedUser;
+    }
+
+
+    private void validateFavourite(SavedUserCode favourite) throws Exception {
+
+        if (favourite.getLinkId() == null) {
+            log.error("Missing link id from favourite");
+            throw new Exception("Missing link id for favourite");
+        }
+
+        if (StringUtils.isEmpty(favourite.getCode())) {
+            log.error("Missing code from favourite");
+            throw new Exception("Missing code for favourite");
+        }
+
+        if (StringUtils.isEmpty(favourite.getType())) {
+            log.error("Missing type from favourite");
+            throw new Exception("Missing type for Diagnosis Code");
+        }
     }
 
 }
