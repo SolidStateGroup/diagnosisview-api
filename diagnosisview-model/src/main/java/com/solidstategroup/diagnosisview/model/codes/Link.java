@@ -41,9 +41,6 @@ public class Link extends AuditModel {
     @Column(name = "link")
     private String link;
 
-    @Transient
-    private String originalLink;
-
     @Column(name = "name")
     private String name;
 
@@ -59,9 +56,6 @@ public class Link extends AuditModel {
     @OneToMany(mappedBy = "link", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<LinkRuleMapping> mappingLinks = new HashSet<>();
 
-    @Transient
-    private Boolean displayLink = true;
-
     @ManyToOne
     @JoinColumn(name = "link_logo_id")
     private LogoRule logoRule;
@@ -69,6 +63,11 @@ public class Link extends AuditModel {
     @Column(name = "external_id")
     private String externalId;
 
+    @Transient
+    private String originalLink;
+
+    @Transient
+    private Boolean displayLink = true;
 
     @Transient
     private String paywalled;
