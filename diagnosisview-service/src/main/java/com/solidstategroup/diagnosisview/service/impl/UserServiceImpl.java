@@ -558,6 +558,12 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    /**
+     * Validate give given favourite object
+     *
+     * @param favourite a favourite to validate
+     * @throws Exception
+     */
     private void validateFavourite(SavedUserCode favourite) throws Exception {
 
         if (favourite.getLinkId() == null) {
