@@ -824,7 +824,7 @@ public class CodeServiceImpl implements CodeService {
                             link.getId(),
                             link.getLinkType(),
                             link.getDifficultyLevel(),
-                            linkMapping.get(LINK_KEY) != null ? linkMapping.get(LINK_KEY) : null,
+                            linkMapping.get(LINK_KEY) != null ? linkMapping.get(LINK_KEY) : originalLink,
                             originalLink,
                             link.getDisplayOrder(),
                             shouldDisplayLink(linkMapping.get(LINK_KEY), link),
