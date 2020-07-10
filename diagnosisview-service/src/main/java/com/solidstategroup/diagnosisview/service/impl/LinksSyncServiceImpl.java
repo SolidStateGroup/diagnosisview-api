@@ -9,6 +9,7 @@ import com.solidstategroup.diagnosisview.model.codes.Lookup;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.repository.LookupRepository;
 import com.solidstategroup.diagnosisview.service.CodeService;
+import com.solidstategroup.diagnosisview.service.LinkRuleService;
 import com.solidstategroup.diagnosisview.service.LinkService;
 import com.solidstategroup.diagnosisview.service.LinksSyncService;
 import com.solidstategroup.diagnosisview.service.MedlinePlusService;
@@ -60,17 +61,20 @@ public class LinksSyncServiceImpl implements LinksSyncService {
     private final CodeService codeService;
     private final LinkService linkService;
     private final MedlinePlusService medlinePlusService;
+    private final LinkRuleService linkRuleService;
 
     private final Lookup BMJ;
 
     public LinksSyncServiceImpl(final CodeService codeService,
                                 final LinkService linkService,
                                 final LookupRepository lookupRepository,
-                                final MedlinePlusService medlinePlusService) {
+                                final MedlinePlusService medlinePlusService,
+                                final LinkRuleService linkRuleService) {
 
         this.codeService = codeService;
         this.linkService = linkService;
         this.medlinePlusService = medlinePlusService;
+        this.linkRuleService = linkRuleService;
 
         BMJ = lookupRepository.findOneByValue("BMJ").orElse(null);
     }
@@ -119,6 +123,9 @@ public class LinksSyncServiceImpl implements LinksSyncService {
 
         long stop = System.currentTimeMillis();
         log.info("Links Sync DONE Processing codes, timing {}.", (stop - start));
+
+        // trigger sync link rules to add any missing mappings
+        linkRuleService.syncLinkRules();
     }
 
     @CacheEvict(value = {"getAllCodes", "getAllCategories"}, allEntries = true)
