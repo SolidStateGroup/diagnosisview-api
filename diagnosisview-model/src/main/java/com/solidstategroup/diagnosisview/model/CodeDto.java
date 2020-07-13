@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -15,6 +17,12 @@ public class CodeDto {
     private String code;
     private Set<CategoryDto> categories;
     private Set<LinkDto> links;
+    @Builder.Default
+    private Set<Tag> tags = new HashSet<>();
+
+    private boolean hideFromPatients;
+    private boolean removedExternally;
+    private Date created;
 }
 
 

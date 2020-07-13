@@ -2,6 +2,7 @@ package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.solidstategroup.diagnosisview.model.Synonym;
+import com.solidstategroup.diagnosisview.model.Tag;
 import com.solidstategroup.diagnosisview.model.codes.enums.CodeSourceTypes;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -86,6 +87,11 @@ public class Code extends AuditModel {
     @Column(name = "synonyms", columnDefinition = "jsonb")
     @Builder.Default
     private Set<Synonym> synonyms = new HashSet<>();
+
+    @Type(type = "jsonb")
+    @Column(name = "tags", columnDefinition = "jsonb")
+    @Builder.Default
+    private Set<Tag> tags = new HashSet<>();
 
     /**
      * Adds a link to the current code.

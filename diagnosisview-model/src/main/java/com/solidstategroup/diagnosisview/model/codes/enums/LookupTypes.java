@@ -8,5 +8,6 @@ public enum LookupTypes {
     CODE_STANDARD,
     CODE_TYPE,
     LINK_TYPE,
-    INSTITUTION_TYPE
+    INSTITUTION_TYPE,
+    TAG_TYPES
 }
