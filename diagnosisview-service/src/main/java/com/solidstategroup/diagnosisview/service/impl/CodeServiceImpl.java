@@ -530,6 +530,8 @@ public class CodeServiceImpl implements CodeService {
         code.setTags(new HashSet<>());
         code.setLastUpdate(new Date());
 
+        codeRepository.save(code);
+
         code.setCodeCategories(codeCategories
                 .stream()
                 .peek(cc -> cc.setCode(code))
