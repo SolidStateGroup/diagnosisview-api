@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -25,11 +26,21 @@ public interface LookupRepository extends JpaRepository<Lookup, Long> {
     Optional<Lookup> findOneByValue(final String value);
 
     @Query("SELECT loo FROM Lookup loo " +
-            " WHERE loo.lookupType.type = :lookupType AND loo.value = :lookupValue")
+            " WHERE loo.lookupType.type = :lookupType AND UPPER(loo.value) = UPPER(:lookupValue)")
     Optional<Lookup> findByTypeAndValue(@Param("lookupType") LookupTypes lookupType,
                                         @Param("lookupValue") String lookupValue);
 
     @Query("SELECT l FROM Lookup l WHERE l.lookupType.type = :lookupType")
     List<Lookup> findByType(@Param("lookupType") LookupTypes lookupType);
 
+    /**
+     * Get a list of user statistics for given institution code
+     * @param code an Institution lookup type code
+     * @return a list of statistics
+     */
+    @Query(value = "SELECT " +
+            "(SELECT COUNT(*) from dv_user WHERE institution = :code) as users," +
+            "(SELECT COUNT(*) from dv_user WHERE institution = :code AND active_subscription = TRUE) as subscriptions",
+            nativeQuery = true)
+    List<Map<String, Object>> getInstitutionStats(@Param("code") String code);
 }
