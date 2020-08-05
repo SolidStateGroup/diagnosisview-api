@@ -17,9 +17,9 @@ public class InstitutionDto implements Serializable {
     private String id;
     private String name;
 
-    public InstitutionDto(Lookup lookup){
-        this.id = lookup.getValue();
-        this.name = lookup.getDescription();
+    public InstitutionDto(String id, String name){
+        this.id = id;
+        this.name = name;
     }
 }
 
