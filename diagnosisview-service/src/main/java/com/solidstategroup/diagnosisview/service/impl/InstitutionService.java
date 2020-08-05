@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,6 +60,23 @@ public class InstitutionService {
         return new Institution(lookup);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Institution update(final Long id, Institution payload) throws ResourceNotFoundException {
+        Lookup lookup = new Lookup();
+        lookup.setValue(payload.getCode());
+        lookup.setDescription(payload.getDescription());
+        lookup.setData(ImmutableMap.of("hidden", payload.getHidden()));
+        lookup.setLastUpdate(new Date());
+
+        Lookup updated = lookupManager.update(id, lookup);
+        return new Institution(updated);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void delete(final Long id) throws ResourceNotFoundException {
+        lookupManager.delete(id);
+    }
+
     private Lookup toLookupEntity(Institution institution) throws ResourceNotFoundException {
         LookupType lookupType = lookupManager.getLookupTypeByType(LookupTypes.INSTITUTION_TYPE);
 
@@ -67,7 +85,7 @@ public class InstitutionService {
         lookup.setValue(institution.getCode());
         lookup.setDescription(institution.getDescription());
         lookup.setLookupType(lookupType);
-        lookup.setDvOnly(true);
+        //lookup.setDvOnly(true);
         lookup.setData(ImmutableMap.of("hidden", institution.getHidden()));
 
         return lookup;
@@ -96,7 +114,7 @@ public class InstitutionService {
      */
     public List<InstitutionDto> getInstitutionsConfigs() {
         return this.getAll().stream()
-                .filter(institution -> institution.getHidden() == false)
+                // .filter(institution -> institution.getHidden() == false) // FE does filtering
                 .map(institution -> new InstitutionDto(institution.getCode(), institution.getDescription()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
