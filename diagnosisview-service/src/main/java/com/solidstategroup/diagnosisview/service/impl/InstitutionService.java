@@ -86,17 +86,18 @@ public class InstitutionService {
                     i.setStats(lookupManager.getInstitutionStats(i.getCode()));
                     return i;
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
-     * Get a list of Institution
+     * Get a list of Institutions settings, used in FE for drop down select
      *
-     * @return
+     * @return a list of InstitutionDto
      */
     public List<InstitutionDto> getInstitutionsConfigs() {
-        return lookupManager.findByType(LookupTypes.INSTITUTION_TYPE).stream()
-                .map(InstitutionDto::new)
+        return this.getAll().stream()
+                .filter(institution -> institution.getHidden() == false)
+                .map(institution -> new InstitutionDto(institution.getCode(), institution.getDescription()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }
