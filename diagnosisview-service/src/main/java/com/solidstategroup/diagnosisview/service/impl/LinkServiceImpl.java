@@ -326,18 +326,25 @@ public class LinkServiceImpl implements LinkService {
                 link.setMappingLinks(existingLink.getMappingLinks());
             }
 
+            // For existing Link if link url changed and we have link rules mapping
+            // delete mappings first and re save them with new Link
             if (compareIgnoreCase(existingLink.getLink(), link.getLink()) != 0
                     && existingLink.getMappingLinks() != null) {
 
-                Set<LinkRuleMapping> mappings = linkRuleService
-                        .matchLinkToRule(link);
+                Set<LinkRuleMapping> mappings = linkRuleService.matchLinkToRule(link);
 
                 if (mappings.size() > 0) {
-
                     linkRuleMappingRepository.deleteAll(existingLink.getMappingLinks());
                     link.setMappingLinks(mappings);
                     linkRuleMappingRepository.saveAll(mappings);
                 }
+            }
+        } else {
+            // if we have a new Link build link rule mappings based on given link url
+            Set<LinkRuleMapping> mappings = linkRuleService.matchLinkToRule(link);
+            if (mappings.size() > 0) {
+                link.setMappingLinks(mappings);
+                // dont persist here, will be created when link saved
             }
         }
 
