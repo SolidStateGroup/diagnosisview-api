@@ -46,6 +46,34 @@ public class InstitutionService {
     }
 
     /**
+     * Creates new Institution lookup type in the system.
+     *
+     * @param payload
+     * @return
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Institution create(Institution payload) throws ResourceNotFoundException {
+
+        Lookup lookup = lookupManager.create(toLookupEntity(payload));
+        // check make sure code for the sam type
+        return new Institution(lookup);
+    }
+
+    private Lookup toLookupEntity(Institution institution) throws ResourceNotFoundException {
+        LookupType lookupType = lookupManager.getLookupTypeByType(LookupTypes.INSTITUTION_TYPE);
+
+        Lookup lookup = new Lookup();
+        lookup.setId(institution.getId());
+        lookup.setValue(institution.getCode());
+        lookup.setDescription(institution.getDescription());
+        lookup.setLookupType(lookupType);
+        lookup.setDvOnly(true);
+        lookup.setData(ImmutableMap.of("hidden", institution.getHidden()));
+
+        return lookup;
+    }
+
+    /**
      * Find all Institutions in the system
      *
      * @return a List of Institutions
