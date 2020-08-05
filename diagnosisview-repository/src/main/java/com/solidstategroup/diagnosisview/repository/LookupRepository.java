@@ -30,6 +30,11 @@ public interface LookupRepository extends JpaRepository<Lookup, Long> {
     Optional<Lookup> findByTypeAndValue(@Param("lookupType") LookupTypes lookupType,
                                         @Param("lookupValue") String lookupValue);
 
+    @Query("SELECT loo FROM Lookup loo " +
+            " WHERE loo.lookupType.type = :lookupType AND UPPER(loo.value) = UPPER(:lookupValue)")
+    List<Lookup> findAllByTypeAndValue(@Param("lookupType") LookupTypes lookupType,
+                                        @Param("lookupValue") String lookupValue);
+
     @Query("SELECT l FROM Lookup l WHERE l.lookupType.type = :lookupType")
     List<Lookup> findByType(@Param("lookupType") LookupTypes lookupType);
 
