@@ -56,10 +56,17 @@ public class InstitutionService {
     public Institution create(Institution payload) throws ResourceNotFoundException {
 
         Lookup lookup = lookupManager.create(toLookupEntity(payload));
-        // check make sure code for the sam type
         return new Institution(lookup);
     }
 
+    /**
+     * Update existing Institution lookup.
+     *
+     * @param id      an id of the Lookup to update
+     * @param payload
+     * @return an updated Institution
+     * @throws ResourceNotFoundException
+     */
     @Transactional(propagation = Propagation.REQUIRED)
     public Institution update(final Long id, Institution payload) throws ResourceNotFoundException {
         Lookup lookup = new Lookup();
@@ -72,6 +79,12 @@ public class InstitutionService {
         return new Institution(updated);
     }
 
+    /**
+     * Delete existing Institution lookup by given id.
+     *
+     * @param id an id of the Lookup to delete
+     * @throws ResourceNotFoundException
+     */
     @Transactional(propagation = Propagation.REQUIRED)
     public void delete(final Long id) throws ResourceNotFoundException {
         lookupManager.delete(id);
