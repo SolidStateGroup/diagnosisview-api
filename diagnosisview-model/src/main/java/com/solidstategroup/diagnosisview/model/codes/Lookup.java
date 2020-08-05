@@ -1,6 +1,11 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,6 +13,8 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * TODO Add generics for enum http://www.gabiaxel.com/2011/01/better-enum-mapping-with-hibernate.html
@@ -17,6 +24,10 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "pv_lookup_value")
+@TypeDefs({
+        @TypeDef(name = "json", typeClass = JsonStringType.class),
+        @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Lookup extends AuditModel {
 
@@ -38,6 +49,10 @@ public class Lookup extends AuditModel {
 
     @Column(name = "dv_only")
     private Boolean dvOnly;
+
+    @Type(type = "jsonb")
+    @Column(name = "data", columnDefinition = "jsonb")
+    private Map<String, Object> data = new HashMap<>();
 
     public String getValue() {
         return value;
@@ -88,5 +103,13 @@ public class Lookup extends AuditModel {
 
     public void setDvOnly(Boolean dvOnly) {
         this.dvOnly = dvOnly;
+    }
+
+    public Map<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
     }
 }
