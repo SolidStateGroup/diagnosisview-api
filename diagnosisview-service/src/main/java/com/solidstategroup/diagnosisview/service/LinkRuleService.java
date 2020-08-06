@@ -55,4 +55,10 @@ public interface LinkRuleService {
     void deleteLinkRule(String id);
 
     Set<LinkRuleMapping> matchLinkToRule(Link link);
+
+    /**
+     * Re sync all the link rule mappings for existing link rules.
+     * Used to populate any missing link rule mapping after sync Links job.
+     */
+    void syncLinkRules();
 }
