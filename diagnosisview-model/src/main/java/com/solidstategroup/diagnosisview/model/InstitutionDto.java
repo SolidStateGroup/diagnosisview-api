@@ -16,10 +16,12 @@ import java.io.Serializable;
 public class InstitutionDto implements Serializable {
     private String id;
     private String name;
+    private boolean hidden;
 
-    public InstitutionDto(String id, String name){
+    public InstitutionDto(String id, String name, boolean hidden){
         this.id = id;
         this.name = name;
+        this.hidden = hidden;
     }
 }
 
