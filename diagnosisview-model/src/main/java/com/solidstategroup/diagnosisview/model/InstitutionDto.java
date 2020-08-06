@@ -16,10 +16,12 @@ import java.io.Serializable;
 public class InstitutionDto implements Serializable {
     private String id;
     private String name;
+    private boolean hidden;
 
-    public InstitutionDto(Lookup lookup){
-        this.id = lookup.getValue();
-        this.name = lookup.getDescription();
+    public InstitutionDto(String id, String name, boolean hidden){
+        this.id = id;
+        this.name = name;
+        this.hidden = hidden;
     }
 }
 
