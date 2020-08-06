@@ -72,7 +72,7 @@ public class InstitutionService {
         Lookup lookup = new Lookup();
         lookup.setValue(payload.getCode());
         lookup.setDescription(payload.getDescription());
-        lookup.setData(ImmutableMap.of("hidden", payload.getHidden()));
+        lookup.setData(ImmutableMap.of("hidden", payload.isHidden()));
         lookup.setLastUpdate(new Date());
 
         Lookup updated = lookupManager.update(id, lookup);
@@ -99,7 +99,7 @@ public class InstitutionService {
         lookup.setDescription(institution.getDescription());
         lookup.setLookupType(lookupType);
         //lookup.setDvOnly(true);
-        lookup.setData(ImmutableMap.of("hidden", institution.getHidden()));
+        lookup.setData(ImmutableMap.of("hidden", institution.isHidden()));
 
         return lookup;
     }
@@ -128,7 +128,9 @@ public class InstitutionService {
     public List<InstitutionDto> getInstitutionsConfigs() {
         return this.getAll().stream()
                 // .filter(institution -> institution.getHidden() == false) // FE does filtering
-                .map(institution -> new InstitutionDto(institution.getCode(), institution.getDescription()))
+                .map(institution -> new InstitutionDto(institution.getCode(),
+                        institution.getDescription(),
+                        institution.isHidden()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }
