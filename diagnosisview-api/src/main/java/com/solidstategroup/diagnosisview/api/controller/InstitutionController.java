@@ -47,13 +47,13 @@ public class InstitutionController extends BaseController {
     public Institution create(@RequestBody final Institution payload,
                               HttpServletRequest request) throws Exception {
 
-//        isAdminUser(request);
+        isAdminUser(request);
 
         return institutionService.create(payload);
     }
 
     @ApiOperation(value = "Update Institution",
-            notes = "Create new institution in the system",
+            notes = "Update institution details in the system",
             response = User.class)
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -66,11 +66,11 @@ public class InstitutionController extends BaseController {
         return institutionService.update(id, payload);
     }
 
-    @ApiOperation(value = "Create Institution",
-            notes = "Update institution in the system",
+    @ApiOperation(value = "Delete Institution",
+            notes = "Delete institution from the system",
             response = User.class)
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity update(@PathVariable("id") final Long id,
+    public ResponseEntity delete(@PathVariable("id") final Long id,
                                  HttpServletRequest request) throws Exception {
 
         isAdminUser(request);
