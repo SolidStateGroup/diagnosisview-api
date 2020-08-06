@@ -75,6 +75,18 @@ public class LookupManager {
     }
 
     /**
+     * Get a Lookup by given id
+     *
+     * @param id an id of the Lookup to search for
+     * @return Lookup
+     * @throws ResourceNotFoundException
+     */
+    public Lookup get(final Long id) throws ResourceNotFoundException {
+        return lookupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Could not find Lookup value"));
+    }
+
+    /**
      * Update Lookup
      *
      * @param id   an id of Lookup to update
