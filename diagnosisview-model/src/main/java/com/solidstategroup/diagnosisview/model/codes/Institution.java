@@ -1,8 +1,6 @@
 package com.solidstategroup.diagnosisview.model.codes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.solidstategroup.diagnosisview.model.codes.enums.LookupTypes;
-import io.swagger.models.auth.In;
 
 import java.util.Map;
 
@@ -17,7 +15,7 @@ public class Institution extends LookupWrapper {
     private boolean hidden = false;
     private Map<String, Object> stats;
 
-    public Institution(){
+    public Institution() {
         super();
     }
 
@@ -39,7 +37,7 @@ public class Institution extends LookupWrapper {
         this.stats = stats;
     }
 
-    public Boolean getHidden() {
+    public boolean isHidden() {
         return hidden;
     }
 
