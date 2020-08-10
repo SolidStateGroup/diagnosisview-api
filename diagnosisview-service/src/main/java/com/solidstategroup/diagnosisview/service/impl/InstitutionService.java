@@ -181,7 +181,8 @@ public class InstitutionService {
                 // .filter(institution -> institution.getHidden() == false) // FE does filtering
                 .map(institution -> new InstitutionDto(institution.getCode(),
                         institution.getDescription(),
-                        institution.isHidden()))
+                        institution.isHidden(),
+                        institution.getLogoUrl()))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }
