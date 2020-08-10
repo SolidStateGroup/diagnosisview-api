@@ -17,11 +17,13 @@ public class InstitutionDto implements Serializable {
     private String id;
     private String name;
     private boolean hidden;
+    private String logoUrl;
 
-    public InstitutionDto(String id, String name, boolean hidden){
+    public InstitutionDto(String id, String name, boolean hidden, String logoUrl){
         this.id = id;
         this.name = name;
         this.hidden = hidden;
+        this.logoUrl = logoUrl;
     }
 }
 
