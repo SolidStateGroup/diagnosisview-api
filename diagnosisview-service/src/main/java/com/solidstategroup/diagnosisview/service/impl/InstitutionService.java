@@ -125,7 +125,7 @@ public class InstitutionService {
         Lookup current = lookupManager.get(id);
         // remove image keys from the data
         if (!CollectionUtils.isEmpty(current.getData())) {
-            current.getData().entrySet().removeIf(d -> d.getKey().equals(Institution.LOGO_DATA_FIELD) &&
+            current.getData().entrySet().removeIf(d -> d.getKey().equals(Institution.LOGO_DATA_FIELD) ||
                     d.getKey().equals(Institution.IMAGE_FORMAT_FIELD));
         }
         lookupManager.update(id, current);
