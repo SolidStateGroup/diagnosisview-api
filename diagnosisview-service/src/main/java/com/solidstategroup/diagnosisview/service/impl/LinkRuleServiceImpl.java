@@ -12,15 +12,18 @@ import com.solidstategroup.diagnosisview.repository.LinkRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleMappingRepository;
 import com.solidstategroup.diagnosisview.repository.LinkRuleRepository;
 import com.solidstategroup.diagnosisview.service.LinkRuleService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
+@Slf4j
 @Service
 public class LinkRuleServiceImpl implements LinkRuleService {
 
@@ -150,6 +153,7 @@ public class LinkRuleServiceImpl implements LinkRuleService {
         return linkRule;
     }
 
+    @Override
     public Set<LinkRuleMapping> matchLinkToRule(Link link) {
 
         Set<LinkRuleMapping> collect = linkRuleRepository
@@ -170,6 +174,58 @@ public class LinkRuleServiceImpl implements LinkRuleService {
 
         return collect;
     }
+
+    /**
+     * Re sync all the link rule mappings for existing link rule. Used to populate any missing link rule mapping after
+     * sync Links job.
+     */
+    @Override
+    public void syncLinkRules() {
+
+        long start = System.currentTimeMillis();
+        log.info("Start LinkRules Processing...");
+        // for each LinkRule find links and update link rule mappings
+        linkRuleRepository.findAll().stream()
+                .forEach(r -> {
+
+                    linkRepository
+                            .findLinksByLinkContaining(r.getLink())
+                            .forEach(link -> {
+
+                                // check if one exist
+                                Optional<LinkRuleMapping> optional = linkRuleMappingRepository.
+                                        findByRuleAndLink(r, link);
+
+                                if (optional.isPresent()) {
+                                    LinkRuleMapping existing = optional.get();
+                                    existing.setCriteria(r.getCriteria());
+                                    existing.setCriteriaType(r.getCriteriaType());
+                                    existing.setReplacementLink(transformLink(
+                                            link.getLink(), r.getTransform(), r.getLink()));
+
+                                    linkRuleMappingRepository.save(existing);
+
+                                } else {
+
+                                    // dont have one create
+                                    LinkRuleMapping newMapping = LinkRuleMapping
+                                            .builder()
+                                            .link(link)
+                                            .rule(r)
+                                            .criteriaType(r.getCriteriaType())
+                                            .criteria(r.getCriteria())
+                                            .replacementLink(transformLink(
+                                                    link.getLink(), r.getTransform(), r.getLink()))
+                                            .build();
+                                    linkRuleMappingRepository.save(newMapping);
+                                }
+                            });
+                });
+
+        long stop = System.currentTimeMillis();
+        log.info("LinkRules Sync DONE, timing {}.", (stop - start));
+    }
+
 
     private String transformLink(String original, String transform, String url) {
         return original.replace(url, transform);
