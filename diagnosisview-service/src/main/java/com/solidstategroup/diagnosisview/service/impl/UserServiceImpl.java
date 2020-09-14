@@ -516,6 +516,42 @@ public class UserServiceImpl implements UserService {
                 new GoogleReceipt(data.get("packageName"), data.get("productId"), data.get("purchaseToken")));
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public String verifyAndroidToken(String receipt) throws Exception {
+
+        Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
+        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
+        GoogleReceipt googleReceipt =
+                new GoogleReceipt(data.get("packageName"), data.get("productId"), data.get("purchaseToken"));
+
+        InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
+
+        GoogleCredential credential =
+                GoogleCredential.fromStream(file)
+                        .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
+        HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+        JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+        AndroidPublisher pub = new AndroidPublisher.Builder
+                (httpTransport, jsonFactory, credential)
+                .setApplicationName(androidApplicationName)
+                .build();
+
+        final AndroidPublisher.Purchases.Subscriptions.Get get =
+                pub.purchases()
+                        .subscriptions()
+                        .get(googleReceipt.getPackageName(),
+                                googleReceipt.getProductId(),
+                                googleReceipt.getToken());
+        final SubscriptionPurchase purchase = get.execute();
+        String purchaseString = purchase.toPrettyString();
+        log.info("Found google purchase item {}" + purchaseString);
+        return purchaseString;
+    }
+
 
     /**
      * {@inheritDoc}

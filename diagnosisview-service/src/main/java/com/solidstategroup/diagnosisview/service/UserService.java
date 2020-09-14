@@ -175,6 +175,14 @@ public interface UserService {
     User verifyAndroidToken(User user, String receipt) throws Exception;
 
     /**
+     * Validates the Android receipt against the api
+     *
+     * @param receipt - the base64 encoded string
+     * @return User the updated user
+     */
+    String verifyAndroidToken(String receipt) throws Exception;
+
+    /**
      * Verify an Android purchase against the google play API
      * @param savedUser - the saved user
      * @param googleReceipt - the receipt object to verify
