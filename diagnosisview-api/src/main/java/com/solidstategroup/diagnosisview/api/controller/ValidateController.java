@@ -36,13 +36,11 @@ public class ValidateController extends BaseController {
 
     @ApiOperation(value = "Validate an Android receipt",
             notes = "Validates and android receipt against the play store API.",
-            response = User.class)
+            response = String.class)
     @PostMapping("/validate/android/public")
-    public User validateAndroidReceiptPublic(@RequestBody final String purchase,
-                                       final HttpServletRequest request) throws Exception {
-        User user = checkIsAuthenticated(request);
+    public String validateAndroidReceiptPublic(@RequestBody final String purchase) throws Exception {
 
-        return userService.verifyAndroidToken(user, purchase);
+        return userService.verifyAndroidToken(purchase);
     }
 
     @ApiOperation(value = "Validate and iOS receipt",
