@@ -522,9 +522,9 @@ public class UserServiceImpl implements UserService {
     public String verifyAndroidToken(String receipt) throws Exception {
 
         Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
-        Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
         GoogleReceipt googleReceipt =
-                new GoogleReceipt(data.get("packageName"), data.get("productId"), data.get("purchaseToken"));
+                new GoogleReceipt(receiptMap.get("packageName"), receiptMap.get("productId"),
+                        receiptMap.get("purchaseToken"));
 
         InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
 
