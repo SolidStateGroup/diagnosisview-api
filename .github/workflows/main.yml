@@ -31,7 +31,7 @@ jobs:
 
       - name: Build project with Maven
         run: |
-          PWD
+          echo $PWD
           ls -l
           mvn -B clean install -DskipTests=true -P staging --file pom.xml
 
