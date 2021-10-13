@@ -64,6 +64,9 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: diagnosisview-api-staging
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
       #Deploy the artifact (JAR) into AWS Beanstalk
       - name: Deploy to AWS
         if: ${{ env.PUSH_PACKAGES }}
@@ -73,7 +76,7 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: DiagnosisView
           environment_name: staging
-          version_label: "diagnosisview-api:${{ steps.format-time.outputs.replaced }}"
+          version_label: diagnosisview-api-staging:${{ steps.date.outputs.date }}
           region: ${{ secrets.AWS_DEFAULT_REGION }}
           deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
 
