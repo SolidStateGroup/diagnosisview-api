@@ -42,7 +42,7 @@ jobs:
           name: diagnosisview-api-staging
           #From this path
           path: diagnosisview-api/target/diagnosisview-api-1.0-SNAPSHOT.jar
-
+          retention-days: 1
 
   #Deploy's job
   deploy:
