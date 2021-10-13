@@ -33,7 +33,7 @@ jobs:
           ls -l
           echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-api/src/main/resources/google-play-key.json
           echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-service/src/main/resources/google-play-key.json
-          mvn -B clean install -DskipTests=true -P staging --file pom.xml
+          mvn -B clean package -DskipTests=true -P staging --file pom.xml
 
       - name: Upload JAR
         uses: actions/upload-artifact@v2
