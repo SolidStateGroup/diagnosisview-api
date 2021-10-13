@@ -59,6 +59,7 @@ jobs:
           name: diagnosisview-api-staging
       #Deploy the artifact (JAR) into AWS Beanstalk
       - name: Deploy to EB
+        run:  echo ALL DONE..
 #        uses: einaregilsson/beanstalk-deploy@v18
 #        with:
 #          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
