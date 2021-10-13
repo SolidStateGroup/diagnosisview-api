@@ -50,7 +50,7 @@ jobs:
     #Depends on build's job
     needs: build
     name: Deploy
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
+#    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
 
     #Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
@@ -58,22 +58,25 @@ jobs:
       PUSH_PACKAGES: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
 
     steps:
+      - name: Set current date as env variable
+          run: echo "NOW::$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       - name: Download JAR
-        if: ${{ env.PUSH_PACKAGES }}
+#        if: ${{ env.PUSH_PACKAGES }}
         #Download the artifact which was uploaded in the build's job
         uses: actions/download-artifact@v2
         with:
           name: diagnosisview-api-staging
       #Deploy the artifact (JAR) into AWS Beanstalk
       - name: Deploy to AWS
-        if: ${{ env.PUSH_PACKAGES }}
-        uses: einaregilsson/beanstalk-deploy@v18
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: DiagnosisView
-          environment_name: staging
-          version_label: "diagnosisview-api:${{ steps.format-time.outputs.replaced }}"
-          region: ${{ secrets.AWS_DEFAULT_REGION }}
-          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
+        run: echo $NOW
+#        if: ${{ env.PUSH_PACKAGES }}
+#        uses: einaregilsson/beanstalk-deploy@v18
+#        with:
+#          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          application_name: DiagnosisView
+#          environment_name: staging
+#          version_label: "diagnosisview-api-staging:${{ steps.format-time.outputs.replaced }}"
+#          region: ${{ secrets.AWS_DEFAULT_REGION }}
+#          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
 
