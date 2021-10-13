@@ -37,11 +37,11 @@ jobs:
 
       - name: Upload JAR
         uses: actions/upload-artifact@v2
-          with:
-            #Set artifact name
-            name: diagnosisview-api-staging
-            #From this path
-            path: target/diagnosisview-api-1.0-SNAPSHOT.jar
+        with:
+          #Set artifact name
+          name: diagnosisview-api-staging
+          #From this path
+          path: target/diagnosisview-api-1.0-SNAPSHOT.jar
 
 
   #Deploy's job
@@ -59,29 +59,15 @@ jobs:
           name: diagnosisview-api-staging
       #Deploy the artifact (JAR) into AWS Beanstalk
       - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v18
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
-          use_existing_version_if_available: false
-          application_name: DiagnosisView
-          environment_name: staging
-          version_label: ${{github.SHA}}
-          region: us-east-1
-          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
-
-
-
-
-      - name: Deploy to AWS
-        run: echo All DONE....
 #        uses: einaregilsson/beanstalk-deploy@v18
-#          with:
-#            aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#            aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#            application_name: DiagnosisView
-#            environment_name: staging
-#            region: ${{ secrets.AWS_DEFAULT_REGION }}
-#            version_label: "diagnosisview-api:{{ steps.format-time.outputs.replaced }}"
-#            deployment_package: deploy.zip
+#        with:
+#          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+#          use_existing_version_if_available: false
+#          application_name: DiagnosisView
+#          environment_name: staging
+#          version_label: ${{github.SHA}}
+#          region: us-east-1
+#          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
+
