@@ -48,10 +48,13 @@ jobs:
     #Depends on build's job
     needs: build
     name: Deploy
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
+
     #Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
     env:
       PUSH_PACKAGES: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
+
     steps:
       - name: Download JAR
         if: ${{ env.PUSH_PACKAGES }}
