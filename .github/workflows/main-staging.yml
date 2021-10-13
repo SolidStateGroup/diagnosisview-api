@@ -1,0 +1,79 @@
+name: Staging Build and Deploy
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ staging ]
+  pull_request:
+    branches: [ staging ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # Builds artifact
+  build:
+    name: Build and Package
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          cache: maven
+
+      - name: Build
+        run: |
+          echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-api/src/main/resources/google-play-key.json
+          echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-service/src/main/resources/google-play-key.json
+          mvn -B clean package -DskipTests=true -P staging --file pom.xml
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v2
+        if: ${{ github.event_name == 'push' }} # only create artifact on push
+        with:
+          #Set artifact name
+          name: diagnosisview-api-staging
+          #From this path
+          path: diagnosisview-api/target/diagnosisview-api-1.0-SNAPSHOT.jar
+          retention-days: 1
+
+  #Deploy's job
+  deploy:
+    #Depends on build's job
+    needs: build
+    name: Deploy
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
+
+    #Run on Ubuntu using the latest version
+    runs-on: ubuntu-latest
+    env:
+      PUSH_PACKAGES: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
+
+    steps:
+      - name: Download JAR
+        if: ${{ env.PUSH_PACKAGES }}
+        #Download the artifact which was uploaded in the build's job
+        uses: actions/download-artifact@v2
+        with:
+          name: diagnosisview-api-staging
+      #Deploy the artifact (JAR) into AWS Beanstalk
+      - name: Deploy to AWS
+        if: ${{ env.PUSH_PACKAGES }}
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: diagnosisview-staging
+          environment_name: staging
+          version_label: "diagnosisview-api:${{ steps.format-time.outputs.replaced }}"
+          region: ${{ secrets.AWS_DEFAULT_REGION }}
+          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
+
