@@ -41,7 +41,7 @@ jobs:
           #Set artifact name
           name: diagnosisview-api-staging
           #From this path
-          path: target/diagnosisview-api-1.0-SNAPSHOT.jar
+          path: diagnosisview-api/target/diagnosisview-api-1.0-SNAPSHOT.jar
 
 
   #Deploy's job
