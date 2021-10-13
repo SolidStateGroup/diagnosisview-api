@@ -33,6 +33,8 @@ jobs:
         run: |
           echo $PWD
           ls -l
+          echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-api/src/main/resources/google-play-key.json
+          echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-service/src/main/resources/google-play-key.json
           mvn -B clean install -DskipTests=true -P staging --file pom.xml
 
   deploy_aws:
