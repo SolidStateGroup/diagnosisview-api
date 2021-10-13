@@ -71,7 +71,7 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: diagnosisview-api
+          application_name: diagnosisview-staging
           environment_name: staging
           version_label: "diagnosisview-api:${{ steps.format-time.outputs.replaced }}"
           region: ${{ secrets.AWS_DEFAULT_REGION }}
