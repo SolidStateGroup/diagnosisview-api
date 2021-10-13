@@ -58,8 +58,11 @@ jobs:
       PUSH_PACKAGES: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' }}
 
     steps:
-      - name: Set current date as env variable
-        run: echo "NOW::$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
+        env:
+          RELEASE_NAME: diagnosisview-api-staging:${{ steps.date.outputs.date }}
       - name: Download JAR
         #        if: ${{ env.PUSH_PACKAGES }}
         #Download the artifact which was uploaded in the build's job
@@ -68,7 +71,7 @@ jobs:
           name: diagnosisview-api-staging
       #Deploy the artifact (JAR) into AWS Beanstalk
       - name: Deploy to AWS
-        run: echo $NOW
+        run: echo $RELEASE_NAME  test-${{ steps.date.outputs.date }}
 #        if: ${{ env.PUSH_PACKAGES }}
 #        uses: einaregilsson/beanstalk-deploy@v18
 #        with:
