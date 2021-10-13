@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Maven CI/CD
 
 # Controls when the workflow will run
@@ -15,8 +13,8 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build_and_test"
-  build_and_test:
+  # Builds artifact
+  build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -29,7 +27,7 @@ jobs:
           distribution: 'adopt'
           cache: maven
 
-      - name: Build project with Maven
+      - name: Build
         run: |
           echo $PWD
           ls -l
@@ -37,22 +35,53 @@ jobs:
           echo $GOOGLE_PLAY_KEY_STAGING > diagnosisview-service/src/main/resources/google-play-key.json
           mvn -B clean install -DskipTests=true -P staging --file pom.xml
 
-  deploy_aws:
-    # The type of runner that the job will run on
+      - name: Upload JAR
+        uses: actions/upload-artifact@v2
+          with:
+            #Set artifact name
+            name: diagnosisview-api-staging
+            #From this path
+            path: target/diagnosisview-api-1.0-SNAPSHOT.jar
+
+
+  #Deploy's job
+  deploy:
+    #Depends on build's job
+    needs: build
+    name: Deploy
+    #Run on Ubuntu using the latest version
     runs-on: ubuntu-latest
-    needs: [build_and_test]
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - name: Download JAR
+        #Download the artifact which was uploaded in the build's job
+        uses: actions/download-artifact@v2
+        with:
+          name: diagnosisview-api-staging
+      #Deploy the artifact (JAR) into AWS Beanstalk
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+          use_existing_version_if_available: false
+          application_name: DiagnosisView
+          environment_name: staging
+          version_label: ${{github.SHA}}
+          region: us-east-1
+          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+
+
+      - name: Deploy to AWS
+        run: echo All DONE....
+#        uses: einaregilsson/beanstalk-deploy@v18
+#          with:
+#            aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#            aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#            application_name: DiagnosisView
+#            environment_name: staging
+#            region: ${{ secrets.AWS_DEFAULT_REGION }}
+#            version_label: "diagnosisview-api:{{ steps.format-time.outputs.replaced }}"
+#            deployment_package: deploy.zip
