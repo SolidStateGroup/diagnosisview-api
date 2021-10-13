@@ -63,12 +63,12 @@ jobs:
         run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
         env:
           RELEASE_NAME: diagnosisview-api-staging:${{ steps.date.outputs.date }}
-      - name: Download JAR
-        #        if: ${{ env.PUSH_PACKAGES }}
-        #Download the artifact which was uploaded in the build's job
-        uses: actions/download-artifact@v2
-        with:
-          name: diagnosisview-api-staging
+#      - name: Download JAR
+#        if: ${{ env.PUSH_PACKAGES }}
+#        #Download the artifact which was uploaded in the build's job
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: diagnosisview-api-staging
       #Deploy the artifact (JAR) into AWS Beanstalk
       - name: Deploy to AWS
         run: echo $RELEASE_NAME  test-${{ steps.date.outputs.date }}
