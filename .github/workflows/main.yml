@@ -5,8 +5,8 @@ on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [ staging ]
-  pull_request:
-    branches: [ staging ]
+#  pull_request:
+#    branches: [ staging ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -58,17 +58,14 @@ jobs:
         with:
           name: diagnosisview-api-staging
       #Deploy the artifact (JAR) into AWS Beanstalk
-      - name: Deploy to EB
-        run:  echo ALL DONE..
-#        uses: einaregilsson/beanstalk-deploy@v18
-#        with:
-#          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
-#          use_existing_version_if_available: false
-#          application_name: DiagnosisView
-#          environment_name: staging
-#          version_label: ${{github.SHA}}
-#          region: us-east-1
-#          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
+      - name: Deploy to AWS
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: DiagnosisView
+          environment_name: staging
+          version_label: ${{github.SHA}}
+          region: ${{ secrets.AWS_DEFAULT_REGION }}
+          deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
 
