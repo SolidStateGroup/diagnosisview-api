@@ -319,6 +319,31 @@ public class UserServiceImpl implements UserService {
     return savedUser;
   }
 
+
+  @Override
+  public List<SavedUserCode> getFavouriteList(final User user) {
+    List<SavedUserCode> favourite = user.getFavourites();
+
+    // if user not subscribed, return only last 20
+    if (favourite.size() > 20 && !user.isActiveSubscription()) {
+      return favourite.subList(favourite.size() - 20, favourite.size());
+    } else {
+      return favourite;
+    }
+  }
+
+  @Override
+  public List<SavedUserCode> getHistoryList(final User user) {
+    List<SavedUserCode> history = user.getHistory();
+
+    // if user not subscribed, return only last 20
+    if (history.size() > 20 && !user.isActiveSubscription()) {
+      return history.subList(history.size() - 20, history.size());
+    } else {
+      return history;
+    }
+  }
+
   /**
    * {@inheritDoc}
    */
