@@ -11,7 +11,6 @@ import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
-import com.solidstategroup.diagnosisview.exceptions.NotAuthorisedException;
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.PaymentDetails;
@@ -25,6 +24,16 @@ import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -36,17 +45,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 
 /**
@@ -253,15 +251,10 @@ public class UserServiceImpl implements UserService {
       }
 
       if (user.getStoredPassword() != null) {
-        //If the user isnt an admin, we need to ensure that the password matches the old one
-        if (!isAdmin) {
-          //Check the old password
-          User userLogin = this.login(user.getUsername(), user.getOldPassword());
 
-          if (userLogin == null) {
-            throw new NotAuthorisedException("Your password does not appear to be correct. " +
-                "Please check and try again.");
-          }
+        if (!Utils.checkPassword(user.getOldPassword(), user.getStoredSalt(),
+            user.getStoredPassword())) {
+          throw new BadCredentialsException("Current password incorrect. Please try again.");
         }
 
         savedUser.setSalt(Utils.generateSalt());
@@ -353,7 +346,7 @@ public class UserServiceImpl implements UserService {
     User user = userRepository.findOneByUsername(username.toLowerCase());
 
     if (user == null) {
-      throw new BadCredentialsException("Please check your username and password.");
+      throw new BadCredentialsException("Login failed - please check your username and password.");
     }
     if (Utils.checkPassword(password, user.getStoredSalt(), user.getStoredPassword())) {
       if (user.isDeleted()) {
@@ -377,7 +370,7 @@ public class UserServiceImpl implements UserService {
 
     } else {
 
-      throw new BadCredentialsException("Please check your username and password");
+      throw new BadCredentialsException("Login failed - please check your username and password");
     }
   }
 
@@ -624,7 +617,7 @@ public class UserServiceImpl implements UserService {
    * Validate give given favourite object
    *
    * @param favourite a favourite to validate
-   * @throws Exception
+   * @throws Exception when failed validation
    */
   private void validateFavourite(SavedUserCode favourite) throws Exception {
 
