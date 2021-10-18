@@ -466,10 +466,6 @@ public class UserServiceImpl implements UserService {
           "Please check your username and reset code.");
     }
 
-    if (StringUtils.isEmpty(resetDto.getNewPassword())) {
-      throw new BadRequestException("New password is required");
-    }
-
     //Check the reset code hasn't expired
     if (user.getResetExpiryDate().before(new Date())) {
       throw new BadRequestException("Your request has expired. Please request a new reset code");
