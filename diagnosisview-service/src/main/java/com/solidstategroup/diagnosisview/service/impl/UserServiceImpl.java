@@ -253,8 +253,8 @@ public class UserServiceImpl implements UserService {
 
       if (user.getStoredPassword() != null) {
 
-        if (!Utils.checkPassword(user.getOldPassword(), user.getStoredSalt(),
-            user.getStoredPassword())) {
+        if (!Utils.checkPassword(user.getOldPassword(), savedUser.getStoredSalt(),
+            savedUser.getStoredPassword())) {
           throw new BadCredentialsException("Current password incorrect. Please try again.");
         }
 
