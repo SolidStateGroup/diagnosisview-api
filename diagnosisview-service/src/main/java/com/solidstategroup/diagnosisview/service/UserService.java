@@ -159,9 +159,8 @@ public interface UserService {
    * Reset the users password using the reset code they enter
    *
    * @param passwordResetDto The required params to reset a password
-   * @return
    */
-  User resetPassword(final PasswordResetDto passwordResetDto) throws Exception;
+  void resetPassword(final PasswordResetDto passwordResetDto) throws Exception;
 
 
   /**
