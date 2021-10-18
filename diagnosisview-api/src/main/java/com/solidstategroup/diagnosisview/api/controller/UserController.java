@@ -8,6 +8,7 @@ import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import javax.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -62,7 +63,7 @@ public class UserController extends BaseController {
   @ApiOperation(value = "Reset password",
       notes = "Reset the password of a user with the given reset code")
   @PostMapping("/reset-password")
-  public void resetPassword(@RequestBody final PasswordResetDto passwordResetDto)
+  public void resetPassword(@Valid @RequestBody final PasswordResetDto passwordResetDto)
       throws Exception {
 
     userService.resetPassword(passwordResetDto);

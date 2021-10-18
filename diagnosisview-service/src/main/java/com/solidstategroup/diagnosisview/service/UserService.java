@@ -4,7 +4,6 @@ import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -159,9 +158,8 @@ public interface UserService {
    * Reset the users password using the reset code they enter
    *
    * @param passwordResetDto The required params to reset a password
-   * @return
    */
-  User resetPassword(final PasswordResetDto passwordResetDto) throws Exception;
+  void resetPassword(final PasswordResetDto passwordResetDto) throws Exception;
 
 
   /**

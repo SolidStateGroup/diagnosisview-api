@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -431,6 +432,7 @@ public class UserServiceImpl implements UserService {
    * {@inheritDoc}
    */
   @Override
+  @Transactional
   public void sendResetPassword(User user) throws Exception {
     int length = 6;
     boolean useLetters = true;
@@ -453,7 +455,8 @@ public class UserServiceImpl implements UserService {
    * {@inheritDoc}
    */
   @Override
-  public User resetPassword(final PasswordResetDto resetDto) throws Exception {
+  @Transactional
+  public void resetPassword(final PasswordResetDto resetDto) throws Exception {
     //Get the user from the db
     User user = this.getUser(resetDto.getUsername());
 
@@ -463,7 +466,7 @@ public class UserServiceImpl implements UserService {
           "Please check your username and reset code.");
     }
 
-    //Check the reset code hasnt expired
+    //Check the reset code hasn't expired
     if (user.getResetExpiryDate().before(new Date())) {
       throw new BadRequestException("Your request has expired. Please request a new reset code");
     }
@@ -476,10 +479,9 @@ public class UserServiceImpl implements UserService {
     //Update the password and salt
     user.setResetExpiryDate(null);
     user.setResetCode(null);
+    user.setSalt(Utils.generateSalt());
+    user.setPassword(DigestUtils.sha256Hex(resetDto.getNewPassword() + user.getStoredSalt()));
     userRepository.save(user);
-
-    user.setPassword(resetDto.getNewPassword());
-    return this.createOrUpdateUser(user, true);
   }
 
 
