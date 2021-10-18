@@ -4,7 +4,6 @@ import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
