@@ -207,6 +207,31 @@ public class CodeServiceImpl implements CodeService {
         .collect(toList());
   }
 
+  @Override
+  public List<CodeDto> getAllActiveByCodes(List<String> codes, String institutionCode)
+      throws ResourceNotFoundException {
+
+    final Institution institution =
+        StringUtils.isEmpty(institutionCode) ? null
+            : institutionService.getInstitution(institutionCode);
+
+    return codeRepository
+        .findAllActiveByCodes(codes)
+        .parallelStream()
+        .map(code -> CodeDto
+            .builder()
+            .code(code.getCode())
+            .links(buildLinkDtos(code, institution))
+            .categories(buildCategories(code))
+            .deleted(shouldBeDeleted(code))
+            .friendlyName(code.getPatientFriendlyName())
+            .tags(code.getTags())
+            .build())
+        .sorted(Comparator.comparing(CodeDto::getFriendlyName,
+            Comparator.nullsFirst(Comparator.naturalOrder())))
+        .collect(toList());
+  }
+
   /**
    * {@inheritDoc}
    */
