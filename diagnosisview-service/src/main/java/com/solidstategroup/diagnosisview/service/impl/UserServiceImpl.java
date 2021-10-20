@@ -11,6 +11,8 @@ import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
+import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.PaymentDetails;
@@ -21,6 +23,8 @@ import com.solidstategroup.diagnosisview.model.codes.Institution;
 import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
+import com.solidstategroup.diagnosisview.results.HistoryResult;
+import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
 import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
@@ -34,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -45,6 +50,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 
@@ -59,6 +65,7 @@ public class UserServiceImpl implements UserService {
   private final AppleReceiptValidation appleReceiptValidation;
   private final EmailService emailService;
   private final InstitutionService institutionService;
+  private final CodeService codeService;
 
   @Value("${IOS_SANDBOX:true}")
   private boolean isIosSandbox;
@@ -75,11 +82,13 @@ public class UserServiceImpl implements UserService {
   public UserServiceImpl(final UserRepository userRepository,
       final AppleReceiptValidation appleReceiptValidation,
       final EmailService emailService,
-      final InstitutionService institutionService) {
+      final InstitutionService institutionService,
+      final CodeService codeService) {
     this.userRepository = userRepository;
     this.appleReceiptValidation = appleReceiptValidation;
     this.emailService = emailService;
     this.institutionService = institutionService;
+    this.codeService = codeService;
   }
 
   /**
@@ -327,15 +336,55 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public List<SavedUserCode> getHistoryList(final User user) {
-    List<SavedUserCode> history = user.getHistory();
+  @Transactional
+  public List<HistoryResult> getHistoryList(final User user) throws ResourceNotFoundException {
+    User savedUser = userRepository.findById(user.getId())
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException("User not found"));
+
+    List<SavedUserCode> currentHistory = savedUser.getHistory();
+
+    if (CollectionUtils.isEmpty(currentHistory)) {
+      return new ArrayList<>();
+    }
+
+    List<String> historyCodes = currentHistory.stream()
+        .map(SavedUserCode::getCode)
+        .collect(Collectors.toList());
+
+    // before returning list of History Items clean any that is hidden or removed externally
+    List<CodeDto> activeCodeDtos = codeService.getAllActiveByCodes(historyCodes,
+        savedUser.getInstitution());
+
+    List<String> activeCodesCode = activeCodeDtos.stream()
+        .map(CodeDto::getCode)
+        .collect(Collectors.toList());
+
+    // if history list is not the same as active codes we need to clean user History and save
+    if (historyCodes.size() != activeCodeDtos.size()) {
+      List<SavedUserCode> filteredHistory = currentHistory.stream()
+          .filter(h -> activeCodesCode.contains(h.getCode()))
+          .collect(Collectors.toList());
+      savedUser.setHistory(filteredHistory);
+      userRepository.save(savedUser);
+    }
+
+    List<SavedUserCode> historyToReturn = savedUser.getHistory();
 
     // if user not subscribed, return only last 20
-    if (history.size() > 20 && !user.isActiveSubscription()) {
-      return history.subList(history.size() - 20, history.size());
-    } else {
-      return history;
+    if (historyToReturn.size() > 20 && !user.isActiveSubscription()) {
+      historyToReturn = historyToReturn.subList(historyToReturn.size() - 20,
+          historyToReturn.size());
     }
+    return historyToReturn.stream()
+        .map(h -> {
+          CodeDto dto = activeCodeDtos.stream()
+              .filter(a -> a.getCode().equals(h.getCode()))
+              .findFirst()
+              .orElse(null);
+          return HistoryResult.toResult(h, dto);
+        }).collect(Collectors.toList());
   }
 
   /**

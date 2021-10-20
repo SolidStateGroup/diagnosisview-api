@@ -1,9 +1,11 @@
 package com.solidstategroup.diagnosisview.service;
 
+import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.results.HistoryResult;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -98,7 +100,17 @@ public interface UserService {
 
   List<SavedUserCode> getFavouriteList(final User user);
 
-  List<SavedUserCode> getHistoryList(final User user);
+  /**
+   * Returns a list of stored History codes items for user.
+   *
+   * This method will also check if any of the saved codes have been removed and automatically
+   * will remove them from the user history.
+   *
+   * @param user a user to get history for
+   * @return a list of saved user history codes
+   * @throws ResourceNotFoundException
+   */
+  List<HistoryResult> getHistoryList(final User user) throws ResourceNotFoundException;
 
   /**
    * Dashboard user login.
