@@ -42,7 +42,7 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
     boolean existsByCode(String code);
 
     /**
-     * Find all the Code that has not been removed externally and not hidden from patient.
+     * Find all the Code that has not been removed externally and not hidden from user.
      *
      * @return a list of Code objects
      */
@@ -51,7 +51,8 @@ public interface CodeRepository extends JpaRepository<Code, Long> {
     List<Code> findAllActive();
 
     /**
-     * Find all the Code that has not been removed externally and not hidden from patient.
+     * Find all the Code that has not been removed externally and not hidden from user
+     * filtered by given list of codes.
      *
      * @return a list of Code objects
      */
