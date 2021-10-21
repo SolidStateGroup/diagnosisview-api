@@ -489,15 +489,19 @@ public class UserServiceImpl implements UserService {
     String generatedString = RandomStringUtils.random(length, useLetters, useNumbers).toUpperCase();
 
     User existingUser = userRepository.findOneByUsername(user.getUsername());
+
+    if (existingUser == null) {
+      return;
+    }
+
     if (existingUser.getResetExpiryDate() == null || existingUser.getResetExpiryDate()
         .before(new Date())) {
       existingUser.setResetCode(generatedString);
       DateTime oneDayAdded = new DateTime().plusHours(1);
       existingUser.setResetExpiryDate(oneDayAdded.toDate());
       userRepository.save(existingUser);
+      emailService.sendForgottenPasswordEmail(user, existingUser.getResetCode());
     }
-
-    emailService.sendForgottenPasswordEmail(user, existingUser.getResetCode());
   }
 
   /**
