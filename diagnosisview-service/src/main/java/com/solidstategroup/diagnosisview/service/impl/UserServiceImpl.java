@@ -336,7 +336,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  @Transactional
   public List<HistoryResult> getHistoryList(final User user) throws ResourceNotFoundException {
     User savedUser = userRepository.findById(user.getId())
         .orElseThrow(
@@ -361,23 +360,20 @@ public class UserServiceImpl implements UserService {
         .map(CodeDto::getCode)
         .collect(Collectors.toList());
 
-    // if history list is not the same as active codes we need to clean user History and save
+    List<SavedUserCode> filteredHistory = new ArrayList<>();
+    // if history list is not the same as active codes we need to exclude from user History
     if (historyCodes.size() != activeCodeDtos.size()) {
-      List<SavedUserCode> filteredHistory = currentHistory.stream()
+      filteredHistory = currentHistory.stream()
           .filter(h -> activeCodesCode.contains(h.getCode()))
           .collect(Collectors.toList());
-      savedUser.setHistory(filteredHistory);
-      userRepository.save(savedUser);
     }
-
-    List<SavedUserCode> historyToReturn = savedUser.getHistory();
 
     // if user not subscribed, return only last 20
-    if (historyToReturn.size() > 20 && !user.isActiveSubscription()) {
-      historyToReturn = historyToReturn.subList(historyToReturn.size() - 20,
-          historyToReturn.size());
+    if (filteredHistory.size() > 20 && !user.isActiveSubscription()) {
+      filteredHistory = filteredHistory.subList(filteredHistory.size() - 20,
+          filteredHistory.size());
     }
-    return historyToReturn.stream()
+    return filteredHistory.stream()
         .map(h -> {
           CodeDto dto = activeCodeDtos.stream()
               .filter(a -> a.getCode().equals(h.getCode()))
