@@ -14,15 +14,18 @@ import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
+import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
 import com.solidstategroup.diagnosisview.model.codes.Institution;
+import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
+import com.solidstategroup.diagnosisview.results.FavouriteResult;
 import com.solidstategroup.diagnosisview.results.HistoryResult;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.EmailService;
@@ -37,6 +40,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
@@ -324,15 +328,65 @@ public class UserServiceImpl implements UserService {
 
 
   @Override
-  public List<SavedUserCode> getFavouriteList(final User user) {
-    List<SavedUserCode> favourite = user.getFavourites();
+  public List<FavouriteResult> getFavouriteList(final User user) throws ResourceNotFoundException {
+    List<SavedUserCode> currentFavourites = user.getFavourites();
+
+    if (CollectionUtils.isEmpty(currentFavourites)) {
+      return new ArrayList<>();
+    }
+
+    List<String> favouritesCodes = currentFavourites.stream()
+        .map(SavedUserCode::getCode)
+        .collect(Collectors.toList());
+
+    List<CodeDto> activeCodeDtos = codeService.getAllActiveByCodes(
+        favouritesCodes, user.getInstitution());
+
+    List<String> activeCodesCode = activeCodeDtos.stream()
+        .map(CodeDto::getCode)
+        .collect(Collectors.toList());
+
+    List<SavedUserCode> filteredFavourites;
+
+    // filter out removed and hidden codes
+    filteredFavourites = currentFavourites.stream()
+        .filter(f -> activeCodesCode.contains(f.getCode()))
+        .collect(Collectors.toList());
+
+    List<FavouriteResult> favouriteResults = new ArrayList<>();
+
+    // Filter codes based on active codes and subscription
+    filteredFavourites.forEach(f -> {
+      // find active code
+      Optional<CodeDto> dto = activeCodeDtos.stream()
+          .filter(a -> a.getCode().equals(f.getCode()))
+          .findFirst();
+
+      if (dto.isPresent()) {
+        Optional<LinkDto> linkDto = dto.get().getLinks().stream()
+            .filter(l -> l.getId().equals(f.getLinkId()))
+            .findFirst();
+
+        if (linkDto.isPresent()) {
+          // active Subscription add to favourite lists
+          if (user.isActiveSubscription()) {
+            favouriteResults.add(FavouriteResult.toResult(f, dto.get(), linkDto.get()));
+          } else {
+            // otherwise, ignore Red or Amber link unless link is marked as Free
+            if ((linkDto.get().getFreeLink()
+                || linkDto.get().getDifficultyLevel().getId()
+                .equals(DifficultyLevel.GREEN.getId()))) {
+              favouriteResults.add(FavouriteResult.toResult(f, dto.get(), linkDto.get()));
+            }
+          }
+        }
+      }
+    });
 
     // if user not subscribed, return only last 20
-    if (favourite.size() > 20 && !user.isActiveSubscription()) {
-      return favourite.subList(favourite.size() - 20, favourite.size());
-    } else {
-      return favourite;
-    }
+    return (favouriteResults.size() > 20 && !user.isActiveSubscription())
+        ? favouriteResults.subList(favouriteResults.size() - 20, favouriteResults.size())
+        : favouriteResults;
   }
 
   @Override
@@ -353,8 +407,8 @@ public class UserServiceImpl implements UserService {
         .collect(Collectors.toList());
 
     // before returning list of History Items clean any that is hidden or removed externally
-    List<CodeDto> activeCodeDtos = codeService.getAllActiveByCodes(historyCodes,
-        savedUser.getInstitution());
+    List<CodeDto> activeCodeDtos = codeService.getAllActiveByCodes(
+        historyCodes, savedUser.getInstitution());
 
     List<String> activeCodesCode = activeCodeDtos.stream()
         .map(CodeDto::getCode)
