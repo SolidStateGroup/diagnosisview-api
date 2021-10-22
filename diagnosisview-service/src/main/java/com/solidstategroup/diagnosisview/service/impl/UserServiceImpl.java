@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -383,9 +384,12 @@ public class UserServiceImpl implements UserService {
       }
     });
 
+    // sort by date added descending (latest first
+    favouriteResults.sort(Comparator.comparing(FavouriteResult::getDateAdded).reversed());
+
     // if user not subscribed, return only last 20
     return (favouriteResults.size() > 20 && !user.isActiveSubscription())
-        ? favouriteResults.subList(favouriteResults.size() - 20, favouriteResults.size())
+        ? favouriteResults.subList(0, favouriteResults.size() - 20)
         : favouriteResults;
   }
 
