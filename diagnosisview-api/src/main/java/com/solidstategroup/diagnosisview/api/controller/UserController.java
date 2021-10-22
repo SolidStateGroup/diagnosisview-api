@@ -1,9 +1,11 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
+import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.FeedbackDto;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.results.FavouriteResult;
 import com.solidstategroup.diagnosisview.results.HistoryResult;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
@@ -81,7 +83,7 @@ public class UserController extends BaseController {
       notes = "Get a list of user's favourite codes",
       response = User.class)
   @GetMapping("/favourites")
-  public List<SavedUserCode> getFavouriteList(final HttpServletRequest request) throws Exception {
+  public List<FavouriteResult> getFavouriteList(final HttpServletRequest request) throws Exception {
     User user = checkIsAuthenticated(request);
 
     return userService.getFavouriteList(user);

@@ -5,6 +5,7 @@ import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.results.FavouriteResult;
 import com.solidstategroup.diagnosisview.results.HistoryResult;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -98,13 +99,22 @@ public interface UserService {
    */
   User deleteHistoryToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
 
-  List<SavedUserCode> getFavouriteList(final User user);
+  /**
+   * Get a list of favourite links for user.
+   *
+   * <p>List is filtered based on active subscription and hidden/excluded codes.
+   *
+   * @param user a user to get favourites for
+   * @return a list of FavouriteResult
+   * @throws ResourceNotFoundException
+   */
+  List<FavouriteResult> getFavouriteList(final User user) throws ResourceNotFoundException;
 
   /**
    * Returns a list of stored History codes items for user.
    *
-   * This method will also check if any of the saved codes have been removed and automatically
-   * will remove them from the user history.
+   * <p>This method will also check if any of the history codes have been removed or hidden and
+   * excludes them from returned list.
    *
    * @param user a user to get history for
    * @return a list of saved user history codes
