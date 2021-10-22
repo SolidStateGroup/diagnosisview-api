@@ -384,7 +384,7 @@ public class UserServiceImpl implements UserService {
       }
     });
 
-    // sort by date added descending (latest first
+    // sort by date added descending (latest first)
     favouriteResults.sort(Comparator.comparing(FavouriteResult::getDateAdded).reversed());
 
     // if user not subscribed, return only last 20
