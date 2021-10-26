@@ -57,9 +57,9 @@ public class UserController extends BaseController {
   public void sendDVFeedback(@RequestBody final FeedbackDto feedbackDto,
       final HttpServletRequest request) throws Exception {
 
-    User user = getUserFromRequest(request);
+    User requestUser = checkIsAuthenticated(request);
 
-    emailService.sendFeedback(user, feedbackDto.getBody());
+    emailService.sendFeedback(requestUser, feedbackDto.getBody());
   }
 
   @ApiOperation(value = "Reset password",
