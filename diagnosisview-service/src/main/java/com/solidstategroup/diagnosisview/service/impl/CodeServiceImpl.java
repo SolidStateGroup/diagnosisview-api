@@ -208,6 +208,8 @@ public class CodeServiceImpl implements CodeService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  @Cacheable("getAllCodes")
   public List<CodeDto> getAllActiveByCodes(List<String> codes, String institutionCode)
       throws ResourceNotFoundException {
 
