@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -55,9 +54,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
 
 /**
  * {@inheritDoc}.
@@ -329,6 +328,7 @@ public class UserServiceImpl implements UserService {
 
 
   @Override
+  @Transactional(readOnly = true)
   public List<FavouriteResult> getFavouriteList(final User user) throws ResourceNotFoundException {
     List<SavedUserCode> currentFavourites = user.getFavourites();
 
@@ -394,13 +394,10 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<HistoryResult> getHistoryList(final User user) throws ResourceNotFoundException {
-    User savedUser = userRepository.findById(user.getId())
-        .orElseThrow(
-            () ->
-                new ResourceNotFoundException("User not found"));
 
-    List<SavedUserCode> currentHistory = savedUser.getHistory();
+    List<SavedUserCode> currentHistory = user.getHistory();
 
     if (CollectionUtils.isEmpty(currentHistory)) {
       return new ArrayList<>();
@@ -412,7 +409,7 @@ public class UserServiceImpl implements UserService {
 
     // before returning list of History Items clean any that is hidden or removed externally
     List<CodeDto> activeCodeDtos = codeService.getAllActiveByCodes(
-        historyCodes, savedUser.getInstitution());
+        historyCodes, user.getInstitution());
 
     List<String> activeCodesCode = activeCodeDtos.stream()
         .map(CodeDto::getCode)
