@@ -122,6 +122,12 @@
     </dependency>
 
     <dependency>
+      <artifactId>spring-dotenv</artifactId>
+      <groupId>me.paulschwarz</groupId>
+      <version>2.4.1</version>
+    </dependency>
+
+    <dependency>
       <groupId>io.springfox</groupId>
       <artifactId>springfox-swagger-ui</artifactId>
       <version>${springfox.version}</version>
