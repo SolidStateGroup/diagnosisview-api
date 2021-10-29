@@ -415,12 +415,14 @@ public class UserServiceImpl implements UserService {
         .map(CodeDto::getCode)
         .collect(Collectors.toList());
 
-    List<SavedUserCode> filteredHistory = new ArrayList<>();
+    List<SavedUserCode> filteredHistory;
     // if history list is not the same as active codes we need to exclude from user History
     if (historyCodes.size() != activeCodeDtos.size()) {
       filteredHistory = currentHistory.stream()
           .filter(h -> activeCodesCode.contains(h.getCode()))
           .collect(Collectors.toList());
+    } else {
+      filteredHistory = currentHistory;
     }
 
     // if user not subscribed, return only last 20
@@ -428,6 +430,7 @@ public class UserServiceImpl implements UserService {
       filteredHistory = filteredHistory.subList(filteredHistory.size() - 20,
           filteredHistory.size());
     }
+
     return filteredHistory.stream()
         .map(h -> {
           CodeDto dto = activeCodeDtos.stream()
