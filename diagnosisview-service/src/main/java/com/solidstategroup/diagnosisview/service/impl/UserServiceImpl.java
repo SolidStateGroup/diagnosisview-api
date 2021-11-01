@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
+import com.solidstategroup.diagnosisview.exceptions.UsernameTakenException;
 import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.LinkDto;
@@ -24,9 +25,12 @@ import com.solidstategroup.diagnosisview.model.codes.Institution;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
 import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
+import com.solidstategroup.diagnosisview.payloads.ForgotPasswordPayload;
+import com.solidstategroup.diagnosisview.payloads.RegisterPayload;
 import com.solidstategroup.diagnosisview.repository.UserRepository;
 import com.solidstategroup.diagnosisview.results.FavouriteResult;
 import com.solidstategroup.diagnosisview.results.HistoryResult;
+import com.solidstategroup.diagnosisview.service.CaptchaValidatorService;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
@@ -70,6 +74,7 @@ public class UserServiceImpl implements UserService {
   private final EmailService emailService;
   private final InstitutionService institutionService;
   private final CodeService codeService;
+  private final CaptchaValidatorService captchaValidatorService;
 
   @Value("${IOS_SANDBOX:true}")
   private boolean isIosSandbox;
@@ -87,12 +92,14 @@ public class UserServiceImpl implements UserService {
       final AppleReceiptValidation appleReceiptValidation,
       final EmailService emailService,
       final InstitutionService institutionService,
-      final CodeService codeService) {
+      final CodeService codeService,
+      CaptchaValidatorService captchaValidatorService) {
     this.userRepository = userRepository;
     this.appleReceiptValidation = appleReceiptValidation;
     this.emailService = emailService;
     this.institutionService = institutionService;
     this.codeService = codeService;
+    this.captchaValidatorService = captchaValidatorService;
   }
 
   /**
@@ -201,13 +208,47 @@ public class UserServiceImpl implements UserService {
    * {@inheritDoc}
    */
   @Override
+  public User registerUser(RegisterPayload payload) throws Exception {
+
+    if (!captchaValidatorService.isValid(payload.getCaptchaResponse())) {
+      throw new IllegalArgumentException("reCaptcha validation failed");
+    }
+
+    if (userRepository.findOneByUsername(payload.getUsername()) != null) {
+      throw new UsernameTakenException();
+    }
+
+    User userToAdd = new User();
+    userToAdd.setFirstName(payload.getFirstName());
+    userToAdd.setLastName(payload.getLastName());
+    userToAdd.setUsername(payload.getUsername());
+    userToAdd.setEmailAddress(payload.getUsername());
+    userToAdd.setDateCreated(new Date());
+    userToAdd.setSalt(Utils.generateSalt());
+    userToAdd.setPassword(DigestUtils.sha256Hex(payload.getPassword() +
+        userToAdd.getStoredSalt()));
+    userToAdd.setToken(UUID.randomUUID().toString());
+    userToAdd.setRoleType(RoleType.USER);
+    userToAdd.setOccupation(payload.getOccupation());
+
+    // check make sure we have correct selected institution
+    if (!StringUtils.isEmpty(payload.getInstitution())) {
+      Institution institution = institutionService.getInstitution(payload.getInstitution());
+      userToAdd.setInstitution(institution.getCode());
+    }
+
+    return userRepository.save(userToAdd);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public User createOrUpdateUser(final User user, boolean isAdmin) throws Exception {
-    //this is a new user
+    // this is a new user
     if (user.getId() == null) {
       if (userRepository.findOneByUsername(user.getUsername()) != null) {
-        throw new IllegalStateException(
-            String.format("The username %s already exists. Please try another " +
-                "one", user.getUsername()));
+        throw new UsernameTakenException();
       }
       user.setUsername(user.getUsername());
       user.setEmailAddress(user.getEmailAddress());
@@ -536,25 +577,29 @@ public class UserServiceImpl implements UserService {
    */
   @Override
   @Transactional
-  public void sendResetPassword(User user) throws Exception {
-    int length = 6;
-    boolean useLetters = true;
-    boolean useNumbers = true;
-    String generatedString = RandomStringUtils.random(length, useLetters, useNumbers).toUpperCase();
+  public void sendResetPassword(ForgotPasswordPayload payload) throws Exception {
 
-    User existingUser = userRepository.findOneByUsername(user.getUsername());
+    if (!captchaValidatorService.isValid(payload.getCaptchaResponse())) {
+      throw new IllegalArgumentException("reCaptcha validation failed");
+    }
+
+    User existingUser = userRepository.findOneByUsername(payload.getUsername());
 
     if (existingUser == null) {
       return;
     }
 
-    if (existingUser.getResetExpiryDate() == null || existingUser.getResetExpiryDate()
-        .before(new Date())) {
+    if (existingUser.getResetExpiryDate() == null
+        || existingUser.getResetExpiryDate().before(new Date())) {
+      log.info("Sending email....");
+
+      String generatedString = RandomStringUtils.random(6, true, true).toUpperCase();
+
       existingUser.setResetCode(generatedString);
       DateTime oneDayAdded = new DateTime().plusHours(1);
       existingUser.setResetExpiryDate(oneDayAdded.toDate());
       userRepository.save(existingUser);
-      emailService.sendForgottenPasswordEmail(user, existingUser.getResetCode());
+      emailService.sendForgottenPasswordEmail(existingUser, existingUser.getResetCode());
     }
   }
 

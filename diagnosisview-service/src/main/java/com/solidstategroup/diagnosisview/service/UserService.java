@@ -5,6 +5,8 @@ import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.payloads.ForgotPasswordPayload;
+import com.solidstategroup.diagnosisview.payloads.RegisterPayload;
 import com.solidstategroup.diagnosisview.results.FavouriteResult;
 import com.solidstategroup.diagnosisview.results.HistoryResult;
 import java.io.IOException;
@@ -59,6 +61,15 @@ public interface UserService {
    * @throws Exception
    */
   User addHistoryToUser(final User user, final SavedUserCode savedUserCode) throws Exception;
+
+  /**
+   * Register new User in the system.
+   *
+   * @param payload the user to create or update
+   * @return User the created or updated user
+   * @throws Exception thrown when cannot update user
+   */
+  User registerUser(RegisterPayload payload) throws Exception;
 
   /**
    * Create or update a user.
@@ -170,10 +181,10 @@ public interface UserService {
   /**
    * Send the code to allow a user to reset their password
    *
-   * @param user - User to reset password of
+   * @param payload - User details to reset password for
    * @throws Exception
    */
-  void sendResetPassword(final User user) throws Exception;
+  void sendResetPassword(ForgotPasswordPayload payload) throws Exception;
 
 
   /**
