@@ -1,10 +1,10 @@
 package com.solidstategroup.diagnosisview.api.controller;
 
-import com.solidstategroup.diagnosisview.model.CodeDto;
 import com.solidstategroup.diagnosisview.model.FeedbackDto;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
+import com.solidstategroup.diagnosisview.payloads.ForgotPasswordPayload;
 import com.solidstategroup.diagnosisview.results.FavouriteResult;
 import com.solidstategroup.diagnosisview.results.HistoryResult;
 import com.solidstategroup.diagnosisview.service.EmailService;
@@ -74,9 +74,9 @@ public class UserController extends BaseController {
   @ApiOperation(value = "Forgotten password",
       notes = "Sends a reset password email to a user")
   @PostMapping("/forgotten-password")
-  public void forgottenPassword(@RequestBody final User user) throws Exception {
+  public void forgottenPassword(@RequestBody ForgotPasswordPayload payload) throws Exception {
 
-    userService.sendResetPassword(userService.getUser(user.getUsername()));
+    userService.sendResetPassword(payload);
   }
 
   @ApiOperation(value = "Get a list of favourite codes",
