@@ -33,8 +33,8 @@ jobs:
 
       - name: Build
         run: |
-          echo "${{ env.GOOGLE_PLAY_KEY }}" > diagnosisview-api/src/main/resources/google-play-key.json
-          echo "${{ env.GOOGLE_PLAY_KEY }}" > diagnosisview-service/src/main/resources/google-play-key.json
+          echo ${{ secrets.GOOGLE_PLAY_KEY_PROD }} > diagnosisview-api/src/main/resources/google-play-key.json
+          echo ${{ secrets.GOOGLE_PLAY_KEY_PROD }} > diagnosisview-service/src/main/resources/google-play-key.json
           mvn -B clean package -DskipTests=true -P staging --file pom.xml
 
       - name: Upload JAR
