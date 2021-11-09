@@ -681,7 +681,7 @@ public class UserServiceImpl implements UserService {
    */
   public User verifyAndroidToken(User user, String receipt) throws Exception {
     User savedUser = this.getUser(user.getUsername());
-
+    log.info("verifyAndroidToken() for user receipt {}", receipt);
     Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
     Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
     return verifyAndroidPurchase(savedUser,
@@ -693,13 +693,14 @@ public class UserServiceImpl implements UserService {
    * {@inheritDoc}
    */
   public String verifyAndroidToken(String receipt) throws Exception {
+    log.info("verifyAndroidToken() receipt {}", receipt);
 
     Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
     GoogleReceipt googleReceipt =
         new GoogleReceipt(receiptMap.get("packageName"), receiptMap.get("productId"),
             receiptMap.get("purchaseToken"));
 
-    InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
+    InputStream file = new ClassPathResource("no_google-play-key-prod.json").getInputStream();
 
     GoogleCredential credential =
         GoogleCredential.fromStream(file)
@@ -721,7 +722,7 @@ public class UserServiceImpl implements UserService {
                 googleReceipt.getToken());
     final SubscriptionPurchase purchase = get.execute();
     String purchaseString = purchase.toPrettyString();
-    log.info("Found google purchase item {}" + purchaseString);
+    log.info("verifyAndroidToken() Found google purchase item {}", purchaseString);
     return purchaseString;
   }
 
@@ -731,7 +732,7 @@ public class UserServiceImpl implements UserService {
    */
   public User verifyAndroidPurchase(User savedUser, GoogleReceipt googleReceipt) throws IOException,
       GeneralSecurityException {
-
+    log.info("verifyAndroidPurchase() for user receipt {}", googleReceipt.toString());
     InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
 
     GoogleCredential credential =
@@ -753,7 +754,7 @@ public class UserServiceImpl implements UserService {
                 googleReceipt.getProductId(),
                 googleReceipt.getToken());
     final SubscriptionPurchase purchase = get.execute();
-    log.info("Found google purchase item " + purchase.toPrettyString());
+    log.info("verifyAndroidPurchase() Found google purchase item {}", purchase.toPrettyString());
 
     List<PaymentDetails> payments = savedUser.getPaymentData();
     payments.add(new PaymentDetails(purchase.toString(), googleReceipt, PaymentType.ANDROID));
@@ -765,7 +766,6 @@ public class UserServiceImpl implements UserService {
 
     return savedUser;
   }
-
 
   /**
    * Validate give given favourite object
