@@ -700,7 +700,7 @@ public class UserServiceImpl implements UserService {
         new GoogleReceipt(receiptMap.get("packageName"), receiptMap.get("productId"),
             receiptMap.get("purchaseToken"));
 
-    InputStream file = new ClassPathResource("no_google-play-key-prod.json").getInputStream();
+    InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
 
     GoogleCredential credential =
         GoogleCredential.fromStream(file)
