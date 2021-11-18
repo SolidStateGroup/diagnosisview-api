@@ -636,14 +636,13 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
   }
 
-
   /**
    * {@inheritDoc}
    */
   public User verifyAppleReceiptData(User user, String receipt) throws Exception {
     User savedUser = this.getUser(user.getUsername());
     //validate the receipt using the sandbox (or use false for production)
-    JsonObject responseJson = appleReceiptValidation.validateReciept(receipt, isIosSandbox);
+    JsonObject responseJson = appleReceiptValidation.validateReceipt(receipt, isIosSandbox);
     //prints response
     log.info(responseJson.toString());
 
