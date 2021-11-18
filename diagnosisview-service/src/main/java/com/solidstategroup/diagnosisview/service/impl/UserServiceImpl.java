@@ -307,9 +307,12 @@ public class UserServiceImpl implements UserService {
 
       if (user.getStoredPassword() != null) {
 
-        if (!Utils.checkPassword(user.getOldPassword(), savedUser.getStoredSalt(),
-            savedUser.getStoredPassword())) {
-          throw new BadCredentialsException("Current password incorrect. Please try again.");
+        //If the user isn't an admin, we need to ensure that the password matches the old one
+        if (!isAdmin) {
+          if (!Utils.checkPassword(user.getOldPassword(), savedUser.getStoredSalt(),
+              savedUser.getStoredPassword())) {
+            throw new BadCredentialsException("Current password incorrect. Please try again.");
+          }
         }
 
         savedUser.setSalt(Utils.generateSalt());
