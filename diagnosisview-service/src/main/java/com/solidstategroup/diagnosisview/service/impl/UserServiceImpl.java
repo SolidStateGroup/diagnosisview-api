@@ -635,7 +635,7 @@ public class UserServiceImpl implements UserService {
     user.setPassword(DigestUtils.sha256Hex(resetDto.getNewPassword() + user.getStoredSalt()));
     userRepository.save(user);
   }
-  
+
   /**
    * {@inheritDoc}
    */
