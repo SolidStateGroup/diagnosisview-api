@@ -307,7 +307,7 @@ public class UserServiceImpl implements UserService {
 
       if (user.getStoredPassword() != null) {
 
-        //If the user isn't an admin, we need to ensure that the password matches the old one
+        // If the user isn't an admin, we need to ensure that the password matches the old one
         if (!isAdmin) {
           if (!Utils.checkPassword(user.getOldPassword(), savedUser.getStoredSalt(),
               savedUser.getStoredPassword())) {
