@@ -75,7 +75,7 @@ jobs:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: DiagnosisView
-          environment_name: staging
+          environment_name: dv-api-staging
           version_label: diagnosisview-api-staging:${{ steps.date.outputs.date }}
           region: ${{ secrets.AWS_DEFAULT_REGION }}
           deployment_package: diagnosisview-api-1.0-SNAPSHOT.jar
