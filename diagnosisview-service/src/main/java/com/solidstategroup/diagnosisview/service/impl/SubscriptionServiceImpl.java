@@ -63,8 +63,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
   public SubscriptionServiceImpl(UserService userService,
       AppleReceiptValidation appleReceiptValidation,
-      @Value("${chargebee.api.key}") String chargebeeSite,
-      @Value("${chargebee.site}") String chargebeeApiKey) {
+      @Value("${chargebee.site}") String chargebeeSite,
+      @Value("${chargebee.api.key}") String chargebeeApiKey) {
     this.userService = userService;
     this.appleReceiptValidation = appleReceiptValidation;
     this.chargebeeSite = chargebeeSite;
@@ -80,8 +80,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         PaymentDetails payment = user.getPaymentData().get(user.getPaymentData().size() - 1);
 
         //If its android, run it against the verify android
-        if ((payment.getPaymentType() != null && payment.getPaymentType()
-            .equals(PaymentType.ANDROID))) {
+        if ((payment.getPaymentType() != null && payment.getPaymentType().equals(PaymentType.ANDROID))) {
           try {
             verifyAndroidPurchase(user, payment.getGoogleReceipt());
           } catch (IOException e) {
