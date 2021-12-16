@@ -4,7 +4,7 @@ import com.solidstategroup.diagnosisview.model.User
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
-class ValidateControllerTest extends AbstractMvcSpec {
+class SubscriptionControllerTest extends AbstractMvcSpec {
 
     static VALIDATE_ANDROID = '/api/user/validate/android'
 
@@ -12,7 +12,7 @@ class ValidateControllerTest extends AbstractMvcSpec {
 
     void setup() {
 
-        controller = new ValidateController(userService)
+        controller = new SubscriptionController(userService, subscriptionService)
         buildMvc()
     }
 

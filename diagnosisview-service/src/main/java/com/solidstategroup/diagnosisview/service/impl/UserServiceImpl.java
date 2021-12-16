@@ -1,29 +1,17 @@
 package com.solidstategroup.diagnosisview.service.impl;
 
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.androidpublisher.AndroidPublisher;
-import com.google.api.services.androidpublisher.AndroidPublisherScopes;
-import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.solidstategroup.diagnosisview.exceptions.BadRequestException;
 import com.solidstategroup.diagnosisview.exceptions.ResourceNotFoundException;
 import com.solidstategroup.diagnosisview.exceptions.UsernameTakenException;
 import com.solidstategroup.diagnosisview.model.CodeDto;
-import com.solidstategroup.diagnosisview.model.GoogleReceipt;
 import com.solidstategroup.diagnosisview.model.LinkDto;
 import com.solidstategroup.diagnosisview.model.PasswordResetDto;
-import com.solidstategroup.diagnosisview.model.PaymentDetails;
 import com.solidstategroup.diagnosisview.model.SavedUserCode;
 import com.solidstategroup.diagnosisview.model.User;
 import com.solidstategroup.diagnosisview.model.Utils;
 import com.solidstategroup.diagnosisview.model.codes.Institution;
 import com.solidstategroup.diagnosisview.model.codes.enums.DifficultyLevel;
-import com.solidstategroup.diagnosisview.model.enums.PaymentType;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
 import com.solidstategroup.diagnosisview.payloads.ForgotPasswordPayload;
 import com.solidstategroup.diagnosisview.payloads.RegisterPayload;
@@ -34,17 +22,11 @@ import com.solidstategroup.diagnosisview.service.CaptchaValidatorService;
 import com.solidstategroup.diagnosisview.service.CodeService;
 import com.solidstategroup.diagnosisview.service.EmailService;
 import com.solidstategroup.diagnosisview.service.UserService;
-import com.solidstategroup.diagnosisview.utils.AppleReceiptValidation;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,8 +35,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -70,17 +50,10 @@ import org.springframework.util.StringUtils;
 public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
-  private final AppleReceiptValidation appleReceiptValidation;
   private final EmailService emailService;
   private final InstitutionService institutionService;
   private final CodeService codeService;
   private final CaptchaValidatorService captchaValidatorService;
-
-  @Value("${IOS_SANDBOX:true}")
-  private boolean isIosSandbox;
-
-  @Value("${ANDROID_APPLICATION_NAME:NONE}")
-  private String androidApplicationName;
 
   /**
    * Constructor for the dashboard user service.
@@ -89,13 +62,11 @@ public class UserServiceImpl implements UserService {
    */
   @Autowired
   public UserServiceImpl(final UserRepository userRepository,
-      final AppleReceiptValidation appleReceiptValidation,
       final EmailService emailService,
       final InstitutionService institutionService,
       final CodeService codeService,
       CaptchaValidatorService captchaValidatorService) {
     this.userRepository = userRepository;
-    this.appleReceiptValidation = appleReceiptValidation;
     this.emailService = emailService;
     this.institutionService = institutionService;
     this.codeService = codeService;
@@ -322,6 +293,14 @@ public class UserServiceImpl implements UserService {
 
       return userRepository.save(savedUser);
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public User saveUser(User user) {
+    return userRepository.save(user);
   }
 
   /**
@@ -637,136 +616,6 @@ public class UserServiceImpl implements UserService {
     user.setSalt(Utils.generateSalt());
     user.setPassword(DigestUtils.sha256Hex(resetDto.getNewPassword() + user.getStoredSalt()));
     userRepository.save(user);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public User verifyAppleReceiptData(User user, String receipt) throws Exception {
-    User savedUser = this.getUser(user.getUsername());
-    //validate the receipt using the sandbox (or use false for production)
-    JsonObject responseJson = appleReceiptValidation.validateReceipt(receipt, isIosSandbox);
-    //prints response
-    log.info(responseJson.toString());
-
-    PaymentDetails details = new PaymentDetails(responseJson.toString(), null, PaymentType.IOS);
-    List<PaymentDetails> payments = savedUser.getPaymentData();
-    payments.add(details);
-    savedUser.setPaymentData(payments);
-    Date expiryDate;
-
-    // If the application is the test application, then add 1 hour to the expiry time,
-    // otherwise, assume it is the production application and allow 1  year as the expiry time
-    if (responseJson.get("receipt_type").toString().toLowerCase().contains("sandbox")) {
-      expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
-          .get("receipt_creation_date_ms").toString()));
-      DateTime plusOneHour = new DateTime(expiryDate).plusHours(1);
-      expiryDate = plusOneHour.toDate();
-    } else {
-      expiryDate = new Date(Long.parseLong(new Gson().fromJson(details.getResponse(), Map.class)
-          .get("receipt_creation_date_ms").toString()));
-      DateTime plusOneHour = new DateTime(expiryDate).plusYears(1);
-      expiryDate = plusOneHour.toDate();
-    }
-
-    //Hard coded for ios users
-    savedUser.setAutoRenewing(false);
-    savedUser.setExpiryDate(expiryDate);
-    savedUser.setActiveSubscription(true);
-    userRepository.save(savedUser);
-
-    return savedUser;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public User verifyAndroidToken(User user, String receipt) throws Exception {
-    User savedUser = this.getUser(user.getUsername());
-    log.info("verifyAndroidToken() for user receipt {}", receipt);
-    Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
-    Map<String, String> data = new Gson().fromJson(receiptMap.get("data"), Map.class);
-    return verifyAndroidPurchase(savedUser,
-        new GoogleReceipt(data.get("packageName"), data.get("productId"),
-            data.get("purchaseToken")));
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public String verifyAndroidToken(String receipt) throws Exception {
-    log.info("verifyAndroidToken() receipt {}", receipt);
-
-    Map<String, String> receiptMap = new Gson().fromJson(receipt, Map.class);
-    GoogleReceipt googleReceipt =
-        new GoogleReceipt(receiptMap.get("packageName"), receiptMap.get("productId"),
-            receiptMap.get("purchaseToken"));
-
-    InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
-
-    GoogleCredential credential =
-        GoogleCredential.fromStream(file)
-            .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
-    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-    JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-
-    AndroidPublisher pub = new AndroidPublisher.Builder
-        (httpTransport, jsonFactory, credential)
-        .setApplicationName(androidApplicationName)
-        .build();
-
-    final AndroidPublisher.Purchases.Subscriptions.Get get =
-        pub.purchases()
-            .subscriptions()
-            .get(googleReceipt.getPackageName(),
-                googleReceipt.getProductId(),
-                googleReceipt.getToken());
-    final SubscriptionPurchase purchase = get.execute();
-    String purchaseString = purchase.toPrettyString();
-    log.info("verifyAndroidToken() Found google purchase item {}", purchaseString);
-    return purchaseString;
-  }
-
-
-  /**
-   * {@inheritDoc}
-   */
-  public User verifyAndroidPurchase(User savedUser, GoogleReceipt googleReceipt) throws IOException,
-      GeneralSecurityException {
-    log.info("verifyAndroidPurchase() for user receipt {}", googleReceipt.toString());
-    InputStream file = new ClassPathResource("google-play-key.json").getInputStream();
-
-    GoogleCredential credential =
-        GoogleCredential.fromStream(file)
-            .createScoped(Collections.singleton(AndroidPublisherScopes.ANDROIDPUBLISHER));
-    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-    JacksonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-
-    AndroidPublisher pub = new AndroidPublisher.Builder
-        (httpTransport, jsonFactory, credential)
-        .setApplicationName(androidApplicationName)
-        .build();
-
-    final AndroidPublisher.Purchases.Subscriptions.Get get =
-        pub.purchases()
-            .subscriptions()
-            .get(googleReceipt.getPackageName(),
-                googleReceipt.getProductId(),
-                googleReceipt.getToken());
-    final SubscriptionPurchase purchase = get.execute();
-    log.info("verifyAndroidPurchase() Found google purchase item {}", purchase.toPrettyString());
-
-    List<PaymentDetails> payments = savedUser.getPaymentData();
-    payments.add(new PaymentDetails(purchase.toString(), googleReceipt, PaymentType.ANDROID));
-
-    savedUser.setActiveSubscription(true);
-    savedUser.setAutoRenewing(purchase.getAutoRenewing());
-    savedUser.setExpiryDate(new Date(purchase.getExpiryTimeMillis()));
-    userRepository.save(savedUser);
-
-    return savedUser;
   }
 
   /**

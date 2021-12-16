@@ -25,6 +25,11 @@ Data is created using an admin service which will create a unique set of project
 * SPRING_DATASOURCE_PASSWORD - Password for data store, currently PostgreSQL in RDS.
 * SPRING_DATASOURCE_URL - JDBC URL for data store, e.g. jdbc:postgresql://instance:5432/database.
 * SPRING_DATASOURCE_USERNAME - Username for data store.
+* NHS_CHOICES_API_KEY
+* RECAPTCHA_SITEKEY
+* RECAPTCHA_SITESECRET
+* CHARGEBEE_API_KEY
+* CHARGEBEE_SITE
 
 ## Create database
 

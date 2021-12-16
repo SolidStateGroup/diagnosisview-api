@@ -2,15 +2,15 @@ package com.solidstategroup.diagnosisview.model.enums;
 
 
 /**
- * Type of payment.
+ * Type of subscription.
  */
-public enum PaymentType {
+public enum SubscriptionType {
     ANDROID("Android"),
     IOS("iOS"),
     CHARGEBEE("Chargebee");
 
-    private final String name;
-    PaymentType(String name) { this.name = name; }
+    private String name;
+    SubscriptionType(String name) { this.name = name; }
     public String getName() { return this.name; }
     public String getId() { return this.name(); }
 }

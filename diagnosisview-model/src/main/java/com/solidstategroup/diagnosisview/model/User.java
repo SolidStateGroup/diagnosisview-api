@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.solidstategroup.diagnosisview.model.enums.RoleType;
+import com.solidstategroup.diagnosisview.model.enums.SubscriptionType;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import io.swagger.annotations.ApiModelProperty;
@@ -73,6 +74,15 @@ public class User implements Serializable {
 
     @Column
     private boolean activeSubscription;
+
+    @Column(name = "subscription_type", length = 100)
+    @Enumerated(EnumType.STRING)
+    private SubscriptionType currentSubscription;
+
+    @JsonIgnore
+    @Type(type = "jsonb")
+    @Column(name = "subscription_data", columnDefinition = "jsonb")
+    private SubscriptionData subscriptionData;
 
     @Column
     private boolean deleted;
