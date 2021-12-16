@@ -6,9 +6,10 @@ package com.solidstategroup.diagnosisview.model.enums;
  */
 public enum PaymentType {
     ANDROID("Android"),
-    IOS("iOS");
+    IOS("iOS"),
+    CHARGEBEE("Chargebee");
 
-    private String name;
+    private final String name;
     PaymentType(String name) { this.name = name; }
     public String getName() { return this.name; }
     public String getId() { return this.name(); }
