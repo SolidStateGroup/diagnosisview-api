@@ -94,9 +94,9 @@ public class TempAdminApiController extends BaseController {
      */
     @RequestMapping(value = "/android-test", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public void checkAndroid()
+    public void checkAndroid(HttpServletRequest request)
             throws Exception {
-
+        isAdminUser(request);
         subscriptionService.checkSubscriptions();
     }
 }
