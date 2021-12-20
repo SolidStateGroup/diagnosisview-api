@@ -75,12 +75,21 @@ public class SubscriptionServiceImpl implements SubscriptionService {
   public void checkSubscriptions() throws Exception {
     //Get all the users that are expiring soon
     userService.getExpiringUsers().forEach(user -> {
+
+      // validate chargebee subscriptions
+      if (user.getCurrentSubscription() != null
+          && user.getCurrentSubscription().equals(SubscriptionType.CHARGEBEE)) {
+        validateChargebeeSubscription(user);
+        return;
+      }
+
       //Get the latest payment data
       if (user.getPaymentData().size() > 0) {
         PaymentDetails payment = user.getPaymentData().get(user.getPaymentData().size() - 1);
 
         //If its android, run it against the verify android
-        if ((payment.getPaymentType() != null && payment.getPaymentType().equals(PaymentType.ANDROID))) {
+        if ((payment.getPaymentType() != null && payment.getPaymentType()
+            .equals(PaymentType.ANDROID))) {
           try {
             verifyAndroidPurchase(user, payment.getGoogleReceipt());
           } catch (IOException e) {
@@ -290,5 +299,37 @@ public class SubscriptionServiceImpl implements SubscriptionService {
       log.error("Failed to get chargebee hosted page", e);
       throw new BadRequestException("Failed to get chargebee hosted page.");
     }
+  }
+
+  /**
+   * Validates if Chargebee subscription is still active
+   */
+  private void validateChargebeeSubscription(User user) {
+
+    if (user.getCurrentSubscription() == null || user.getSubscriptionData() == null
+        || !user.getCurrentSubscription().equals(SubscriptionType.CHARGEBEE)) {
+      log.error("Validating Chargebee subscription ignored, subscription type invalid for user {}",
+          user.getId());
+      return;
+    }
+    Environment.configure(chargebeeSite, chargebeeApiKey);
+    Result result;
+    try {
+      result = Subscription.retrieve(user.getSubscriptionData().getSubscriptionId()).request();
+      Subscription subscription = result.subscription();
+
+      user.setActiveSubscription(subscription.status().equals(Status.ACTIVE));
+      user.setCurrentSubscription(SubscriptionType.CHARGEBEE);
+      if (subscription.currentTermEnd() != null) {
+        user.setExpiryDate(new Date(subscription.currentTermEnd().getTime()));
+      }
+
+      user = userService.saveUser(user);
+    } catch (Exception e) {
+      log.error("There was a problem validating chargebee subscription", e);
+      user.setActiveSubscription(false);
+    }
+
+    userService.saveUser(user);
   }
 }
