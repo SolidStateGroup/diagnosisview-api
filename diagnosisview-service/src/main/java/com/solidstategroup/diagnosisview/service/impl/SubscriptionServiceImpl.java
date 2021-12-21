@@ -320,7 +320,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
       user.setActiveSubscription(subscription.status().equals(Status.ACTIVE));
       user.setCurrentSubscription(SubscriptionType.CHARGEBEE);
-      if (subscription.currentTermEnd() != null) {
+
+      // if payment failed the expiry date is moved forward on chargebee anyway.
+      // client will have grace period before subscription cancelled, unless all paid.
+      // We need make sure no outstanding invoices exist before moving expiry date on DV forward.
+      if (subscription.currentTermEnd() != null && subscription.dueInvoicesCount() == 0) {
         user.setExpiryDate(new Date(subscription.currentTermEnd().getTime()));
       }
 
