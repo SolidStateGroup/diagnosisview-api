@@ -19,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param username String the username to lookup
      * @return the found user
      */
-    User findOneByUsername(final String username);
+    User findOneByUsernameIgnoreCase(final String username);
 
     /**
      * Find a user by the login token.
