@@ -185,7 +185,7 @@ public class UserServiceImpl implements UserService {
       throw new IllegalArgumentException("reCaptcha validation failed");
     }
 
-    if (userRepository.findOneByUsername(payload.getUsername()) != null) {
+    if (userRepository.findOneByUsernameIgnoreCase(payload.getUsername()) != null) {
       throw new UsernameTakenException();
     }
 
@@ -218,7 +218,7 @@ public class UserServiceImpl implements UserService {
   public User createOrUpdateUser(final User user, boolean isAdmin) throws Exception {
     // this is a new user
     if (user.getId() == null) {
-      if (userRepository.findOneByUsername(user.getUsername()) != null) {
+      if (userRepository.findOneByUsernameIgnoreCase(user.getUsername()) != null) {
         throw new UsernameTakenException();
       }
       user.setUsername(user.getUsername());
@@ -246,7 +246,7 @@ public class UserServiceImpl implements UserService {
             .orElseThrow(() -> new IllegalStateException("Could not find user"));
       } else {
         //Only certain fields can be updated, these are in this section.
-        savedUser = userRepository.findOneByUsername(user.getUsername().toLowerCase());
+        savedUser = userRepository.findOneByUsernameIgnoreCase(user.getUsername().toLowerCase());
       }
 
       if (user.getFirstName() != null) {
@@ -308,7 +308,7 @@ public class UserServiceImpl implements UserService {
    */
   @Override
   public User deleteUser(User user) {
-    User user1 = userRepository.findOneByUsername(user.getUsername());
+    User user1 = userRepository.findOneByUsernameIgnoreCase(user.getUsername());
     user1.setDeleted(true);
     userRepository.save(user1);
 
@@ -470,7 +470,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public User login(final String username, final String password) throws Exception {
 
-    User user = userRepository.findOneByUsername(username.toLowerCase());
+    User user = userRepository.findOneByUsernameIgnoreCase(username.toLowerCase());
 
     if (user == null) {
       throw new BadCredentialsException("Login failed - please check your username and password.");
@@ -506,7 +506,7 @@ public class UserServiceImpl implements UserService {
    */
   @Override
   public User getUser(final String username) {
-    return userRepository.findOneByUsername(username);
+    return userRepository.findOneByUsernameIgnoreCase(username);
   }
 
   /**
@@ -565,7 +565,7 @@ public class UserServiceImpl implements UserService {
       throw new IllegalArgumentException("reCaptcha validation failed");
     }
 
-    User existingUser = userRepository.findOneByUsername(payload.getUsername());
+    User existingUser = userRepository.findOneByUsernameIgnoreCase(payload.getUsername());
 
     if (existingUser == null) {
       return;
