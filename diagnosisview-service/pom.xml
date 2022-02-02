@@ -71,6 +71,14 @@
             <version>0.9.4</version>
         </dependency>
 
+
+        <!-- https://mvnrepository.com/artifact/com.chargebee/chargebee-java -->
+        <dependency>
+            <groupId>com.chargebee</groupId>
+            <artifactId>chargebee-java</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>

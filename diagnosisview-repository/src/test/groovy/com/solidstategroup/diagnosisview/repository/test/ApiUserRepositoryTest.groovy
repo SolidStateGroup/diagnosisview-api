@@ -23,7 +23,7 @@ class ApiUserRepositoryTest extends Specification {
 
     def "find by username"() {
         when:
-            def user = userRepository.findOneByUsername(user1.username)
+            def user = userRepository.findOneByUsernameIgnoreCase(user1.username)
         then: "should return correct user"
             user != null
             user.id.equals(user1.id)
